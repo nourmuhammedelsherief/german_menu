@@ -127,9 +127,9 @@ use \App\Http\Middleware\AdminRole;
 Route::get('redirect_back', [IntegrationController::class, 'redirect_code']);
 
 Route::get('test', [TestController::class, 'index']);
-Route::get('/', function () {
-    return redirect()->to('https://web.easymenu.site');
-});
+//Route::get('/', function () {
+//    return redirect()->to('https://web.easymenu.site');
+//});
 Route::get('/login', function () {
     return redirect()->to('https://easymenu.site/restaurant/login');
 });
