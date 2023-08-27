@@ -43,8 +43,7 @@ class Kernel extends HttpKernel
             \App\Http\Middleware\Localization::class,
             \App\Http\Middleware\GlobalRestaurantWebMiddleware::class,
 
-            \App\Http\Middleware\ActivityMiddleware::class,
-            
+
         ],
 
         'api' => [
