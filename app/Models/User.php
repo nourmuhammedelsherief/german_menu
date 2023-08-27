@@ -33,6 +33,7 @@ class User extends Authenticatable
         'active',       // ENUM('true','fasle')
         'latitude',
         'longitude',
+        'register_restaurant_id' , 
     ];
 
     /**
@@ -56,6 +57,10 @@ class User extends Authenticatable
     public function country()
     {
         return $this->belongsTo(Country::class , 'country_id');
+    }
+    public function registerRestaurant()
+    {
+        return $this->belongsTo(Restaurant::class , 'register_restaurant_id');
     }
     public function city()
     {

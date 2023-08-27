@@ -25,6 +25,7 @@ class IntegrationController extends Controller
             $query->whereNotIn('type' , ['bank' ,'my_fatoora']);
            })
         ->whereIn('status' , ['active'])->with('service' , 'branch')->orderBy('end_at')->get();
+        
         return view('restaurant.integrations.index' , compact('restaurant' , 'subscriptionServices'));
     }
     public function tentative_services()

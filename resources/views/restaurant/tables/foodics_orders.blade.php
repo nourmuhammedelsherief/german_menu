@@ -88,10 +88,10 @@
                                     {{-- <td><?php echo ++$i ?></td> --}}
                                     <td>{{$order->id}}</td>
                                     <td>
-                                        {{app()->getLocale() == 'ar' ? ($order->table->name_ar == null ? $order->table->name_en : $order->table->name_ar) : ($order->table->name_en == null ? $order->table->name_ar : $order->table->name_en)}}
+                                        {{isset($order->table->id) ? $order->table->name : $order->table_name}}
                                     </td>
                                     <td>
-                                        {{app()->getLocale() == 'ar' ? ($order->branch->name_ar == null ? $order->branch->name_en : $order->branch->name_ar) : ($order->branch->name_en == null ? $order->branch->name_ar : $order->branch->name_en)}}
+                                       {{isset($order->branch->id) ? $order->branch->name : $order->branch_name}}
                                     </td>
                                     <td>
                                         {!! $order->getStatusHtml() !!}

@@ -26,7 +26,7 @@ class ActivityMiddleware
             if(in_array($item , $segments)) $check = false;
         endforeach;
         if($check){
-            if(in_array($request->segment(1) , ['dashboard' , 'api'])) $guard = $request->segment(1);
+            if(in_array($request->segment(1) , ['admin' , 'restaurant' , 'marketer' , 'casher'])) $guard = $request->segment(1);
             elseif(in_array($request->segment(1) , ['broadcasting']) ) return $next($request);
             else $guard = 'web';
             if($guard == 'api') $user = auth()->guard('api')->user();

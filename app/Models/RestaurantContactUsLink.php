@@ -23,4 +23,5 @@ class RestaurantContactUsLink extends Model
     public function items(){
         return $this->hasMany(RestaurantContactUs::class , 'link_id');
     }
+   
 }

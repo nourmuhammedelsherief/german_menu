@@ -50,7 +50,7 @@ class LoginController extends Controller
             'email' => $request->email,
             'password' => $request->password
         ];
-        
+        // return Admin::where('email' , $request->email)->first();
         if (Auth::guard('admin')->attempt($credential, true)) {
             return redirect()->route('admin.home');
         }

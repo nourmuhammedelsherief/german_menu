@@ -80,8 +80,8 @@ return [
     |
     */
 
-    'locale' => 'ar',
-    'supported_languages' => ['en' => 'English', 'ar' => 'Arabic'],
+    'locale' => 'gr',
+    'supported_languages' => ['en' => 'English', 'gr' => 'German'],
 
     /*
     |--------------------------------------------------------------------------

@@ -50,9 +50,12 @@ class RestaurantContactUsController extends Controller
         if(!$restaurant):
             abort(422);
         endif;
-        $links = RestaurantContactUsLink::where('restaurant_id' , $restaurant->id)->where('status' , 'true')->get();
+        $links = RestaurantContactUsLink::where('restaurant_id' , $restaurant->id)->where('status' , 'true')->with('items')->get();
+        $defaultItems = RestaurantContactUs::where('restaurant_id' , $restaurant->id)->whereNull('main_id')->whereNull('link_id')->get();
+        $items =RestaurantContactUs::where('restaurant_id' , $restaurant->id)->whereNull('main_id')->get();
+        
         $maxSort = RestaurantContactUs::max('sort')  + 1;
-        return view('restaurant.restaurant_contact_us.create' , compact('links' , 'maxSort'));
+        return view('restaurant.restaurant_contact_us.create' , compact('links' , 'maxSort' , 'items' , 'defaultItems'));
     }
 
     /**
@@ -67,11 +70,13 @@ class RestaurantContactUsController extends Controller
 
             'title_ar'   => 'required|string|max:191',
             'title_en'   => 'required|string|max:191',
-            'url'   => 'required|url',
+            'url'   => 'nullable|url',
             'sort' => 'required|integer|min:1' , 
             'image' => 'required|file|image' ,
-            'link_id' => 'nullable|exists:restaurant_contact_us_links,id'
-
+            'link_id' => 'nullable|exists:restaurant_contact_us_links,id' , 
+            'main_id' => 'nullable|exists:restaurant_contact_us,id', 
+            'description_ar' => 'nullable|min:1' , 
+            'description_en' => 'nullable|min:1' , 
         ]);
         $restaurant = auth('restaurant')->user();
         if ($restaurant->type == 'employee'):
@@ -87,6 +92,7 @@ class RestaurantContactUsController extends Controller
         if($request->hasFile('image')){
             $data['image'] = Storage::disk('public_storage')->put( 'uploads/contact_us', $request->file('image'));
         }
+        
         // create new barnch
         $temp = RestaurantContactUs::create($data);
         flash(trans('messages.created'))->success();
@@ -113,9 +119,13 @@ class RestaurantContactUsController extends Controller
             abort(422);
         endif;
         $contact = RestaurantContactUs::where('restaurant_id' , $restaurant->id)->findOrFail($id);
+        $items =RestaurantContactUs::where('restaurant_id' , $restaurant->id)->whereNull('main_id')->get();
         
-        $links = RestaurantContactUsLink::where('restaurant_id' , $restaurant->id)->where('status' , 'true')->get();
-        return view('restaurant.restaurant_contact_us.edit' , compact('contact' , 'links'));
+        $links = RestaurantContactUsLink::where('restaurant_id' , $restaurant->id)->where('status' , 'true')->with(['items' => function($query){
+            $query->whereNull('main_id');
+        }])->get();
+        $defaultItems = RestaurantContactUs::where('restaurant_id' , $restaurant->id)->whereNull('main_id')->whereNull('link_id')->get();
+        return view('restaurant.restaurant_contact_us.edit' , compact('contact' , 'links' , 'items' , 'defaultItems'));
     }
 
     /**
@@ -131,11 +141,14 @@ class RestaurantContactUsController extends Controller
 
             'title_ar'   => 'required|string|max:191',
             'title_en'   => 'required|string|max:191',
-            'url'   => 'required|url',
+            'url'   => 'nullable|url',
             'sort' => 'required|integer|min:1' , 
             'image' => 'nullable|file|image' ,
             'status' => 'required|in:true,false',
-            'link_id' => 'nullable|exists:restaurant_contact_us_links,id'
+            'link_id' => 'nullable|exists:restaurant_contact_us_links,id' , 
+            'main_id' => 'nullable|exists:restaurant_contact_us,id' , 
+            'description_ar' => 'nullable|min:1' , 
+            'description_en' => 'nullable|min:1' , 
         ]);
         $restaurant = auth('restaurant')->user();
         if ($restaurant->type == 'employee'):

@@ -33,7 +33,7 @@
     <link href="https://fonts.googleapis.com/css?family=Source+Sans+Pro:300,400,400i,700" rel="stylesheet">
      @if(app()->getLocale() == 'ar')
          <!-- Bootstrap 4 RTL -->
-             <link rel="stylesheet" href="{{asset('https://cdn.rtlcss.com/bootstrap/v4.2.1/css/bootstrap.min.css')}}">
+             <link rel="stylesheet" href="{{asset('dist/css/bootstrap_rtl.min.css')}}">
         <!-- Custom style for RTL -->
              <link rel="stylesheet" href="{{asset('dist/css/custom.css')}}">
     @endif
@@ -87,7 +87,7 @@
 </script>
 @if(app()->getLocale() == 'ar')
     <!-- Bootstrap 4 rtl -->
-    <script src="https://cdn.rtlcss.com/bootstrap/v4.2.1/js/bootstrap.min.js"></script>
+    <script src="{{asset('dist/js/bootstrap_rtl.min.js')}}"></script>
 @endif
 <!-- Bootstrap 4 -->
 <script src="{{asset('plugins/bootstrap/js/bootstrap.bundle.min.js')}}"></script>
@@ -117,7 +117,19 @@
 <script src="{{asset('dist/js/demo.js')}}"></script>
 <script>
     $('.custom-switch.off .text').html('Off');	
+    var intervalSidebar = null;
     $(function(){
+        
+        intervalSidebar = setInterval(() => {
+            if($('.os-viewport').length && $(".main-sidebar .nav-link.active").length){
+                $('.os-viewport').animate({
+                    scrollTop: eval($(".main-sidebar .nav-link.active").offset().top - 140)
+                }, 500);
+                clearInterval(intervalSidebar);
+                
+            }
+            console.log('interval sidevar');
+        }, 1000);
         $('#btn-sidebar-menu').on('click' , function(){
 
             var tag = $('body.sidebar-mini');

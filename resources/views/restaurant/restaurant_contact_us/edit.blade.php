@@ -69,6 +69,22 @@
                                     </span>
                                 @endif
                             </div>
+                            {{-- main_id --}}
+                            <div class="form-group">
+                                    <label class="control-label"> @lang('dashboard.entry.main_id') </label>
+                                    <select name="main_id" id="main_id" class="form-control select2" >
+                                        
+                                        <option value="" selected>{{ trans('dashboard.not_exists') }}</option>
+                                        @foreach ($items as $item)
+                                            <option value="{{$item->id}}" {{$contact->main_id == $item->id ? 'selected' : ''}}>{{$item->title}}</option>
+                                        @endforeach
+                                    </select>
+                                    @if ($errors->has('main_id'))
+                                        <span class="help-block">
+                                            <strong style="color: red;">{{ $errors->first('main_id') }}</strong>
+                                        </span>
+                                    @endif
+                            </div>
                                 {{-- name ar --}}
                                 <div class="form-group">
                                     <label class="control-label"> @lang('dashboard.entry.name_ar') </label>
@@ -93,6 +109,31 @@
                                         </span>
                                     @endif
                                 </div>
+                                
+                                {{-- description_ar --}}
+                                <div class="form-group">
+                                    <label class="control-label"> @lang('dashboard.entry.description_ar') </label>
+                                    <textarea name="description_ar" type="text" class="form-control"
+                                            placeholder="@lang('dashboard.entry.description_ar')">{{$contact->description_ar}}</textarea>
+                                    @if ($errors->has('description_ar'))
+                                        <span class="help-block">
+                                            <strong style="color: red;">{{ $errors->first('description_ar') }}</strong>
+                                        </span>
+                                    @endif
+                                </div>
+                                {{-- description_en --}}
+                                <div class="form-group">
+                                    <label class="control-label"> @lang('dashboard.entry.description_en') </label>
+                                    <textarea name="description_en" type="text" class="form-control"
+                                            placeholder="@lang('dashboard.entry.description_en')">{{$contact->description_en}}</textarea>
+                                    @if ($errors->has('description_en'))
+                                        <span class="help-block">
+                                            <strong style="color: red;">{{ $errors->first('description_en') }}</strong>
+                                        </span>
+                                    @endif
+                                </div>
+                                
+                                
 
                                 <div class="form-group">
                                     <label class="control-label"> @lang('dashboard.entry.status') </label>
@@ -170,116 +211,7 @@
 
                 </div>
             </div>
-            <script>
-                if ($("#post-form").length > 0) {
-                    $("#post-form").validate({
-
-                        rules: {
-                            name_ar: {
-                                required: {{\Illuminate\Support\Facades\Auth::guard('restaurant')->user()->ar == 'true' ? true : false}},
-                                maxlength: 191,
-                                // unique: true,
-                            },
-                            name_en: {
-                                required: {{\Illuminate\Support\Facades\Auth::guard('restaurant')->user()->ar == 'true' ? true : false}},
-                                maxlength: 191
-                            },
-                            {{--description_ar: {--}}
-                                {{--    required: {{\Illuminate\Support\Facades\Auth::guard('restaurant')->user()->ar == 'true' ? true : false}},--}}
-                                {{--    // unique: true,--}}
-                                {{--},--}}
-                                {{--description_en: {--}}
-                                {{--    required: {{\Illuminate\Support\Facades\Auth::guard('restaurant')->user()->ar == 'true' ? true : false}},--}}
-                                {{--},--}}
-                            branch_id: {
-                                required: true,
-                            },
-                            menu_category_id: {
-                                required: true,
-                            },
-                            poster_id: {
-                                required: false,
-                            },
-                            sub_category_id: {
-                                required: false,
-                            },
-                            price: {
-                                required: true,
-                                maxlength: 11
-                            },
-                            active: {
-                                required: true,
-                            },
-
-                        },
-                        messages: {
-                            name_ar: {
-                                required: "{{trans('messages.name_ar')}}" + " " + "{{trans('messages.required')}}",
-                                maxlength: "{{trans('messages.max_length')}}" + " " + "{{trans('messages.name_ar')}}" + "191",
-                            },
-                            name_en: {
-                                required: "{{trans('messages.name_en')}}" + " " + "{{trans('messages.required')}}",
-                                maxlength: "{{trans('messages.max_length')}}" + " " + "{{trans('messages.name_en')}}" + "191",
-                            },
-                            branch_id: {
-                                required: "{{trans('messages.branch')}}" + " " + "{{trans('messages.required')}}",
-                            },
-                            menu_category_id: {
-                                required: "{{trans('messages.menu_category')}}" + " " + "{{trans('messages.required')}}",
-                            },
-                            price: {
-                                required: "{{trans('messages.price')}}" + " " + "{{trans('messages.required')}}",
-                                maxlength: "{{trans('messages.max_length')}}" + " " + "{{trans('messages.price')}}" + "8",
-                            },
-
-                            {{--description_ar: {--}}
-                                {{--    required: "{{trans('messages.description_ar')}}" +" "+ "{{trans('messages.required')}}",--}}
-                                {{--},--}}
-                                {{--description_en: {--}}
-                                {{--    required: "{{trans('messages.description_en')}}" +" "+ "{{trans('messages.required')}}",--}}
-                                {{--},--}}
-                            active: {
-                                required: "{{trans('messages.active')}}" + " " + "{{trans('messages.required')}}",
-                            },
-                        },
-                        submitHandler: function (form) {
-                            $.ajaxSetup({
-                                headers: {
-                                    'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
-                                }
-                            });
-                            var formData = new FormData($(this)[0]);
-
-                            $('#send_form').html('Sending..');
-                            $.ajax({
-                                url: "{{ route('employees.store') }}",
-                                type: "POST",
-                                data: $('#post-form').serialize(),
-                                success: function (response) {
-                                    if (response.errors && response.errors.length > 0) {
-                                        jQuery.each(response.errors, function (key, value) {
-                                            jQuery('.alert-danger').show();
-                                            jQuery('.alert-danger').append('<p>' + value + '</p>');
-                                        });
-                                    } else {
-                                        $('#send_form').html('Submit');
-                                        $('#res_message').show();
-                                        $('#res_message').html(response.msg);
-                                        $('#msg_div').removeClass('d-none');
-
-                                        document.getElementById("post-form").reset();
-                                        setTimeout(function () {
-                                            $('#res_message').hide();
-                                            $('#msg_div').hide();
-                                        }, 10000);
-                                        window.location = response.url;
-                                    }
-                                }
-                            });
-                        }
-                    })
-                }
-            </script>
+      
 
         </div><!-- /.container-fluid -->
     </section>
@@ -288,6 +220,48 @@
     <script src="{{ URL::asset('admin/js/select2.full.min.js') }}"></script>
     <script src="{{ URL::asset('admin/js/components-select2.min.js') }}"></script>
     <script src="{{ URL::asset('admin/js/bootstrap-fileinput.js') }}"></script>
+
+    
+    <script>
+        var links = {!!  json_encode($links)  !!};
+                var defaultItems = {!!  json_encode($defaultItems)  !!};
+                console.log(links , defaultItems);
+            
+        $(document).ready(function () {
+         
+   
+                    console.log('done');
+                    $('select[name=link_id]').on('change' , function(){
+                        var tag = $(this);
+                        console.log(tag.val());
+                        var check = false;
+                        $.each(links , function(k , v){
+                            if(v.id == tag.val()){
+                                check = true;
+                                console.log('true' , tag.val() , v);
+                                content = '<option value="">لا يوجد</option>' ;
+                                $.each(v.items  , function(kk , vv){
+                                    content += '<option value="'+vv.id+'">'+vv.title_ar+'</option>' ;
+                                });
+                                $('select[name=main_id]').html(content);
+                                $('select[name=main_id]').select2();
+                            }
+                        });
+                        if(!check){
+                            console.log('false');
+                            content = '<option value="">لا يوجد</option>' ;
+                                $.each(defaultItems  , function(kk , vv){
+                                    content += '<option value="'+vv.id+'">'+vv.title_ar+'</option>' ;
+                                });
+                                $('select[name=main_id]').html(content);
+                                $('select[name=main_id]').select2();
+                        }
+                    });
+                    $('select[name=link_id]').trigger('change');
+                
+        });
+    </script>
+
     <script>
         $(document).ready(function () {
             $('.select2').select2();

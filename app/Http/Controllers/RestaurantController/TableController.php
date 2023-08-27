@@ -29,12 +29,12 @@ class TableController extends Controller
      */
     public function index()
     {
-        if(!auth('restaurant')->check()):
+        if (!auth('restaurant')->check()) :
             return redirect(url('restaurant/login'));
         endif;
         $restaurant = Auth::guard('restaurant')->user();
-        if ($restaurant->type == 'employee'):
-            if (check_restaurant_permission($restaurant->id , 3) == false):
+        if ($restaurant->type == 'employee') :
+            if (check_restaurant_permission($restaurant->id, 3) == false) :
                 abort(404);
             endif;
             $restaurant = Restaurant::find($restaurant->restaurant_id);
@@ -44,7 +44,7 @@ class TableController extends Controller
             ->where('status', 'active')
             ->first();
         if ($checkTableService == null) {
-            
+
             abort(404);
         }
         if ($restaurant->status == 'finished' || $restaurant->subscription->status == 'tentative_finished') {
@@ -60,12 +60,12 @@ class TableController extends Controller
 
     public function service_tables($service_id)
     {
-        if( !auth('restaurant')->check()):
+        if (!auth('restaurant')->check()) :
             return redirect(url('restaurant/login'));
         endif;
         $restaurant = Auth::guard('restaurant')->user();
-        if ($restaurant->type == 'employee'):
-            if (check_restaurant_permission($restaurant->id , 3) == false):
+        if ($restaurant->type == 'employee') :
+            if (check_restaurant_permission($restaurant->id, 3) == false) :
                 abort(404);
             endif;
             $restaurant = Restaurant::find($restaurant->restaurant_id);
@@ -106,21 +106,21 @@ class TableController extends Controller
 
     public function foodics_tables($id)
     {
-        if(!auth('restaurant')->check() and !auth('admin')->check() ):
+        if (!auth('restaurant')->check() and !auth('admin')->check()) :
             return redirect(url('restaurant/login'));
         endif;
         $branch = Branch::findOrFail($id);
         $restaurant = $branch->restaurant;
-//        $checkTableService = ServiceSubscription::whereRestaurantId($restaurant->id)
-//            ->where('service_id' , 8)
-//            ->where('status' , 'active')
-//            ->first();
-//        if ($checkTableService == null)
-//        {
-//            abort(404);
-//        }
-        if ($restaurant->type == 'employee'):
-            if (check_restaurant_permission($restaurant->id , 3) == false):
+        //        $checkTableService = ServiceSubscription::whereRestaurantId($restaurant->id)
+        //            ->where('service_id' , 8)
+        //            ->where('status' , 'active')
+        //            ->first();
+        //        if ($checkTableService == null)
+        //        {
+        //            abort(404);
+        //        }
+        if ($restaurant->type == 'employee') :
+            if (check_restaurant_permission($restaurant->id, 3) == false) :
                 abort(404);
             endif;
             $restaurant = Restaurant::find($restaurant->restaurant_id);
@@ -144,24 +144,24 @@ class TableController extends Controller
      */
     public function create()
     {
-        if(!auth('restaurant')->check() ):
+        if (!auth('restaurant')->check()) :
             return redirect(url('restaurant/login'));
         endif;
         $restaurant = Auth::guard('restaurant')->user();
-        if ($restaurant->type == 'employee'):
-            if (check_restaurant_permission($restaurant->id , 3) == false):
+        if ($restaurant->type == 'employee') :
+            if (check_restaurant_permission($restaurant->id, 3) == false) :
                 abort(404);
             endif;
             $restaurant = Restaurant::find($restaurant->restaurant_id);
         endif;
-//        $checkTableService = ServiceSubscription::whereRestaurantId($restaurant->id)
-//            ->where('service_id' , 8)
-//            ->where('status' , 'active')
-//            ->first();
-//        if ($checkTableService == null)
-//        {
-//            abort(404);
-//        }
+        //        $checkTableService = ServiceSubscription::whereRestaurantId($restaurant->id)
+        //            ->where('service_id' , 8)
+        //            ->where('status' , 'active')
+        //            ->first();
+        //        if ($checkTableService == null)
+        //        {
+        //            abort(404);
+        //        }
         $branches = Branch::with('subscription')
             ->whereHas('subscription', function ($q) {
                 $q->where('end_at', '!=', null);
@@ -171,17 +171,17 @@ class TableController extends Controller
             ->whereStatus('active')
             ->get();
         $service_id = null;
-        return view('restaurant.tables.create', compact('branches' , 'service_id'));
+        return view('restaurant.tables.create', compact('branches', 'service_id'));
     }
 
     public function create_service_table($service_id)
     {
-        if(!auth('restaurant')->check() ):
+        if (!auth('restaurant')->check()) :
             return redirect(url('restaurant/login'));
         endif;
         $restaurant = Auth::guard('restaurant')->user();
-        if ($restaurant->type == 'employee'):
-            if (check_restaurant_permission($restaurant->id , 3) == false):
+        if ($restaurant->type == 'employee') :
+            if (check_restaurant_permission($restaurant->id, 3) == false) :
                 abort(404);
             endif;
             $restaurant = Restaurant::find($restaurant->restaurant_id);
@@ -191,7 +191,7 @@ class TableController extends Controller
                 $q->where('service_id', $service_id);
             })
             ->whereRestaurantId($restaurant->id)
-            ->whereIn('status',['active' , 'tentative'])
+            ->whereIn('status', ['active', 'tentative'])
             ->get();
         return view('restaurant.tables.create', compact('branches', 'service_id'));
     }
@@ -204,7 +204,7 @@ class TableController extends Controller
      */
     public function store(Request $request)
     {
-        if(!auth('restaurant')->check() ):
+        if (!auth('restaurant')->check()) :
             return redirect(url('restaurant/login'));
         endif;
         $this->validate($request, [
@@ -215,8 +215,8 @@ class TableController extends Controller
             'code' => 'nullable|numeric',
         ]);
         $restaurant = Auth::guard('restaurant')->user();
-        if ($restaurant->type == 'employee'):
-            if (check_restaurant_permission($restaurant->id , 3) == false):
+        if ($restaurant->type == 'employee') :
+            if (check_restaurant_permission($restaurant->id, 3) == false) :
                 abort(404);
             endif;
             $restaurant = Restaurant::find($restaurant->restaurant_id);
@@ -227,13 +227,12 @@ class TableController extends Controller
         }
         // create new table
         $barcode = str_replace(' ', '-', $request->name_barcode);
-        if ($request->service_id != null and $request->branch_id == null)
-        {
+        if ($request->service_id != null and $request->branch_id == null) {
             $branch = ServiceSubscription::whereRestaurantId($restaurant->id)
-                ->where('service_id' , $request->service_id)
+                ->where('service_id', $request->service_id)
                 ->whereStatus('active')
                 ->first()->branch_id;
-        }else{
+        } else {
             $branch = $request->branch_id;
         }
         Table::create([
@@ -246,19 +245,15 @@ class TableController extends Controller
             'service_id' => $request->service_id == null ? null : $request->service_id,
         ]);
         flash(trans('messages.created'))->success();
-        if ($request->service_id != null)
-        {
-            if ($request->service_id == 9)
-            {
-                return redirect()->route('WhatsAppTable' , 9);
-            }elseif ($request->service_id == 10)
-            {
-                return redirect()->route('EasyMenuTable' , 10);
+        if ($request->service_id != null) {
+            if ($request->service_id == 9) {
+                return redirect()->route('WhatsAppTable', 9);
+            } elseif ($request->service_id == 10) {
+                return redirect()->route('EasyMenuTable', 10);
             }
-        }else{
+        } else {
             return redirect()->route('tables.index');
         }
-
     }
 
     /**
@@ -280,31 +275,31 @@ class TableController extends Controller
      */
     public function edit($id)
     {
-        if(!auth('restaurant')->check() ):
+        if (!auth('restaurant')->check()) :
             return redirect(url('restaurant/login'));
         endif;
         $restaurant = Auth::guard('restaurant')->user();
-        if ($restaurant->type == 'employee'):
-            if (check_restaurant_permission($restaurant->id , 3) == false):
+        if ($restaurant->type == 'employee') :
+            if (check_restaurant_permission($restaurant->id, 3) == false) :
                 abort(404);
             endif;
             $restaurant = Restaurant::find($restaurant->restaurant_id);
         endif;
-//        $checkTableService = ServiceSubscription::whereRestaurantId($restaurant->id)
-//            ->where('service_id' , 8)
-//            ->where('status' , 'active')
-//            ->first();
-//        if ($checkTableService == null)
-//        {
-//            abort(404);
-//        }
+        //        $checkTableService = ServiceSubscription::whereRestaurantId($restaurant->id)
+        //            ->where('service_id' , 8)
+        //            ->where('status' , 'active')
+        //            ->first();
+        //        if ($checkTableService == null)
+        //        {
+        //            abort(404);
+        //        }
         $table = Table::findOrFail($id);
         $branches = Branch::with('subscription')
             ->whereHas('subscription', function ($q) {
                 $q->where('end_at', '!=', null);
             })
             ->whereRestaurantId($restaurant->id)
-            ->whereIn('status',['active' , 'tentative'])
+            ->whereIn('status', ['active', 'tentative'])
             ->get();
         return view('restaurant.tables.edit', compact('table', 'branches'));
     }
@@ -318,12 +313,12 @@ class TableController extends Controller
      */
     public function update(Request $request, $id)
     {
-        if(!auth('restaurant')->check() ):
+        if (!auth('restaurant')->check()) :
             return redirect(url('restaurant/login'));
         endif;
         $restaurant = Auth::guard('restaurant')->user();
-        if ($restaurant->type == 'employee'):
-            if (check_restaurant_permission($restaurant->id , 3) == false):
+        if ($restaurant->type == 'employee') :
+            if (check_restaurant_permission($restaurant->id, 3) == false) :
                 abort(404);
             endif;
             $restaurant = Restaurant::find($restaurant->restaurant_id);
@@ -369,7 +364,7 @@ class TableController extends Controller
      */
     public function destroy($id)
     {
-        if(!auth('restaurant')->check() and !auth('admin')->check() ):
+        if (!auth('restaurant')->check() and !auth('admin')->check()) :
             return redirect(url('restaurant/login'));
         endif;
         $table = Table::findOrFail($id);
@@ -390,7 +385,7 @@ class TableController extends Controller
 
     public function show_barcode($id)
     {
-        if(!auth('restaurant')->check() and !auth('admin')->check() ):
+        if (!auth('restaurant')->check() and !auth('admin')->check()) :
             return redirect(url('restaurant/login'));
         endif;
         $table = Table::findOrFail($id);
@@ -399,34 +394,32 @@ class TableController extends Controller
 
     public function tableOrder()
     {
-        if(!auth('restaurant')->check()):
+        if (!auth('restaurant')->check()) :
             return redirect(url('restaurant/login'));
         endif;
         $restaurant = auth('restaurant')->user();
-        $orders = TableOrder::where('restaurant_id' , $restaurant->id)
-        ->where('status' , '!=' , 'in_reservation')
-        ->whereHas('branch' , function($query){
-            $query->where('foodics_status' , 'true');
-        })->whereHas('table' , function($query){
-            $query->whereNotNull('foodics_id');
-        })->with('branch' , 'table' )->orderBy('created_at' , 'desc')->paginate(500);
+        $orders = TableOrder::where('restaurant_id', $restaurant->id)
+            ->where('status', '!=', 'in_reservation')
+            ->whereHas('order_items')
+            ->with('branch', 'table')->orderBy('created_at', 'desc')->paginate(500);
         // return $orders;
         return view('restaurant.tables.foodics_orders', compact('orders'));
     }
 
-    public function getFoodicsDetails(Request $request){
-        if(!auth('restaurant')->check()):
-            return response('unauth' , 401);
+    public function getFoodicsDetails(Request $request)
+    {
+        if (!auth('restaurant')->check()) :
+            return response('unauth', 401);
         endif;
         $restaurant = auth('restaurant')->user();
         $request->validate([
-            'order_id' => 'required|integer' , 
+            'order_id' => 'required|integer',
         ]);
         $order = TableOrder::findOrFail($request->order_id);
-        $foodics = null ;
+        $foodics = null;
         $res = null;
-        if(!empty($order->foodics_order_id)):
-            $res = getFoodicsOrder($order->foodics_order_id , $restaurant->foodics_access_token);
+        if (!empty($order->foodics_order_id)) :
+            $res = getFoodicsOrder($order->foodics_order_id, $restaurant->foodics_access_token);
             // file_put_contents(storage_path('foodics_t.txt') ,  '\n' . date('Y-m-d h:i A') .' \n ' .   $res , FILE_APPEND);
             $foodics = $res->json();
         endif;
@@ -434,40 +427,42 @@ class TableController extends Controller
         return response([
             'status' => true,
             'data' => [
-                'content' => view('restaurant.tables.include.foodics_info' , compact('restaurant' , 'foodics' , 'res' , 'order'))->render()
+                'content' => view('restaurant.tables.include.foodics_info', compact('restaurant', 'foodics', 'res', 'order'))->render()
             ]
         ]);
     }
 
-    
-    public function orderDetails(Request $request){
-        if(!auth('restaurant')->check()):
-            return response('unauth' , 401);
+
+    public function orderDetails(Request $request)
+    {
+        if (!auth('restaurant')->check()) :
+            return response('unauth', 401);
         endif;
         $restaurant = auth('restaurant')->user();
         $request->validate([
-            'order_id' => 'required|integer' , 
+            'order_id' => 'required|integer',
         ]);
         $order = TableOrder::findOrFail($request->order_id);
-       
+
 
         return response([
             'status' => true,
             'data' => [
-                'content' => view('restaurant.tables.include.order_details' , compact('restaurant'  , 'order'))->render()
+                'content' => view('restaurant.tables.include.order_details', compact('restaurant', 'order'))->render()
             ]
         ]);
     }
 
-    public function createFoodicsOrder(Request $request){
+    public function createFoodicsOrder(Request $request)
+    {
         $request->validate([
             'order_id' => 'required|integer'
         ]);
         $restaurant = auth('restaurant')->user();
-        if(!$order = TableOrder::find($request->order_id)){
+        if (!$order = TableOrder::find($request->order_id)) {
             return response([
-                'status' => false , 
-                'message' => 'الطلب غير موجود' ,
+                'status' => false,
+                'message' => 'الطلب غير موجود',
             ]);
         }
         if ($order->branch->foodics_status == 'true') {
@@ -491,23 +486,23 @@ class TableController extends Controller
             $foodics = create_foodics_table_order($order->restaurant_id, $branch_id, $order->order_items, 'EasyMenu-cash', $order->table_id);
             $order = Order::find($order->id);
             $foodics = json_decode($foodics, true);
-            if(isset($foodics['data']['id']) or true):
+            if (isset($foodics['data']['id']) or true) :
                 return response([
-                    'status' => true , 
-                    'message' => 'تم إرسال الطلب بنجاح' ,
-                    'content' =>  view('restaurant.tables.include.foodics_info' , compact('restaurant' , 'foodics', 'order'))->render()
+                    'status' => true,
+                    'message' => 'تم إرسال الطلب بنجاح',
+                    'content' =>  view('restaurant.tables.include.foodics_info', compact('restaurant', 'foodics', 'order'))->render()
                 ]);
-            else:
+            else :
                 return response([
-                    'status' => false , 
-                    'message' => 'فشلت العملية الارسال' ,
-                    'content' =>  view('restaurant.tables.include.foodics_info' , compact('restaurant' , 'foodics', 'order'))->render()
+                    'status' => false,
+                    'message' => 'فشلت العملية الارسال',
+                    'content' =>  view('restaurant.tables.include.foodics_info', compact('restaurant', 'foodics', 'order'))->render()
                 ]);
             endif;
-        }else{
+        } else {
             return response([
-                'status' => false , 
-                'message' => 'لا يمكن انشاء فودكس لهذا الفرع' ,
+                'status' => false,
+                'message' => 'لا يمكن انشاء فودكس لهذا الفرع',
             ]);
         }
     }

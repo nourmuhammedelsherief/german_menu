@@ -49,10 +49,14 @@ class Branch extends Model
         'merchant_key',
         'stop_menu',
         'express_password',
-        'table_payment'
+        'table_payment', 
+        'description_ar' , 'description_en'
     ];
     public function getNameAttribute(){
         return app()->getLocale() == 'ar' ? $this->name_ar : $this->name_en;
+    }
+    public function getDescriptionAttribute(){
+        return app()->getLocale() == 'ar' ? $this->description_ar : $this->description_en;
     }
     public function restaurant()
     {
@@ -61,6 +65,10 @@ class Branch extends Model
     public function country()
     {
         return $this->belongsTo(Country::class ,  'country_id');
+    }
+    public function orderSettings()
+    {
+        return $this->hasMany(RestaurantOrderSetting::class ,  'branch_id');
     }
     public function city()
     {
@@ -85,5 +93,9 @@ class Branch extends Model
     public function service_subscriptions()
     {
         return $this->hasMany(ServiceSubscription::class , 'branch_id');
+    }
+    public function waiterItems()
+    {
+        return $this->hasMany(WaiterItem::class, 'branch_id');
     }
 }

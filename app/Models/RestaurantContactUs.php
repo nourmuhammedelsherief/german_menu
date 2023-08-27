@@ -15,10 +15,14 @@ class RestaurantContactUs extends Model
         'image',
         'sort',
         'title_en' , 'title_ar'  , 'status' , 
-        'link_id'
+        'link_id' , 'main_id' ,
+        'description_ar' , 'description_en' , 
     ];
     public function getTitleAttribute(){
         return app()->getLocale() == 'ar' ? $this->title_ar : $this->title_en;
+    }
+    public function getDescriptionAttribute(){
+        return app()->getLocale() == 'ar' ? $this->description_ar : $this->description_en;
     }
     public function restaurant()
     {
@@ -27,4 +31,11 @@ class RestaurantContactUs extends Model
     public function link(){
         return $this->belongsTo(RestaurantContactUsLink::class , 'link_id');
     }
+    public function main(){
+        return $this->belongsTo(RestaurantContactUs::class , 'main_id');
+    }
+    public function childs(){
+        return $this->hasMany(RestaurantContactUs::class , 'main_id');
+    }
+    
 }

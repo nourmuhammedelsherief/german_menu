@@ -73,6 +73,7 @@
                                 <th></th>
                                 <th>{{ trans('dashboard.entry.image') }}</th>
                                 <th> @lang('dashboard.entry.link_id') </th>
+                                <th> @lang('dashboard.entry.main_id') </th>
                                 <th> @lang('dashboard.entry.name_ar') </th>
                                 <th> @lang('dashboard.entry.name_en') </th>
                                 <th> @lang('dashboard.entry.sort') </th>
@@ -103,6 +104,11 @@
                                     <td>
                                         @if(isset($item->link->id))
                                             <a href="{{route('restaurant.link_contact_us.show' , $item->link_id)}}">{{$item->link->name}}</a> 
+                                        @endif
+                                    </td>
+                                    <td>
+                                        @if(isset($item->main->id))
+                                            <a href="{{route('restaurant.link_contact_us.show' , $item->main_id)}}">{{$item->main->title}}</a> 
                                         @endif
                                     </td>
                                     <td>{{$item->title_ar}}</td>

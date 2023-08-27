@@ -33,6 +33,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Validator;
 
@@ -45,7 +46,7 @@ class HomeController extends Controller
      */
     public function __construct()
     {
-        $this->middleware('auth:restaurant')->except('show_register','reset_password_post','reset_password', 'password_verification_post','password_verification','submitStep2', 'storeStep2', 'code_verification', 'phone_verification', 'submit_step1', 'resend_code' , 'forget_password' , 'forget_password_submit' , 'checkEmailAndPhone' , 'sellerRegisters' , 'sellerVerificationPhone' , 'sellerRestaurantPayment');
+        $this->middleware('auth:restaurant')->except('show_register', 'reset_password_post', 'reset_password', 'password_verification_post', 'password_verification', 'submitStep2', 'storeStep2', 'code_verification', 'phone_verification', 'submit_step1', 'resend_code', 'forget_password', 'forget_password_submit', 'checkEmailAndPhone', 'sellerRegisters', 'sellerVerificationPhone', 'sellerRestaurantPayment');
     }
 
     /**
@@ -55,23 +56,23 @@ class HomeController extends Controller
     public function show_register()
     {
         $countries = Country::with('cities')
-            ->where('active' , 'true')
-            ->orderBy('created_at' , 'asc')
+            ->where('active', 'true')
+            ->orderBy('created_at', 'asc')
             ->get();
         // $restaurant = Restaurant::findOrFail($id);
         // $cities = City::whereCountryId($restaurant->country_id)->get();
-//        $packages = Package::whereIn('id' , [1,2])->get();
+        //        $packages = Package::whereIn('id' , [1,2])->get();
         $categories = Category::all();
-        return view('restaurant.authAdmin.first_step_register', compact('countries'  , 'categories'));
+        return view('restaurant.authAdmin.first_step_register', compact('countries', 'categories'));
     }
 
-    public function sellerRegisters(Request $request , $code)
+    public function sellerRegisters(Request $request, $code)
     {
         $date = date('Y-m-d');
-        if(!$seller = SellerCode::where('active' , 'true' )->whereRaw('(start_at is null or start_at <= "'.$date.'") and (end_at is null or end_at >= "'.$date.'")')->where('custom_url' , $code)->orderBy('updated_at' , 'desc')->first()):
+        if (!$seller = SellerCode::where('active', 'true')->whereRaw('(start_at is null or start_at <= "' . $date . '") and (end_at is null or end_at >= "' . $date . '")')->where('custom_url', $code)->orderBy('updated_at', 'desc')->first()) :
             abort(404);
         endif;
-        if($request->method() == 'POST'):
+        if ($request->method() == 'POST') :
             $validator = \Validator::make($request->all(), [
                 'email' => 'required|string|email|max:255|unique:restaurants',
                 'password' => 'required|string|min:8|confirmed',
@@ -87,29 +88,44 @@ class HomeController extends Controller
                 'answer_id' => 'nullable',
                 'category_id' => 'required|array|min:1',
                 // 'category_id.*' => 'required|integer|exists:menu_categories,id'
-            ] , [
-                'category_id.*' => trans('messages.error_category_id_invalid') ,
-                'category_id.*.*' => trans('messages.error_category_id_invalid') ,
-                'name_en.*' => trans('messages.error_name_en_invaild') ,
-                'name_ar.*' => trans('messages.error_name_ar_invalid') ,
-                'city_id.*' => trans('messages.error_city_id_invaild') ,
+            ], [
+                'category_id.*' => trans('messages.error_category_id_invalid'),
+                'category_id.*.*' => trans('messages.error_category_id_invalid'),
+                'name_en.*' => trans('messages.error_name_en_invaild'),
+                'name_ar.*' => trans('messages.error_name_ar_invalid'),
+                'city_id.*' => trans('messages.error_city_id_invaild'),
                 // 'answer_id.*' => trans('messages.error_answer_id_fail'),
             ]);
             if ($validator->fails()) {
                 return response()->json([
                     'status' => false,
-                    'message' => $validator->errors()->first() ,
-                    'errors' => $validator->errors()]);
+                    'message' => $validator->errors()->first(),
+                    'errors' => $validator->errors()
+                ]);
             }
-            // check barcode name
-            $barcodeName =  str_replace(' ' , '-' , $request->name_en);
-            if(Restaurant::where('name_barcode' , $barcodeName)->count() > 0){
+            // check recapcha google 
+            $recapchaResponse = Http::asForm()->post('https://www.google.com/recaptcha/api/siteverify', [
+                'secret' => config('services.recapcha.secret_key'),
+                'response' => $request->recapcha_token,
+                'remoteip' => request()->ip(),
+            ]);
+
+            $dd  = $recapchaResponse->json();
+            if (!isset($dd['success']) or $dd['success'] !== true) :
                 return response([
                     'status' => false,
-                    'message' => trans('messages.error_barcode_name_exist')  ,
+                    'message' => trans('messages.recapcha_fail'),
+                ]);
+            endif;
+            // check barcode name
+            $barcodeName =  str_replace(' ', '-', $request->name_en);
+            if (Restaurant::where('name_barcode', $barcodeName)->count() > 0) {
+                return response([
+                    'status' => false,
+                    'message' => trans('messages.error_barcode_name_exist'),
                     'errors' => [
-                        'name_en' => [[trans('messages.error_barcode_name_exist') ]]
-                    ] ,
+                        'name_en' => [[trans('messages.error_barcode_name_exist')]]
+                    ],
                 ]);
             }
             // create new restaurant
@@ -122,13 +138,13 @@ class HomeController extends Controller
                 'email' => $request->email,
                 'password' => Hash::make($request->password),
                 'country_id' => $request->country_id,
-                'city_id' => $request->city_id ,
+                'city_id' => $request->city_id,
                 'phone_number' => $request->phone_number,
                 'phone_verification' => $code,
                 'status' => 'inComplete',
                 'package_id' => $packageId,
                 'answer_id' => $request->answer_id,
-                'name_barcode' =>$barcodeName ,
+                'name_barcode' => $barcodeName,
                 'menu_arrange' => 'true',
                 'product_arrange' => 'true',
                 'admin_activation' => 'false',
@@ -154,7 +170,7 @@ class HomeController extends Controller
             // send sms to restaurant owner
             $country = $restaurant->country->code;
             // send code to phone_number
-            $msg = app()->getLocale() == 'ar' ? 'كود التحقق الخاص بك في أيزي منيو هو' . ' : ' . $code . '  ' . 'مؤسسة تقني' : 'EasyMenu verification code is : ' . $code. '  ' . 'مؤسسة تقني';
+            $msg = app()->getLocale() == 'ar' ? 'كود التحقق الخاص بك في أيزي منيو هو' . ' : ' . $code . '  ' . 'مؤسسة تقني' : 'EasyMenu verification code is : ' . $code . '  ' . 'مؤسسة تقني';
             $check = substr($restaurant->phone_number, 0, 2) === '05';
             if ($check == true) {
                 $phone = $country . ltrim($restaurant->phone_number, '0');
@@ -167,31 +183,30 @@ class HomeController extends Controller
             dispatch(new SendMailNewRestaurantJob($restaurant));
             if ($restaurant) {
                 return response([
-                    'status' => true ,
+                    'status' => true,
                     'message' => trans('messages.send_code_success'),
                     'data' => [
-                        'restaurant_id' => $restaurant->id ,
-                    ] ,
+                        'restaurant_id' => $restaurant->id,
+                    ],
                 ]);
                 return response()->json(['url' => url('/restaurant/phone_verification/' . $restaurant->id), 'msg' => trans('messages.success_register')]);
             }
         endif;
 
-        $countries = Country::with('cities')->where('id' , $seller->country_id)
-            ->where('active' , 'true')
-            ->orderBy('created_at' , 'asc')
+        $countries = Country::with('cities')->where('id', $seller->country_id)
+            ->where('active', 'true')
+            ->orderBy('created_at', 'asc')
             ->get();
 
         $categories = Category::all();
-        $banks = Bank::whereNull('restaurant_id')->where('country_id' , $seller->country_id)->get();
+        $banks = Bank::whereNull('restaurant_id')->where('country_id', $seller->country_id)->get();
 
         $check_price = CountryPackage::whereCountry_id($seller->country_id)
             ->wherePackageId($seller->package_id)
             ->first();
-        if ($check_price == null)
-        {
+        if ($check_price == null) {
             $package_actual_price = Package::find($seller->package_id)->price;
-        }else{
+        } else {
             $package_actual_price = $check_price->price;
         }
 
@@ -204,34 +219,47 @@ class HomeController extends Controller
         $finalPrice = $finalPrice + $tax_value;
         $commission = $package_price * ($seller->percentage - $seller->code_percentage) / 100;
         $total_commission = $seller->commission + $commission;
-        return view('restaurant.authAdmin.seller_register', compact('countries'  ,'tax_value' ,'tax', 'categories' , 'seller' , 'banks' , 'package_price'  , 'discount_percentage' , 'discount' , 'finalPrice'));
+        return view('restaurant.authAdmin.seller_register', compact('countries', 'tax_value', 'tax', 'categories', 'seller', 'banks', 'package_price', 'discount_percentage', 'discount', 'finalPrice'));
     }
-    public function sellerVerificationPhone(Request $request , $code , $id)
+    public function sellerVerificationPhone(Request $request, $code, $id)
     {
         $restaurant = Restaurant::findOrFail($id);
         $this->validate($request, [
             'code' => 'required|numeric'
         ]);
+          // check recapcha google 
+          $recapchaResponse = Http::asForm()->post('https://www.google.com/recaptcha/api/siteverify', [
+            'secret' => config('services.recapcha.secret_key'),
+            'response' => $request->recapcha_token,
+            'remoteip' => request()->ip(),
+        ]);
+
+        $dd  = $recapchaResponse->json();
+        if (!isset($dd['success']) or $dd['success'] !== true) :
+            return response([
+                'status' => false,
+                'message' => trans('messages.recapcha_fail'),
+            ]);
+        endif;
         if ($request->code == $restaurant->phone_verification) {
             $restaurant->update([
                 'phone_verification' => null,
             ]);
             flash(trans('messages.success_code'))->success();
-            if($request->wantsJson()){
+            if ($request->wantsJson()) {
                 return response([
                     'status' => 1,
                     'message' => trans('messages.success_code')
                 ]);
-
             }
             return redirect()->route('restaurant.step2Register', $restaurant->id);
         } else {
 
-            if($request->wantsJson()){
+            if ($request->wantsJson()) {
                 return response([
-                    'status' => false ,
-                    'message' => trans('messages.error_code') ,
-                    'request' => $request->all() ,
+                    'status' => false,
+                    'message' => trans('messages.error_code'),
+                    'request' => $request->all(),
                 ]);
             }
             flash(trans('messages.error_code'))->error();
@@ -239,29 +267,29 @@ class HomeController extends Controller
         }
     }
 
-    public function sellerRestaurantPayment(Request $request , $code , $id)
+    public function sellerRestaurantPayment(Request $request, $code, $id)
     {
         $date = date('Y-m-d');
-        if(!$seller_code = SellerCode::where('active' , 'true' )->whereRaw('(start_at is null or start_at <= "'.$date.'") and (end_at is null or end_at >= "'.$date.'")')->where('custom_url' , $code)->orderBy('updated_at' , 'desc')->first()):
+        if (!$seller_code = SellerCode::where('active', 'true')->whereRaw('(start_at is null or start_at <= "' . $date . '") and (end_at is null or end_at >= "' . $date . '")')->where('custom_url', $code)->orderBy('updated_at', 'desc')->first()) :
             abort(404);
         endif;
         $restaurant = Restaurant::findOrFail($id);
         $request->validate([
-            'payment_type' => 'required|in:bank,online' ,
-            'bank_id' => 'required_if:payment_type,bank|exists:banks,id' ,
-            'photo' => 'required_if:payment_type,bank|image' ,
+            'payment_type' => 'required|in:bank,online',
+            'bank_id' => 'required_if:payment_type,bank|exists:banks,id',
+            'photo' => 'required_if:payment_type,bank|image',
             'payment_method' => 'required_if:payment_type,online|in:visa,apple_pay,mada'
         ]);
-        $barcode = str_replace(' ' , '-' , $restaurant->name_en);
-        if($request->payment_type == 'bank'):
+        $barcode = str_replace(' ', '-', $restaurant->name_en);
+        if ($request->payment_type == 'bank') :
 
             $restaurant->update([
-                'name_barcode' => $barcode ,
+                'name_barcode' => $barcode,
                 'status' => 'tentative',
                 'menu_arrange'  => 'true',
                 'product_arrange' => 'true',
                 'logo' => 'logo.png',
-                'menu' =>'vertical',
+                'menu' => 'vertical',
                 'description_ar' => 'نبذة عن المطعم . محتوي  يتم تغييره من خلال لوحة تحكم المطعم',
                 'description_en' => 'A Brief About Restaurant Can Be Changed From Restaurant Control Panel',
                 'information_ar' => ' يحتاج البالغون الى 2000 سعر حراري في المتوسط يومياً
@@ -289,10 +317,9 @@ class HomeController extends Controller
             $check_price = CountryPackage::whereCountry_id($restaurant->country_id)
                 ->wherePackageId($restaurant->package_id)
                 ->first();
-            if ($check_price == null)
-            {
+            if ($check_price == null) {
                 $package_actual_price = Package::find($restaurant->package_id)->price;
-            }else{
+            } else {
                 $package_actual_price = $check_price->price;
             }
             $tax = Setting::find(1)->tax;
@@ -306,10 +333,10 @@ class HomeController extends Controller
                 'status' => 'tentative',    // active ,notActive , tentative , finished
                 'end_at' => Carbon::now()->addDays(Setting::find(1)->tentative_period),
                 'type' => 'restaurant',
-                'seller_code_id' => $seller_code->id ,
-                'bank_id' => $request->bank_id ,
-                'payment_type' => 'bank' ,
-                'payment' => true ,
+                'seller_code_id' => $seller_code->id,
+                'bank_id' => $request->bank_id,
+                'payment_type' => 'bank',
+                'payment' => true,
                 'tax_value'   => $tax_value,
                 'discount_value' => 0,
                 'transfer_photo' => UploadImage($request->file('photo'), 'photo', '/uploads/transfers'),
@@ -336,7 +363,7 @@ class HomeController extends Controller
                     'commission' => $total_commission,
                 ]);
                 // store this operation to marketer history
-                if($markterOperation = MarketerOperation::where('restaurant_id' , $restaurant->id)->where('seller_code_id' , $seller_code->id)->where('status' , 'not_done')->first()):
+                if ($markterOperation = MarketerOperation::where('restaurant_id', $restaurant->id)->where('seller_code_id', $seller_code->id)->where('status', 'not_done')->first()) :
                     $markterOperation->update([
                         'marketer_id'   => $seller_code->marketer_id,
                         'seller_code_id' => $seller_code->id,
@@ -344,7 +371,7 @@ class HomeController extends Controller
                         'status'    => 'not_done',
                         'amount'    => $total_commission,
                     ]);
-                else:
+                else :
                     MarketerOperation::create([
                         'marketer_id'   => $seller_code->marketer_id,
                         'seller_code_id' => $seller_code->id,
@@ -372,7 +399,7 @@ class HomeController extends Controller
                     'tax_value'      => $tax_value,
                     'transfer_photo' => UploadImage($request->file('photo'), 'photo', '/uploads/transfers'),
                 ]);
-            }else{
+            } else {
                 // store restaurant register at reports
                 Report::create([
                     'restaurant_id'  => $restaurant->id,
@@ -403,22 +430,21 @@ class HomeController extends Controller
             dispatch(new SendMailCompleteRestaurantJob($restaurant));
             Auth::guard('restaurant')->login($restaurant);
             // flash(trans('messages.success_full_register'))->success();
-            return response()->json(['status' => true , 'url' => url('/restaurant/home'), 'message' => trans('messages.success_full_register')]);
-        else: // online payment
+            return response()->json(['status' => true, 'url' => url('/restaurant/home'), 'message' => trans('messages.success_full_register')]);
+        else : // online payment
             $check_price = CountryPackage::whereCountry_id($restaurant->country_id)
                 ->wherePackageId($restaurant->package_id)
                 ->first();
-            if ($check_price == null)
-            {
+            if ($check_price == null) {
                 $package_actual_price = Package::find($restaurant->package_id)->price;
-            }else{
+            } else {
                 $package_actual_price = $check_price->price;
             }
             $tax = Setting::find(1)->tax;
             $tax_value = $package_actual_price * $tax / 100;
             $package_actual_price = $package_actual_price + $tax_value;
 
-            if(!$branch = Branch::whereRestaurantId($id)->where('main' , 'true')->first()):
+            if (!$branch = Branch::whereRestaurantId($id)->where('main', 'true')->first()) :
                 $branch = Branch::create([
                     'restaurant_id' => $restaurant->id,
                     'country_id'    => $restaurant->country_id,
@@ -434,7 +460,7 @@ class HomeController extends Controller
                     //    'longitude'     => $restaurant->longitude,
                 ]);
             endif;
-            if(!$subscription = $branch->subscription){
+            if (!$subscription = $branch->subscription) {
                 $subscription = Subscription::create([
                     'package_id' => $restaurant->package_id,
                     'restaurant_id' => $restaurant->id,
@@ -443,8 +469,8 @@ class HomeController extends Controller
                     'status' => 'tentative',    // active ,notActive , tentative , finished
                     'end_at' => Carbon::now()->addDays(Setting::find(1)->tentative_period),
                     'type' => 'restaurant',
-                    'seller_code_id' => $seller_code->id ,
-                    'payment' => true ,
+                    'seller_code_id' => $seller_code->id,
+                    'payment' => true,
                     'payment_type' => 'online',
                     'tax_value'   => $tax_value,
                     'discount_value' => 0,
@@ -470,7 +496,7 @@ class HomeController extends Controller
                     'commission' => $total_commission,
                 ]);
                 // store this operation to marketer history
-                if($markterOperation = MarketerOperation::where('restaurant_id' , $restaurant->id)->where('seller_code_id' , $seller_code->id)->where('status' , 'not_done')->first()):
+                if ($markterOperation = MarketerOperation::where('restaurant_id', $restaurant->id)->where('seller_code_id', $seller_code->id)->where('status', 'not_done')->first()) :
                     $markterOperation->update([
                         'marketer_id'   => $seller_code->marketer_id,
                         'seller_code_id' => $seller_code->id,
@@ -479,7 +505,7 @@ class HomeController extends Controller
                         'status'    => 'not_done',
                         'amount'    => $total_commission,
                     ]);
-                else:
+                else :
                     MarketerOperation::create([
                         'marketer_id'   => $seller_code->marketer_id,
                         'seller_code_id' => $seller_code->id,
@@ -492,11 +518,10 @@ class HomeController extends Controller
                 $subscription->update([
                     'discount_value'  => $discount,
                 ]);
-
             }
             // online payment By My fatoorah
 
-            $amount = check_restaurant_amount($branch->id , $price_after_percentage);
+            $amount = check_restaurant_amount($branch->id, $price_after_percentage);
             if ($request->payment_method == 'visa') {
                 $charge = 2;
             } elseif ($request->payment_method == 'mada') {
@@ -558,7 +583,8 @@ class HomeController extends Controller
     }
 
 
-    public function sellerCodeRestaurantMyFatoora(Request $request){
+    public function sellerCodeRestaurantMyFatoora(Request $request)
+    {
 
         $token = "1IzSLeOkLFQH1zljLzerCm2RpB8AjFZLf8MMhSy4d8rHb0h1uHqrBleBFlFv-M4SHnyeiWg2zWQraKYJGndFcFvaBIeCPDQNrNs1Zwo7O-4apFyAXXUVZOAKbYzncpn-1ay0BPxB1X5dNH0EuWQ9OTqzcnOI7c5Ola5Esxz0imTrbVuhmKZl7SWBrPCU_SOYt80BSDe5j2XY5skkK7e5TxDRbbibdZPM7S11aYmQ7xKmZvaSj916IhTNXuIZA73TYE4xxkXyL_8dhHobugeLHF58VJNBjMv2UvzEP0pSk0RqGs3-AeqYwD6S3BbVrOaGIbx4fwKlowd6SOoSqkMoD9tmFwgdbkMxzWKYGqxg7bcvB0r62jBqn4YXh0Ej8FO6mrTdWZo5bHviUDRPMitO2KQDvyXrlWnf74n9DxOfV7MbuutAr2K2L3hzCYkdfU0eqA3snq-3Xh1KFjRvd5QqofEt9ubK71Xd4TooKLyXD4hby5prqJTTEVi23bPsPmB1uZ0D1cawjjJB8eUTIwEiPTgdPOSIOTkVFm4OIrHEXT44NbJ9MyDInxmQK8-pGDr0rNeBeLo8J_uyHbfh_sVlpS7XT0d-ehaTDtENoyG0XMe7hgWDYWsNxIe1N3dXwwtyBXLgggAl6JvdDXBzY3wp13oFfTHdASeOtyO3d0zwvkF-9j0uF2WgHd-kqgEyQVV0_UifcbMafuYwTgbBod5iB1soNMoVcTfjlsmr8LV8CK7Nr8xq";
         $PaymentId = \Request::query('paymentId');
@@ -569,15 +595,15 @@ class HomeController extends Controller
             $InvoiceId = $result->Data->InvoiceId;
             $subscription = Subscription::where('invoice_id', $InvoiceId)->firstOrFail();
             $restaurant = $subscription->restaurant;
-            $barcode = str_replace(' ' , '-' , $restaurant->name_en);
+            $barcode = str_replace(' ', '-', $restaurant->name_en);
             $end_at = Carbon::now()->addMonths($subscription->package->duration);
             $restaurant->update([
-                'name_barcode' => $barcode ,
+                'name_barcode' => $barcode,
                 'status' => 'tentative',
                 'menu_arrange'  => 'true',
                 'product_arrange' => 'true',
                 'logo' => 'logo.png',
-                'menu' =>'vertical',
+                'menu' => 'vertical',
                 'description_ar' => 'نبذة عن المطعم . محتوي  يتم تغييره من خلال لوحة تحكم المطعم',
                 'description_en' => 'A Brief About Restaurant Can Be Changed From Restaurant Control Panel',
                 'information_ar' => ' يحتاج البالغون الى 2000 سعر حراري في المتوسط يومياً
@@ -623,7 +649,7 @@ class HomeController extends Controller
                     $subscription->update(['seller_code_id' => $operation->seller_code_id]);
                 }
                 $isNew = true;
-                if(History::where('branch_id' , $subscription->branch_id)->where('restaurant_id' , $subscription->restaurant->id)->count() > 0) $isNew = false;
+                if (History::where('branch_id', $subscription->branch_id)->where('restaurant_id', $subscription->restaurant->id)->count() > 0) $isNew = false;
                 History::create([
                     'restaurant_id' => $subscription->restaurant->id,
                     'package_id' => $subscription->package->id,
@@ -655,7 +681,7 @@ class HomeController extends Controller
                 ]);
                 if ($subscription->type == 'branch') {
                     $isNew = true;
-                    if(History::where('branch_id' , $subscription->branch_id)->where('restaurant_id' , $subscription->restaurant->id)->count() > 0) $isNew = false;
+                    if (History::where('branch_id', $subscription->branch_id)->where('restaurant_id', $subscription->restaurant->id)->count() > 0) $isNew = false;
                     History::create([
                         'restaurant_id' => $subscription->restaurant->id,
                         'package_id' => $subscription->package->id,
@@ -699,8 +725,7 @@ class HomeController extends Controller
             dispatch(new SendMailCompleteRestaurantJob($restaurant));
             Auth::guard('restaurant')->login($restaurant);
             // flash(trans('messages.success_full_register'))->success();
-            return response()->json(['status' => true , 'url' => url('/restaurant/home'), 'message' => trans('messages.success_full_register')]);
-
+            return response()->json(['status' => true, 'url' => url('/restaurant/home'), 'message' => trans('messages.success_full_register')]);
         }
     }
 
@@ -723,27 +748,43 @@ class HomeController extends Controller
             'answer_id' => 'nullable',
             'category_id' => 'required|array|min:1',
         ], [
-            'category_id.*' => trans('messages.error_category_id_invalid') ,
-            'category_id.*.*' => trans('messages.error_category_id_invalid') ,
-            'name_en.*' => trans('messages.error_name_en_invaild') ,
-            'name_ar.*' => trans('messages.error_name_ar_invalid') ,
-            'city_id.*' => trans('messages.error_city_id_invaild') ,
+            'category_id.*' => trans('messages.error_category_id_invalid'),
+            'category_id.*.*' => trans('messages.error_category_id_invalid'),
+            'name_en.*' => trans('messages.error_name_en_invaild'),
+            'name_ar.*' => trans('messages.error_name_ar_invalid'),
+            'city_id.*' => trans('messages.error_city_id_invaild'),
             // 'answer_id.*' => trans('messages.error_answer_id_fail'),
         ]);
         if ($validator->fails()) {
             return response()->json([
                 'status' => false,
                 'message' => $validator->errors()->first(),
-                'errors' =>  $validator->errors(),]);
+                'errors' =>  $validator->errors(),
+            ]);
         }
-        $barcodeName = str_replace(' ' , '-' , $request->name_en);
-        if(Restaurant::where('name_barcode' , $barcodeName)->count() > 0){
+        // check recapcha google 
+        $recapchaResponse = Http::asForm()->post('https://www.google.com/recaptcha/api/siteverify', [
+            'secret' => config('services.recapcha.secret_key'),
+            'response' => $request->recapcha_token,
+            'remoteip' => request()->ip(),
+        ]);
+
+        $dd  = $recapchaResponse->json();
+
+        if (!isset($dd['success']) or $dd['success'] !== true) :
+            return response([
+                'status' => false,
+                'msg' => trans('messages.recapcha_fail'),
+            ]);
+        endif;
+        $barcodeName = str_replace(' ', '-', $request->name_en);
+        if (Restaurant::where('name_barcode', $barcodeName)->count() > 0) {
             return response([
                 'status' => false,
                 'message' => trans('messages.error_barcode_name_exist'),
                 'errors' => [
                     'name_en' => [[trans('messages.error_barcode_name_exist'),]]
-                ] ,
+                ],
             ]);
         }
         // create new restaurant
@@ -756,7 +797,7 @@ class HomeController extends Controller
             'email' => $request->email,
             'password' => Hash::make($request->password),
             'country_id' => $request->country_id,
-            'city_id' => $request->city_id ,
+            'city_id' => $request->city_id,
             'phone_number' => $request->phone_number,
             'phone_verification' => $code,
             'status' => 'inComplete',
@@ -778,7 +819,7 @@ class HomeController extends Controller
         // send sms to restaurant owner
         $country = $restaurant->country->code;
         // send code to phone_number
-        $msg = app()->getLocale() == 'ar' ? 'كود التحقق الخاص بك في أيزي منيو هو' . ' : ' . $code. '  ' . 'مؤسسة تقني' : 'EasyMenu verification code is : ' . $code. '  ' . 'مؤسسة تقني';
+        $msg = app()->getLocale() == 'ar' ? 'كود التحقق الخاص بك في أيزي منيو هو' . ' : ' . $code . '  ' . 'مؤسسة تقني' : 'EasyMenu verification code is : ' . $code . '  ' . 'مؤسسة تقني';
         $check = substr($restaurant->phone_number, 0, 2) === '05';
         if ($check == true) {
             $phone = $country . ltrim($restaurant->phone_number, '0');
@@ -790,11 +831,11 @@ class HomeController extends Controller
         dispatch(new SendMailNewRestaurantJob($restaurant));
         if ($restaurant) {
             return response([
-                'status' => true ,
+                'status' => true,
                 'message' => trans('messages.send_code_success'),
                 'data' => [
-                    'restaurant_id' => $restaurant->id ,
-                ] ,
+                    'restaurant_id' => $restaurant->id,
+                ],
             ]);
             return response()->json(['url' => url('/restaurant/phone_verification/' . $restaurant->id), 'msg' => trans('messages.success_register')]);
         }
@@ -812,14 +853,29 @@ class HomeController extends Controller
         $this->validate($request, [
             'code' => 'required|numeric'
         ]);
+        // check recapcha google 
+        $recapchaResponse = Http::asForm()->post('https://www.google.com/recaptcha/api/siteverify', [
+            'secret' => config('services.recapcha.secret_key'),
+            'response' => $request->recapcha_token,
+            'remoteip' => request()->ip(),
+        ]);
+
+        $dd  = $recapchaResponse->json();
+
+        if (!isset($dd['success']) or $dd['success'] !== true) :
+            return response([
+                'status' => false,
+                'message' => trans('messages.recapcha_fail'),
+            ]);
+        endif;
         if ($request->code == $restaurant->phone_verification) {
             $restaurant->update([
                 'phone_verification' => null,
             ]);
             flash(trans('messages.success_code'))->success();
-            if($request->wantsJson()){
+            if ($request->wantsJson()) {
 
-                return $this->submitStep2($request , $restaurant->id);
+                return $this->submitStep2($request, $restaurant->id);
                 // return response([
                 //     'status' => true ,
                 //     // 'message' =>
@@ -831,11 +887,11 @@ class HomeController extends Controller
             return redirect()->route('restaurant.step2Register', $restaurant->id);
         } else {
 
-            if($request->wantsJson()){
+            if ($request->wantsJson()) {
                 return response([
-                    'status' => false ,
-                    'message' => trans('messages.error_code') ,
-                    'request' => $request->all() ,
+                    'status' => false,
+                    'message' => trans('messages.error_code'),
+                    'request' => $request->all(),
                 ]);
             }
             flash(trans('messages.error_code'))->error();
@@ -849,26 +905,26 @@ class HomeController extends Controller
         $cities = City::whereCountryId($restaurant->country_id)->get();
         $packages = Package::all();
         $categories = Category::all();
-        return view('restaurant.authAdmin.secondStep', compact('restaurant', 'packages','categories', 'cities'));
+        return view('restaurant.authAdmin.secondStep', compact('restaurant', 'packages', 'categories', 'cities'));
     }
 
-    protected function submitStep2(Request $request , $id)
+    protected function submitStep2(Request $request, $id)
     {
         $restaurant = Restaurant::findOrFail($id);
 
-        $barcode = str_replace(' ' , '-' , $restaurant->name_en);
+        $barcode = str_replace(' ', '-', $restaurant->name_en);
         // return response([
         //     'status' => false,
         //     'message' => null ,
         //     'errors' => $request->all(),
         // ]);
         $restaurant->update([
-            'name_barcode' => $barcode ,
+            'name_barcode' => $barcode,
             'status' => 'tentative',
             'menu_arrange'  => 'true',
             'product_arrange' => 'true',
             'logo' => 'logo.png',
-            'menu' =>'vertical',
+            'menu' => 'vertical',
             'description_ar' => 'نبذة عن المطعم . محتوي  يتم تغييره من خلال لوحة تحكم المطعم',
             'description_en' => 'A Brief About Restaurant Can Be Changed From Restaurant Control Panel',
             'information_ar' => ' يحتاج البالغون الى 2000 سعر حراري في المتوسط يومياً
@@ -896,10 +952,9 @@ class HomeController extends Controller
         $check_price = CountryPackage::whereCountry_id($restaurant->country_id)
             ->wherePackageId($restaurant->package_id)
             ->first();
-        if ($check_price == null)
-        {
+        if ($check_price == null) {
             $package_actual_price = Package::find($restaurant->package_id)->price;
-        }else{
+        } else {
             $package_actual_price = $check_price->price;
         }
         $tax = Setting::find(1)->tax;
@@ -963,17 +1018,32 @@ class HomeController extends Controller
         dispatch(new SendMailCompleteRestaurantJob($restaurant));
         Auth::guard('restaurant')->login($restaurant);
         // flash(trans('messages.success_full_register'))->success();
-        return response()->json(['status' => true , 'url' => url('/restaurant/home'), 'message' => trans('messages.success_full_register')]);
+        return response()->json(['status' => true, 'url' => url('/restaurant/home'), 'message' => trans('messages.success_full_register')]);
     }
 
-    public function resend_code(Request $request , $id)
+    public function resend_code(Request $request, $id)
     {
         $restaurant = Restaurant::findOrFail($id);
         $code = mt_rand(1000, 9999);
         // $code = 1111; //test
+        // check recapcha google 
+        $recapchaResponse = Http::asForm()->post('https://www.google.com/recaptcha/api/siteverify', [
+            'secret' => config('services.recapcha.secret_key'),
+            'response' => $request->recapcha_token,
+            'remoteip' => request()->ip(),
+        ]);
+
+        $dd  = $recapchaResponse->json();
+
+        if (!isset($dd['success']) or $dd['success'] !== true) :
+            return response([
+                'status' => false,
+                'message' => trans('messages.recapcha_fail'),
+            ]);
+        endif;
         $country = $restaurant->country->code;
         // send code to phone_number
-        $msg = app()->getLocale() == 'ar' ? 'كود التحقق الخاص بك في أيزي منيو هو' . ' : ' . $code. '  ' . 'مؤسسة تقني' : 'EasyMenu verification code is : ' . $code. '  ' . 'مؤسسة تقني';
+        $msg = app()->getLocale() == 'ar' ? 'كود التحقق الخاص بك في أيزي منيو هو' . ' : ' . $code . '  ' . 'مؤسسة تقني' : 'EasyMenu verification code is : ' . $code . '  ' . 'مؤسسة تقني';
         $check = substr($restaurant->phone_number, 0, 2) === '05';
         if ($check == true) {
             $phone = $country . ltrim($restaurant->phone_number, '0');
@@ -982,7 +1052,7 @@ class HomeController extends Controller
         }
         $restaurant->update(['phone_verification' => $code]);
         taqnyatSms($msg, $phone);
-        if($request->wantsJson()){
+        if ($request->wantsJson()) {
             return response([
                 'status' => true,
                 'message' => trans('messages.send_code_success')
@@ -999,7 +1069,7 @@ class HomeController extends Controller
      */
     public function index()
     {
-        
+
         return view('restaurant.home');
     }
 
@@ -1016,16 +1086,15 @@ class HomeController extends Controller
     }
     public function forget_password_submit(Request $request)
     {
-        $this->validate($request , [
+        $this->validate($request, [
             'phone_number' => ['required', 'regex:/^((05)|(01))[0-9]{8}/'],
         ]);
-        $user = Restaurant::where('phone_number' , $request->phone_number)->first();
-        if ($user)
-        {
+        $user = Restaurant::where('phone_number', $request->phone_number)->first();
+        if ($user) {
             $code = mt_rand(1000, 9999);
             $country = $user->country->code;
             // send code to phone_number
-            $msg = app()->getLocale() == 'ar' ? 'كود التحقق الخاص بك في أيزي منيو هو' . ' : ' . $code. '  ' . 'مؤسسة تقني' : 'EasyMenu verification code is : ' . $code. '  ' . 'مؤسسة تقني';
+            $msg = app()->getLocale() == 'ar' ? 'كود التحقق الخاص بك في أيزي منيو هو' . ' : ' . $code . '  ' . 'مؤسسة تقني' : 'EasyMenu verification code is : ' . $code . '  ' . 'مؤسسة تقني';
             $check = substr($request->phone_number, 0, 2) === '05';
             if ($check == true) {
                 $phone = $country . ltrim($request->phone_number, '0');
@@ -1036,43 +1105,41 @@ class HomeController extends Controller
             $user->update([
                 'phone_verification' => $code
             ]);
-            return redirect()->route('forget_password_verification' , $user->id);
-        }else{
+            return redirect()->route('forget_password_verification', $user->id);
+        } else {
             flash(trans('messages.phoneNotFound'))->error();
             return redirect()->route('restaurant.login');
         }
-
     }
 
     public function password_verification($res)
     {
         $user = Restaurant::find($res);
-        return view('restaurant.authAdmin.forget_password.verification' , compact('user'));
+        return view('restaurant.authAdmin.forget_password.verification', compact('user'));
     }
-    public function password_verification_post(Request $request , $id)
+    public function password_verification_post(Request $request, $id)
     {
         $restaurant = Restaurant::find($id);
-        $this->validate($request , [
+        $this->validate($request, [
             'code' => 'required',
         ]);
         $code = $request->code;
-        if ($restaurant->phone_verification == $code)
-        {
+        if ($restaurant->phone_verification == $code) {
             flash(trans('messages.success_code'))->success();
-            return redirect()->route('password_reset_restaurant' , $restaurant->id);
-        }else{
+            return redirect()->route('password_reset_restaurant', $restaurant->id);
+        } else {
             return redirect()->route('restaurant.login');
         }
     }
     public function reset_password($id)
     {
         $restaurant = Restaurant::find($id);
-        return view('restaurant.authAdmin.forget_password.reset' , compact('restaurant'));
+        return view('restaurant.authAdmin.forget_password.reset', compact('restaurant'));
     }
-    public function reset_password_post(Request $request , $id)
+    public function reset_password_post(Request $request, $id)
     {
         $restaurant = Restaurant::find($id);
-        $this->validate($request , [
+        $this->validate($request, [
             'password' => 'required|string|min:8|confirmed',
         ]);
         $restaurant->update([
@@ -1083,27 +1150,28 @@ class HomeController extends Controller
     }
 
 
-    public function checkEmailAndPhone(Request $request){
-        if(!empty($request->country_id) and $country = Country::find($request->country_id)){
-            if($country->code == '2') $min = 'digits:11';
-            elseif($country->code == '973') $min = 'digits:8';
+    public function checkEmailAndPhone(Request $request)
+    {
+        if (!empty($request->country_id) and $country = Country::find($request->country_id)) {
+            if ($country->code == '2') $min = 'digits:11';
+            elseif ($country->code == '973') $min = 'digits:8';
             else $min = 'digits:10';
-        }else $min = '';
+        } else $min = '';
 
-        $vaildator =  validator( $request->all(), [
-            'email' => 'nullable|email|unique:restaurants,email' ,
-            'phone_number' => ['nullable','unique:restaurants,phone_number' , $min]
+        $vaildator =  validator($request->all(), [
+            'email' => 'nullable|email|unique:restaurants,email',
+            'phone_number' => ['nullable', 'unique:restaurants,phone_number', $min]
         ]);
 
-        if($vaildator->fails()){
+        if ($vaildator->fails()) {
             return response([
                 'status' => false,
                 'data' => [
-                    'email' => $vaildator->errors()->first('email') ,
-                    'phone_number' => $vaildator->errors()->first('phone_number') ,
+                    'email' => $vaildator->errors()->first('email'),
+                    'phone_number' => $vaildator->errors()->first('phone_number'),
                 ]
             ]);
         }
-        return response(['status' => true ]);
+        return response(['status' => true]);
     }
 }

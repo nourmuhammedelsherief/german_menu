@@ -41,18 +41,27 @@
                     </div>
 
                     <div>
-                        <div class="double-slider5 owl-carousel text-center  mb-2">
+                        <div class="double-slider6 owl-carousel text-center  mb-2">
                             @if($menu_category != null)
                                 @if($menu_category->sub_categories->count() > 0)
                                     @foreach($menu_category->sub_categories  as $sub)
+                                    @php
+                                        if($subCat == $sub->id) $selectCategory = $sub;
+                                    @endphp
                                         <div class="item ">
-                                            <div data-card-height="35"
-                                                 class=" pr-3 card mb-0 bg-theme rounded-s  bord-all2 {{$subCat == $sub->id ? 'active' : ''}}"
-                                                 style="background-color: {{$restaurant->color == null ? '' : $restaurant->color->product_background}} !important;">
+                                            <div  id="subcat-{{$sub->id}}"  data-card-height="150"
+                                                 class=" pr-3 card mb-0 bg-theme rounded-s  bord-all2 subcat-card {{$subCat == $sub->id ? 'active' : ''}}"
+                                                 style="background-color: {{$restaurant->color == null ? '' : $restaurant->color->product_background}} !important; border-color: {{$restaurant->color == null ? '#f7b538' : $restaurant->color->icons }}  !important;">
                                                 <a class="{{$subCat == $sub->id ? 'active' : ''}}" href="javascript:;"
-                                                   data-link="{{route('sliverHome', [$restaurant->name_barcode , $menu_category->id , $branch->name_barcode, $sub->id])}}">
+                                                   data-link="{{route('sliverHome', [$restaurant->name_barcode , $menu_category->id , $branch->name_barcode, $sub->id])}}" data-id="{{$sub->id}}">
                                                     <div class="card-center mb-0 ">
-
+                                                        <div class="sub-category-image">
+                                                            @if(empty($sub->image))
+                                                                <img src="{{asset($restaurant->image_path)}}" alt="">
+                                                            @else 
+                                                            <img src="{{asset($sub->image_path)}}" alt="">
+                                                            @endif
+                                                        </div>
                                                         <label style="cursor: pointer; color: {{$restaurant->color == null ? '' : $restaurant->color->main_heads}} !important" class="color-dark1-dark " >
                                                             {{app()->getLocale() == 'ar' ? $sub->name_ar : $sub->name_en}}
 
@@ -115,19 +124,28 @@
                 </div>
 
                 <div>
-                    <div class="double-slider5 owl-carousel text-center mb-2">
+                    <div class="double-slider6 owl-carousel text-center mb-2">
                         @if($menu_category != null)
                             @if($menu_category->sub_categories->count() > 0)
                                 @foreach($menu_category->sub_categories  as $sub)
+                                @php
+                                if($subCat == $sub->id) $selectCategory = $sub;
+                            @endphp
                                     <div class="item">
-                                        <div data-card-height="35"
-                                             class=" pr-3 card mb-0 bg-theme rounded-s  bord-all2 {{$subCat == $sub->id ? 'active' : ''}}"
-                                             style="background-color: {{$restaurant->color == null ? '' : $restaurant->color->product_background}} !important;">
+                                        <div id="subcat-{{$sub->id}}" data-card-height="150"
+                                             class=" pr-3 card mb-0 bg-theme rounded-s subcat-card    {{$subCat == $sub->id ? 'active' : ''}}"
+                                             style="background-color: {{$restaurant->color == null ? '' : $restaurant->color->product_background}} !important;  border-color: {{$restaurant->color == null ? '#f7b538' : $restaurant->color->icons }}  !important;">
                                             <a class="{{$subCat == $sub->id ? 'active' : ''}}"
                                                href="javascript:;"
-                                               data-link="{{route('sliverHome', [$restaurant->name_barcode , $menu_category->id, $branch->name_barcode , $sub->id])}}">
+                                               data-link="{{route('sliverHome', [$restaurant->name_barcode , $menu_category->id, $branch->name_barcode , $sub->id])}}" data-id="{{$sub->id}}">
                                                 <div class="card-center mb-0">
-
+                                                    <div class="sub-category-image">
+                                                        @if(empty($sub->image))
+                                                            <img src="{{asset($restaurant->image_path)}}" alt="">
+                                                        @else 
+                                                        <img src="{{asset($sub->image_path)}}" alt="">
+                                                        @endif
+                                                    </div>
                                                     <label style="cursor: pointer;color: {{$restaurant->color == null ? '' : $restaurant->color->main_heads}} !important" class="color-dark1-dark " >
                                                         {{app()->getLocale() == 'ar' ? $sub->name_ar : $sub->name_en}}
                                                         {{--
@@ -145,7 +163,8 @@
 
                         @endif
                     </div>
-                    <br>
+                    
+                  
                 </div>
             </div>
         @endif

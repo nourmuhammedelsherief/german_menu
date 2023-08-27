@@ -24,10 +24,21 @@ class RestaurantEmployee extends Authenticatable
         'is_active',    // [ 'true' , 'false']
         'verification_code',
         'order',   // [main. branch]
+        'type' , 
     ];
     protected $hidden = [
         'password',
     ];
+    protected $casts = [
+        'type' => 'array' , 
+    ];
+    public static function booted()
+    {
+        parent::boot();
+        static::addGlobalScope('type', function ($query) {
+            $query->where('type', 'like', '%normal%');
+        });
+    }
     public function restaurant()
     {
         return $this->belongsTo(Restaurant::class , 'restaurant_id');

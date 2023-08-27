@@ -107,6 +107,19 @@
                                     </div>
 
                                 </div>
+                                {{-- foodics sandbox --}}
+                                <div class="form-group">
+                                    <label class="control-label">تفعيل فودكس ساندبوكس</label>
+                                    <select name="foodics_sandbox" id="foodics_sandbox" class="form-control select2">
+                                        <option value="true" {{$setting->foodics_sandbox == 'true' ? 'selected' : ''}}>نعم</option>
+                                        <option value="false" {{$setting->foodics_sandbox == 'false' ? 'selected' : ''}}>لا</option>
+                                    </select>
+                                    @if ($errors->has('foodics_sandbox'))
+                                        <span class="help-block">
+                                            <strong style="color: red;">{{ $errors->first('foodics_sandbox') }}</strong>
+                                        </span>
+                                    @endif
+                                </div>
 
                             </div>
                             <!-- /.card-body -->

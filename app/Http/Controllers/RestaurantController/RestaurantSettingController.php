@@ -387,6 +387,7 @@ class RestaurantSettingController extends Controller
         {
             abort(404);
         }
+        // return $checkOrderService;
         return view('restaurant.settings.foodics_setting', compact('branch'));
     }
     public function foodics_settings_update(Request $request , $id)
@@ -422,9 +423,10 @@ class RestaurantSettingController extends Controller
             'express_password' => $request->express_password == null ? $branch->express_password : $request->express_password,
             'delivery_distance'  => $request->delivery_distance,
             'takeaway_distance'  => $request->takeaway_distance,
-            'latitude'           => $request->latitude,
-            'longitude'          => $request->longitude,
+            // 'latitude'           => $request->latitude,
+            // 'longitude'          => $request->longitude,
         ]);
+        
         flash(trans('messages.updated'))->success();
         return redirect()->back();
     }

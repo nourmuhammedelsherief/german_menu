@@ -21,6 +21,10 @@ class RestaurantFoodicsBranch extends Model
         'active',
     ];
 
+    public function getNameAttribute(){
+        return app()->getLocale() == 'ar' ? $this->name_ar : $this->name_en;
+    }
+
     public function restaurant()
     {
         return $this->belongsTo(Restaurant::class , 'restaurant_id');

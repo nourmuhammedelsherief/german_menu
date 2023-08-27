@@ -16,8 +16,14 @@ class TableOrderItem extends Model
         'product_count',
         'price' , 
         'loyalty_points' , 
+        'product_name_ar' , 'product_name_en' , 'size_name_en' , 'size_name_ar'
     ];
-
+    public function getProductNameAttribute(){
+        return $this->attributes['product_name_'  . app()->getLocale()];
+    }
+    public function getSizeNameAttribute(){
+        return $this->attributes['size_name_'  . app()->getLocale()];
+    }
     public function table_order()
     {
         return $this->belongsTo(TableOrder::class , 'table_order_id');

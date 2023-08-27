@@ -80,6 +80,7 @@
                                         @else
                                             <a class="btn btn-danger" href="{{route('active_foodics_branch' , [$branch->id , 'true'])}}"> @lang('messages.no') </a>
                                         @endif
+                                         <a class="btn btn-info" href="{{route('foodics_branches.edit' , [$branch->id])}}"> @lang('messages.edit') </a>
                                     </td>
                                 </tr>
                             @endforeach

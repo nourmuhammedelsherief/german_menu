@@ -130,6 +130,8 @@ class PackageController extends Controller
                         'paid_amount' => $subscription->price,
                         'discount_value' => $subscription->discount_value,
                         'tax_value'      => $subscription->tax_value,
+                        'accepted_admin_id' => auth('admin')->id() , 
+                        'accepted_admin_name' => auth('admin')->user()->name
                     ]);
                 }
                 else{
@@ -158,6 +160,8 @@ class PackageController extends Controller
                         'paid_amount' => $subscription->price,
                         'discount_value' => $subscription->discount_value,
                         'tax_value'      => $subscription->tax_value,
+                        'accepted_admin_id' => auth('admin')->id() , 
+                        'accepted_admin_name' => auth('admin')->user()->name
                     ]);
                 }
             }
@@ -191,6 +195,8 @@ class PackageController extends Controller
                         'paid_amount' => $subscription->price,
                         'discount_value' => $subscription->discount_value,
                         'tax_value'      => $subscription->tax_value,
+                        'accepted_admin_id' => auth('admin')->id() , 
+                        'accepted_admin_name' => auth('admin')->user()->name
                     ]);
                 }
                 else{
@@ -219,6 +225,8 @@ class PackageController extends Controller
                         'paid_amount' => $subscription->price,
                         'discount_value' => $subscription->discount_value,
                         'tax_value'      => $subscription->tax_value,
+                        'accepted_admin_id' => auth('admin')->id() , 
+                        'accepted_admin_name' => auth('admin')->user()->name
                     ]);
                 }
             }

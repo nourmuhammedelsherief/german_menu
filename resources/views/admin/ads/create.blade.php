@@ -9,6 +9,11 @@
     <link rel="stylesheet" href="{{ URL::asset('admin/css/select2-bootstrap.min.css') }}">
     <link rel="stylesheet" href="{{ URL::asset('admin/css/bootstrap-fileinput.css') }}">
     <meta name="csrf-token" content="{{ csrf_token() }}">
+
+    
+    <link href="{{ asset('admin') }}/bootstrap-fileinput/bootstrap-fileinput.css" rel="stylesheet" type="text/css" />
+    <link rel="stylesheet" href="{{ asset('admin/bootstrap-fileinput/css/fileinput.min.css') }}">
+    <link rel="stylesheet" href="{{ asset('admin/bootstrap-fileinput/css/fileinput-rtl.min.css') }}">
     {{--    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.1.3/css/bootstrap.min.css" />--}}
 @endsection
 

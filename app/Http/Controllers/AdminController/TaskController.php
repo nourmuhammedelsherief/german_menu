@@ -44,6 +44,13 @@ class TaskController extends Controller
         if(!empty($request->created_at)):
             $tasks  = $tasks->where('created_at' , 'like' , '%' .$request->created_at . '%');
         endif;
+        if(!empty($request->year)):
+            $tasks  = $tasks->where('created_at' , 'like' , '' .$request->year . '%');
+        endif;
+        if(!empty($request->month)):
+            $month = $request->month < 10 ? '-0' . $request->month . '-' : '-' . $request->month . '-';
+            $tasks  = $tasks->where('created_at' , 'like' , '%' .$month . '%');
+        endif;
         $myTask = false;
         if($request->segment(2) == 'my-tasks'):
             $tasks = $tasks->where('employee_id' , auth('admin')->id());
@@ -53,8 +60,9 @@ class TaskController extends Controller
         
         $employees = Admin::where('status' , 'true')->orderBy('name' , 'asc')->get();
         $categories  = TaskCategory::orderBy('name_ar' )->get();
-        
-        return  view('admin.tasks.index' , compact('tasks' , 'filter' , 'categories' , 'employees' , 'myTask'));
+        $firstYear = Task::orderBy('created_at')->first();
+        $firstYear = isset($firstYear->id) ? $firstYear->created_at->format('Y') : date('Y');
+        return  view('admin.tasks.index' , compact('tasks' , 'filter' , 'categories' , 'employees' , 'myTask' , 'firstYear'));
     }
 
     /**

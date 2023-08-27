@@ -1,8 +1,8 @@
-@include('website.'.session('theme_path').'silver.layout.header')
+@include('website.' . session('theme_path') . 'silver.layout.header')
 
 <div id="page">
     <!-- header and footer bar go here-->
-    @include('website.'.session('theme_path').'silver.layout.head')
+    @include('website.' . session('theme_path') . 'silver.layout.head')
     @include('flash::message')
 
     <div id="footer-bar" class="footer-bar-5">
@@ -24,51 +24,64 @@
                     <div class="alert mr-3 ml-3 rounded-s bg-red2-dark" role="alert">
                         <span class="alert-icon"><i class="fa fa-exclamation-triangle font-18"></i></span>
                         <h4 class="text-uppercase color-white">
-{{--                            @lang('messages.error')--}}
+                            {{--                            @lang('messages.error') --}}
                         </h4>
                         <strong class="alert-icon-text">
-                            @if($restaurant->archive == 'true' || $branch->archive == 'true')
-                                @lang('messages.restaurantArchived')
-                            @elseif($restaurant->archive == 'true' || $branch->stop_menu == 'true')
-                                المنيو متوقف الأن
-                            @else
-                                @lang('messages.restaurantNotActive')
-                            @endif
+                            @if ($restaurant->archive == 'true')
+                                
+                                    {{ trans('messages.restaurant_archived') }}
+                            @elseif ($restaurant->status == 'inComplete')
+                                
+                                    {{ trans('messages.restaurant_register_not_complete') }}
+                            @elseif ($restaurant->admin_activation == 'false')
+                                
+                                    {{ trans('messages.restaurant_waiting_to_activate') }}
+                            @elseif (
+                                $restaurant->refresh()->where('id', $restaurant->id)->whereHas('subscription', function ($q) {
+                                        $q->where('status', 'finished');
+                                    })->where('status', 'finished')->first())
+                                    
+                                    {{ trans('messages.restaurant_completed') }}
+                                @elseif ($restaurant->archive == 'true' || (isset($branch->id) and $branch->archive == 'true'))
+                                    @lang('messages.restaurantArchived')
+                                @elseif($restaurant->archive == 'true' || (isset($branch->id) and $branch->stop_menu == 'true'))
+                                    المنيو متوقف الأن
+                                @else
+                                    @lang('messages.restaurantNotActive')
+                                @endif
                         </strong>
-                        <button type="button" class="close color-white opacity-60 font-16" data-dismiss="alert" aria-label="Close">&times;</button>
+                        <button type="button" class="close color-white opacity-60 font-16" data-dismiss="alert"
+                            aria-label="Close">&times;</button>
                     </div>
                 </div>
             </div>
         </div>
     </div>
-@include('website.'.session('theme_path').'silver.layout.footer')
-<!-- footer and footer card-->
+    @include('website.' . session('theme_path') . 'silver.layout.footer')
+    <!-- footer and footer card-->
 </div>
 <!-- end of page content-->
 <!----menu-prodact -------------------->
 
 
 <!----menu-map -------------------->
-<div id="menu-map"
-     class="menu menu-box-bottom menu-box-detached"
-     data-menu-height="300"
-     data-menu-effect="menu-over">
+<div id="menu-map" class="menu menu-box-bottom menu-box-detached" data-menu-height="300" data-menu-effect="menu-over">
 
 
     <div class="content mb-0">
         <div class="float-right mt-n1 mr-3"><a href="#"
-                                               class="icon icon-xs rounded-xl color-white bg-highlight close-menu"><i
-                    class="fa fa-arrow-down"></i></a></div>
+                class="icon icon-xs rounded-xl color-white bg-highlight close-menu"><i class="fa fa-arrow-down"></i></a>
+        </div>
         <h3 class="font-700 text-center"> @lang('messages.branches')</h3>
         <div class="divider"></div>
-        @include('website.'.session('theme_path').'silver.accessories.branches')
+        @include('website.' . session('theme_path') . 'silver.accessories.branches')
     </div>
 
 </div>
 
 <!-----------menu-profile---------------------------->
-@include('website.'.session('theme_path').'silver.accessories.profile')
-{{--@include('website.'.session('theme_path').'silver.accessories.user.login')--}}
+@include('website.' . session('theme_path') . 'silver.accessories.profile')
+{{-- @include('website.'.session('theme_path').'silver.accessories.user.login') --}}
 
 
-@include('website.'.session('theme_path').'silver.layout.scripts')
+@include('website.' . session('theme_path') . 'silver.layout.scripts')

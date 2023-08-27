@@ -148,6 +148,7 @@ class BankController extends Controller
             // return $restaurant;
             $data = $request->validate([
                 'enable_reservation_bank' => 'required|in:true,false' , 
+                'enable_party_payment_bank' => 'required|in:true,false' , 
             ]);
             $restaurant->update($data);
             flash(trans('messages.updated'))->success();

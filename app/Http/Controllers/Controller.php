@@ -45,5 +45,9 @@ class Controller extends BaseController
         endif;
         }
     }
+
+    public function publicError($title , $code = 404 , $description = null , $redirect = null){
+        return view('restaurant.public_error' , compact('title' , 'code' , 'description' , 'redirect'));
+    }
     
 }

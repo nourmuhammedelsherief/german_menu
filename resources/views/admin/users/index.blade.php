@@ -62,6 +62,8 @@
                                 <th>@lang('messages.country')</th>
                                 <th>@lang('messages.activity')</th>
                                 <th>@lang('messages.city')</th>
+                                <th>@lang('messages.restaurant')</th>
+                                <th>@lang('dashboard.entry.created_at')</th>
                                 <th>@lang('messages.operations')</th>
                             </tr>
                             </thead>
@@ -79,7 +81,9 @@
                                     <td> {{$user->phone_number}} </td>
                                     <td> {{app()->getLocale() == 'ar' ? $user->country->name_ar : $user->country->name_en}} </td>
                                     <td>
-                                        <span class="custom-switch {{$user->active == 'true' ? 'on' : 'off'}}" data-url_on="{{route('clientActivation' , [$user->id , 'false'])}}" data-url_off="{{route('clientActivation' , [$user->id , 'true'])}}">
+                                        <span class="custom-switch {{$user->active == 'true' ? 'on' : 'off'}}"
+                                              data-url_on="{{route('clientActivation' , [$user->id , 'false'])}}"
+                                              data-url_off="{{route('clientActivation' , [$user->id , 'true'])}}">
                                             <span class="text">On</span>
                                             <span class="move"></span>
                                         </span>
@@ -91,13 +95,21 @@
                                         @endif
                                     </td>
                                     <td>
+                                        @if(isset($user->registerRestaurant->id))
+                                            <a href="{{route('showRestaurant' , $user->registerRestaurant->id)}}">{{$user->registerRestaurant->name}}</a>
+                                        @endif
+                                    </td>
+                                    <td>{{date('Y-m-d h:i A' , strtotime($user->created_at))}}</td>
+                                    <td>
                                         <a class="btn btn-info" href="{{route('clients.edit' , $user->id)}}">
                                             <i class="fa fa-user-edit"></i> @lang('messages.edit')
                                         </a>
-                                        <a class="delete_city btn btn-danger" data="{{ $user->id }}"
-                                           data_name="{{ $user->name }}">
-                                            <i class="fa fa-key"></i> @lang('messages.delete')
-                                        </a>
+                                        @if(auth()->guard('admin')->user()->role == 'admin')
+                                            <a class="delete_city btn btn-danger" data="{{ $user->id }}"
+                                               data_name="{{ $user->name }}">
+                                                <i class="fa fa-key"></i> @lang('messages.delete')
+                                            </a>
+                                        @endif
                                     </td>
                                 </tr>
                             @endforeach
@@ -126,8 +138,8 @@
         $(function () {
             $("#example1").DataTable({
                 lengthMenu: [
-                    [10, 25, 50 , 100, -1],
-                    [10, 25, 50,  100,'All'],
+                    [10, 25, 50, 100, -1],
+                    [10, 25, 50, 100, 'All'],
                 ],
             });
             $('#example2').DataTable({

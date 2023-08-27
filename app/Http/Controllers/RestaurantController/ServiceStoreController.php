@@ -74,6 +74,7 @@ class ServiceStoreController extends Controller
 //            return redirect()->back();
 //        endif;
         $is_new = $sub == null ? 'true' : 'false';
+        $canTentative = in_array($service->id , [12]) ? false : true;
         
         if ($service->getRealPrice(true, $restaurant->country_id) == 0) {
             return $this->freeSubscription($service);
@@ -85,7 +86,7 @@ class ServiceStoreController extends Controller
             })->get();
         $serviceSubscription = ServiceSubscription::where('restaurant_id' , $restaurant->id)->where('service_id' , $service->id)->where('status' , 'tentative')->first();
         
-        return view('restaurant.service_store.subscription', compact('restaurant', 'branches', 'service', 'is_new' , 'serviceSubscription'));
+        return view('restaurant.service_store.subscription', compact('restaurant', 'branches', 'service', 'is_new' , 'serviceSubscription' , 'canTentative'));
     }
 
     public function storeNewSubscriptionBank(Request $request, Service $service)
@@ -234,9 +235,10 @@ class ServiceStoreController extends Controller
         if ($service->id == 4) {
             Branch::find($request->branch_id)->update([
                 'foodics_request' => 'true',
+                'foodics_status' => 'true' , 
             ]);
         }
-        if ($is_new == 'false'):
+        if ($is_new == 'false' or $service->id == 12):
             $price = $service->getRealPrice(true);
             $discount = 0;
             if ($request->seller_code != null) {

@@ -23,35 +23,36 @@ class OrderController extends Controller
      * @complete_order
      *
      */
-    private function createLoyaltyPointOrder($order){
-        $loyaltySubscription =  ServiceSubscription::whereRestaurantId($order->restaurant->id)->whereHas('service' , function($query){
-            $query->where('id' , 11);
-           })
-            ->whereIn('status' , ['active' , 'tentative'])
+    private function createLoyaltyPointOrder($order)
+    {
+        $loyaltySubscription =  ServiceSubscription::whereRestaurantId($order->restaurant->id)->whereHas('service', function ($query) {
+            $query->where('id', 11);
+        })
+            ->whereIn('status', ['active', 'tentative'])
             ->first();
-        if(  $order->restaurant->enable_loyalty_point == 'true' and isset($loyaltySubscription->id) and !LoyaltyPointHistory::where('order_id' , $order->id)->first()):
-            $points = 0 ; 
+        if ($order->restaurant->enable_loyalty_point == 'true' and isset($loyaltySubscription->id) and !LoyaltyPointHistory::where('order_id', $order->id)->first()) :
+            $points = 0;
             $items = $order->order_items;
-            foreach($items as $t):
-                if($t->loyalty_points > 0) $points+= ($t->loyalty_points * $t->product_count);
+            foreach ($items as $t) :
+                if ($t->loyalty_points > 0) $points += ($t->loyalty_points * $t->product_count);
             endforeach;
-            if($points > 0):
+            if ($points > 0) :
                 LoyaltyPointHistory::create([
-                    'restaurant_id' => $order->restaurant_id , 
-                    'order_id' => $order->id , 
-                    'user_id' => $order->user_id , 
-                    'points' => $points , 
+                    'restaurant_id' => $order->restaurant_id,
+                    'order_id' => $order->id,
+                    'user_id' => $order->user_id,
+                    'points' => $points,
                 ]);
-                if($balance = LoyaltyPoint::where('type' , 'point')->where('user_id' , $order->user_id)->where('restaurant_id' , $order->restaurant_id)->first()):
+                if ($balance = LoyaltyPoint::where('type', 'point')->where('user_id', $order->user_id)->where('restaurant_id', $order->restaurant_id)->first()) :
                     $balance->update([
-                        'amount' => ($balance->amount + $points) , 
+                        'amount' => ($balance->amount + $points),
                     ]);
-                else:
+                else :
                     LoyaltyPoint::create([
-                        'type' => 'point' , 
-                        'restaurant_id' => $order->restaurant_id , 
-                        'user_id' => $order->user_id , 
-                        'amount' => $points , 
+                        'type' => 'point',
+                        'restaurant_id' => $order->restaurant_id,
+                        'user_id' => $order->user_id,
+                        'amount' => $points,
                     ]);
                 endif;
             endif;
@@ -60,7 +61,7 @@ class OrderController extends Controller
     public function complete_order(Request $request)
     {
 
-        $this->validate($request , [
+        $this->validate($request, [
             'order_type'  => 'required|in:delivery,takeaway,previous,whatsapp,easymenu',
             'payment_method' => 'required|in:receipt_payment,online_payment,bank_transfer,loyalty_point',
             'previous_type' => 'required_if:order_type,previous',
@@ -70,97 +71,94 @@ class OrderController extends Controller
         ]);
 
         $order = Order::find($request->order_id);
-        if ($request->notes):
+        if ($request->notes) :
             $order->update([
                 'notes' => $request->notes,
             ]);
         endif;
         $restaurant = $order->restaurant;
         $this->checkTheme($restaurant);
-        if ($request->latitude == null || $request->longitude == null)
-        {
+        if ($request->latitude == null || $request->longitude == null) {
             flash(trans('messages.mustDetermineLocation'))->error();
             return redirect()->back();
         }
         // check the orders distance for branch
         $order_setting = RestaurantOrderSetting::whereRestaurantId($order->restaurant_id)
-            ->where('branch_id' , $order->branch_id)
-            ->where('order_type' , $request->order_type)
+            ->where('branch_id', $order->branch_id)
+            ->where('order_type', $request->order_type)
             ->first();
-//        if ($order_setting->payment_company == 'myFatoourah')
-//        {
-//            $this->validate($request , [
-//                'payment_type' => 'required_if:payment_method,online_payment',
-//            ]);
-//        }
-//        $distance = distanceBetweenTowPlaces($request->latitude , $request->longitude , $order->branch->latitude , $order->branch->longitude);
+        //        if ($order_setting->payment_company == 'myFatoourah')
+        //        {
+        //            $this->validate($request , [
+        //                'payment_type' => 'required_if:payment_method,online_payment',
+        //            ]);
+        //        }
+        //        $distance = distanceBetweenTowPlaces($request->latitude , $request->longitude , $order->branch->latitude , $order->branch->longitude);
 
-        if ($request->order_type == 'whatsapp')
-        {
-            if(WhatsappBranch::count() > 0):
+        if ($request->order_type == 'whatsapp') {
+            if (WhatsappBranch::count() > 0) :
                 $request->validate([
-                    'branch_id' => 'required|integer|exists:whatsapp_branches,id'  , 
-                ] , [
-                    'branch_id.*' => 'يرجي اختيار فرع اولا ..' ,
+                    'branch_id' => 'nullable|integer|exists:whatsapp_branches,id',
+                ], [
+                    'branch_id.*' => 'يرجي اختيار فرع اولا ..',
                 ]);
-                if($whatsappBranch = WhatsappBranch::find($request->branch_id)){
+                if ($whatsappBranch = WhatsappBranch::find($request->branch_id)) {
                     $order->update([
-                        'whatsapp_branch_id' => $whatsappBranch->id , 
-                        'whatsapp_number' => $whatsappBranch->phone , 
+                        'whatsapp_branch_id' => $whatsappBranch->id,
+                        'whatsapp_number' => $whatsappBranch->phone,
                     ]);
                 }
             endif;
 
             $branch = $order->branch;
             $orderPrice = $order->order_price;
-            $deliveryPrice = $request->previous_type == 'delivery' ? $order_setting->delivery_value : ($request->previous_type_method == 'delivery' ? $order_setting->delivery_value : 0 );
+            $deliveryPrice = $request->previous_type == 'delivery' ? $order_setting->delivery_value : ($request->previous_type_method == 'delivery' ? $order_setting->delivery_value : 0);
             $taxPrice = ($branch->tax == 'true' and $branch->tax_value > 0) ? (($branch->tax_value * $orderPrice) / 100) : 0;
             $count = $branch->restaurant->whatsapp_orders + 1;
             $branch->restaurant->update([
                 'whatsapp_orders' => $count,
-                
+
             ]);
 
-            
+
             // check for payment method
-            if ($request->payment_method == 'receipt_payment' or $request->payment_method == 'bank_transfer' or $request->payment_method == 'loyalty_point')
-            {
+            if ($request->payment_method == 'receipt_payment' or $request->payment_method == 'bank_transfer' or $request->payment_method == 'loyalty_point') {
                 $total_price =  ($orderPrice + $deliveryPrice + $taxPrice);
                 $status = 'new';
-                if($request->payment_method == 'loyalty_point' and $loyaltyBalance = LoyaltyPoint::where('restaurant_id' , $order->restaurant_id)->where('user_id' , $order->user_id)->where('type' , 'balance')->first()):
-                    if($total_price > $loyaltyBalance->amount){
+                if ($request->payment_method == 'loyalty_point' and $loyaltyBalance = LoyaltyPoint::where('restaurant_id', $order->restaurant_id)->where('user_id', $order->user_id)->where('type', 'balance')->first()) :
+                    if ($total_price > $loyaltyBalance->amount) {
                         throw ValidationException::withMessages([
                             'payment_method' => trans('messages.empty_balance')
                         ]);
                     }
-                    $loyaltySubscription =  ServiceSubscription::whereRestaurantId($order->restaurant->id)->whereHas('service' , function($query){
-                        $query->where('id' , 11);
-                       })
-                        ->whereIn('status' , ['active' , 'tentative'])
+                    $loyaltySubscription =  ServiceSubscription::whereRestaurantId($order->restaurant->id)->whereHas('service', function ($query) {
+                        $query->where('id', 11);
+                    })
+                        ->whereIn('status', ['active', 'tentative'])
                         ->first();
-                    if(  $order->restaurant->enable_loyalty_point == 'true' and isset($loyaltySubscription->id) and $request->status == 'completed' and !LoyaltyPointHistory::where('order_id' , $order->id)->first()):
-                        $points = 0 ; 
+                    if ($order->restaurant->enable_loyalty_point == 'true' and isset($loyaltySubscription->id) and $request->status == 'completed' and !LoyaltyPointHistory::where('order_id', $order->id)->first()) :
+                        $points = 0;
                         $items = $order->order_items;
-                        foreach($items as $t):
-                            if($t->loyalty_points > 0) $points+= ($t->loyalty_points * $t->product_count);
+                        foreach ($items as $t) :
+                            if ($t->loyalty_points > 0) $points += ($t->loyalty_points * $t->product_count);
                         endforeach;
-                        if($points > 0):
+                        if ($points > 0) :
                             LoyaltyPointHistory::create([
-                                'restaurant_id' => $order->restaurant_id , 
-                                'order_id' => $order->id , 
-                                'user_id' => $order->user_id , 
-                                'points' => $points , 
+                                'restaurant_id' => $order->restaurant_id,
+                                'order_id' => $order->id,
+                                'user_id' => $order->user_id,
+                                'points' => $points,
                             ]);
-                            if($balance = LoyaltyPoint::where('type' , 'point')->where('user_id' , $order->user_id)->where('restaurant_id' , $order->restaurant_id)->first()):
+                            if ($balance = LoyaltyPoint::where('type', 'point')->where('user_id', $order->user_id)->where('restaurant_id', $order->restaurant_id)->first()) :
                                 $balance->update([
-                                    'amount' => ($balance->amount + $points) , 
+                                    'amount' => ($balance->amount + $points),
                                 ]);
-                            else:
+                            else :
                                 LoyaltyPoint::create([
-                                    'type' => 'point' , 
-                                    'restaurant_id' => $order->restaurant_id , 
-                                    'user_id' => $order->user_id , 
-                                    'amount' => $points , 
+                                    'type' => 'point',
+                                    'restaurant_id' => $order->restaurant_id,
+                                    'user_id' => $order->user_id,
+                                    'amount' => $points,
                                 ]);
                             endif;
                         endif;
@@ -179,86 +177,134 @@ class OrderController extends Controller
                     'longitude' => $request->longitude,
                     'payment_method' => $request->payment_method,
                     'delivery_value' => $deliveryPrice,
-                    'total_price' => $orderPrice + $deliveryPrice + $taxPrice ,
-                    'tax' => $taxPrice ,
+                    'total_price' => $orderPrice + $deliveryPrice + $taxPrice,
+                    'tax' => $taxPrice,
                     'previous_type' => $request->previous_type == 'previous' ? $request->previous_type_method : $request->previous_type,
                 ]);
                 $phone  = isset($whatsappBranch->id) ? $whatsappBranch->phone : $order_setting->whatsapp_number;
                 // send to whatsapp
-                $url = 'https://api.whatsapp.com/send?phone='.$phone.'&text=' ;
-                $items = $order->order_items()->with('size' , 'product' , 'order_item_options.option')->get();
-                $content = '' ;
-                foreach($items as $index => $item):
+                $url = 'https://api.whatsapp.com/send?phone=' . $phone . '&text=';
+                $items = $order->order_items()->with('size', 'product', 'order_item_options.option')->get();
+                $content = '';
+                // content ar
+                foreach ($items as $index => $item) :
                     $content .= 'رقم الطلب : ' . $order->id  . ' %0a';
-                    $content .= '*' .($index + 1) . '-  '.$item->product->name.' '  . $item->product_count . 'x* %0a';
+                    $content .= '*' . ($index + 1) . '-  ' . $item->product->name . ' '  . $item->product_count . 'x* %0a';
                     $content .= 'السعر : ' . $item->price  . ' %0a';
-                    if(isset($item->size->id)):
-                        $content .= 'الحجم : ' . $item->size->name ;
+                    if (isset($item->size->id)) :
+                        $content .= 'الحجم : ' . $item->size->name;
                     endif;
-                    if($item->order_item_options->count() > 0){
-                        $content .= '%0a_الإضافات_%0a' ;
+                    if ($item->order_item_options->count() > 0) {
+                        $content .= '%0a_الإضافات_%0a';
                     }
-                    foreach($item->order_item_options as $op):
-                        $content .= $op->option->name . ' ' . $op->option_count . 'x '  . '%0a' ;
+                    foreach ($item->order_item_options as $op) :
+                        $content .= $op->option->name . ' ' . $op->option_count . 'x '  . '%0a';
                     endforeach;
 
-                    // $content .= '%0a';
+                // $content .= '%0a';
                 endforeach;
 
-                $content .= '%0aرقم الجوال العميل : ' . $order->user->phone_number . '  %0a';
+                $content .= '%0aرقم جوال العميل : ' . $order->user->phone_number . '  %0a';
 
-                $content .= '%0aطريقة التسليم  : ' .trans('messages.'.$request->previous_type);
-                if($order->previous_type == 'delivery'):
-                    $content .= '%0aلوكيشن العميل : '.urlencode('https://www.google.com/maps/search/?api=1&query=' .$request->latitude. ','.$request->longitude) . '';
-                elseif($order->previous_type == 'takeaway'):
+                $content .= '%0aطريقة التسليم  : ' . trans('messages.' . $request->previous_type);
+                if ($order->previous_type == 'delivery') :
+                    $content .= '%0aلوكيشن العميل : ' . urlencode('https://www.google.com/maps/search/?api=1&query=' . $request->latitude . ',' . $request->longitude) . '';
+                elseif ($order->previous_type == 'takeaway') :
                     $content .= '%0aاسم الفرع : ' . $branch->name;
                 endif;
                 $content .= '%0aطريقة الدفع: ' . trans('messages.' . $order->payment_method);
 
-                if($order->discount_value > 0)
-                    $content .= '%0aالخصم : ' .$order->discount_value;
+                if ($order->discount_value > 0)
+                    $content .= '%0aالخصم : ' . $order->discount_value;
                 // $content .= '%0aسعر الوجبات: ' .$order->order_price;
-                $content .= '%0aقيمة الطلب : ' .$order->order_price;
-                if($order->previous_type == 'delivery'):
-                    $content .= '%0aسعر التوصيل: ' .$order->delivery_value;
+                $content .= '%0aقيمة الطلب : ' . $order->order_price;
+                if ($order->previous_type == 'delivery') :
+                    $content .= '%0aسعر التوصيل: ' . $order->delivery_value;
                 endif;
-                if($taxPrice > 0):
-                    $content .= '%0aالضريبة: ' .$order->tax;
+                if ($taxPrice > 0) :
+                    $content .= '%0aالضريبة: ' . $order->tax;
                 endif;
-                $content .= '%0aإجمالي السعر: ' .$order->total_price;
-                if ($order->notes != null)
-                {
-                    $content .= '%0a الملاحظات علي الطلب: ' .$order->notes;
+                $content .= '%0aإجمالي السعر: ' . $order->total_price;
+                if ($order->notes != null) {
+                    $content .= '%0a الملاحظات علي الطلب: ' . $order->notes;
                 }
-                if ($request->period_id != null)
-                {
+                if ($request->period_id != null) {
                     $period = RestaurantOrderPeriod::find($request->period_id);
-                    if ($request->day_id != null)
-                    {
+                    if ($request->day_id != null) {
                         $day = Day::find($request->day_id);
                     }
-                    if ($period and $day)
-                    {
-                        $content .= '%0a ميعاد التسليم: ' .$period->start_at;
-                        $content .= '%0a يوم التسليم: ' .$day->name_ar;
-                        $content .= '%0a  نوع الطلب: ' .$request->previous_type_method;
+                    if ($period and $day) {
+                        $content .= '%0a ميعاد التسليم: ' . $period->start_at;
+                        $content .= '%0a يوم التسليم: ' . $day->name_ar;
+                        $content .= '%0a  نوع الطلب: ' . $request->previous_type_method;
+                    }
+                }
+                // content en
+                $content .= ' %0a %0a %0a %0a %0a ';
+
+                foreach ($items as $index => $item) :
+                    $content .= 'Order Num : ' . $order->id  . ' %0a';
+                    $content .= '*' . ($index + 1) . '-  ' . $item->product->name_en . ' '  . $item->product_count . 'x* %0a';
+                    $content .= 'Price : ' . $item->price  . ' %0a';
+                    if (isset($item->size->id)) :
+                        $content .= 'Size : ' . $item->size->name_en;
+                    endif;
+                    if ($item->order_item_options->count() > 0) {
+                        $content .= '%0a_Options_%0a';
+                    }
+                    foreach ($item->order_item_options as $op) :
+                        $content .= $op->option->name_en . ' ' . $op->option_count . 'x '  . '%0a';
+                    endforeach;
+
+                // $content .= '%0a';
+                endforeach;
+
+                $content .= '%0aClient Phone : ' . $order->user->phone_number . '  %0a';
+
+                $content .= '%0aDelivery Method  : ' . trans('messages.' . $request->previous_type, [], 'en');
+                if ($order->previous_type == 'delivery') :
+                    $content .= '%0aClient Location : ' . urlencode('https://www.google.com/maps/search/?api=1&query=' . $request->latitude . ',' . $request->longitude) . '';
+                elseif ($order->previous_type == 'takeaway') :
+                    $content .= '%0aBranch name : ' . $branch->name_en;
+                endif;
+                $content .= '%0aPayment Method : ' . trans('messages.' . $order->payment_method, [], 'en');
+
+                if ($order->discount_value > 0)
+                    $content .= '%0aDiscount : ' . $order->discount_value;
+                // $content .= '%0aسعر الوجبات: ' .$order->order_price;
+                $content .= '%0aSubtotal : ' . $order->order_price;
+                if ($order->previous_type == 'delivery') :
+                    $content .= '%0aShipping Price: ' . $order->delivery_value;
+                endif;
+                if ($taxPrice > 0) :
+                    $content .= '%0aTax : ' . $order->tax;
+                endif;
+                $content .= '%0aTotal Price: ' . $order->total_price;
+                if ($order->notes != null) {
+                    $content .= '%0a Notes : ' . $order->notes;
+                }
+                if ($request->period_id != null) {
+                    $period = RestaurantOrderPeriod::find($request->period_id);
+                    if ($request->day_id != null) {
+                        $day = Day::find($request->day_id);
+                    }
+                    if ($period and $day) {
+                        $content .= '%0a Delivery date: ' . $period->start_at;
+                        $content .= '%0a Delivery day: ' . $day->name_en;
+                        $content .= '%0a  Order type: ' . $request->previous_type_method;
                     }
                 }
                 return redirect($url . $content);
-            }
-            elseif ($request->payment_method == 'online_payment')
-            {
+            } elseif ($request->payment_method == 'online_payment') {
                 // online_payment
-                if ($request->previous_type == 'delivery')
-                {
+                if ($request->previous_type == 'delivery') {
                     $amount = $order->total_price + $order_setting->delivery_value;
-                }else{
+                } else {
                     $amount = $order->total_price;
                 }
                 $amount = round($orderPrice + $deliveryPrice + $taxPrice);
                 // check the payment company
-                if ($order_setting->payment_company == 'tap')
-                {
+                if ($order_setting->payment_company == 'tap') {
                     $order->update([
                         'type'       => $request->order_type,
                         'latitude'   => $request->latitude,
@@ -270,9 +316,8 @@ class OrderController extends Controller
                         'tax' => $taxPrice,
                         'total_price' => $deliveryPrice + $order->order_price + $taxPrice,
                     ]);
-                    return redirect()->to(tap_payment($order_setting->online_token , $amount , $order->user->name , $order->user->email , $order->user->country->code , $order->user->phone_number , 'tapRedirectBackGoldOrder' , $order->id));
-                }elseif ($order_setting->payment_company == 'express')
-                {
+                    return redirect()->to(tap_payment($order_setting->online_token, $amount, $order->user->name, $order->user->email, $order->user->country->code, $order->user->phone_number, 'tapRedirectBackGoldOrder', $order->id));
+                } elseif ($order_setting->payment_company == 'express') {
                     $order->update([
                         'type'       => $request->order_type,
                         'latitude'   => $request->latitude,
@@ -285,10 +330,8 @@ class OrderController extends Controller
                         'total_price' => $deliveryPrice + $order->order_price + $taxPrice,
                     ]);
                     $amount = number_format((float)$amount, 2, '.', '');
-                    return redirect()->to(express_payment($order_setting->merchant_key , $order_setting->express_password , $amount,'express_success' , $order->id , $order->user->name , $order->user->email));
-                }
-                elseif ($order_setting->payment_company == 'myFatoourah')
-                {
+                    return redirect()->to(express_payment($order_setting->merchant_key, $order_setting->express_password, $amount, 'express_success', $order->id, $order->user->name, $order->user->email));
+                } elseif ($order_setting->payment_company == 'myFatoourah') {
                     if ($request->payment_type == 'visa') {
                         $charge = 2;
                     } elseif ($request->payment_type == 'mada') {
@@ -308,21 +351,21 @@ class OrderController extends Controller
                         'CustomerMobile' => $order->user->phone_number,
                         'CustomerEmail' => $order->user->email,
                         'InvoiceValue' => $amount,
-                        'CallBackUrl' => route('checkUserOrderStatus' , $order_setting->id),
+                        'CallBackUrl' => route('checkUserOrderStatus', $order_setting->id),
                         'ErrorUrl' => url('/error'),
-                        'Language'=> app()->getLocale(),
-                        'CustomerReference'=>'ref 1',
-                        'CustomerCivilId'=>'12345678',
-                        'UserDefinedField'=>'Custom field',
-                        'ExpireDate'=>'',
-                        'CustomerAddress' =>array(
-                            'Block' =>'',
-                            'Street' =>'',
-                            'HouseBuildingNo' =>'',
-                            'Address' =>'',
-                            'AddressInstructions' =>'',
+                        'Language' => app()->getLocale(),
+                        'CustomerReference' => 'ref 1',
+                        'CustomerCivilId' => '12345678',
+                        'UserDefinedField' => 'Custom field',
+                        'ExpireDate' => '',
+                        'CustomerAddress' => array(
+                            'Block' => '',
+                            'Street' => '',
+                            'HouseBuildingNo' => '',
+                            'Address' => '',
+                            'AddressInstructions' => '',
                         ),
-                        'InvoiceItems'=>[array(
+                        'InvoiceItems' => [array(
                             'ItemName' => $order->user->phone_number,
                             'Quantity' => '1',
                             'UnitPrice' => $amount,
@@ -348,33 +391,27 @@ class OrderController extends Controller
                             'total_price' => $deliveryPrice + $order->order_price + $taxPrice,
                         ]);
                         return redirect()->to($result->Data->PaymentURL);
-                    }
-                    else {
+                    } else {
                         return redirect()->to(url('/error'));
                     }
                 }
             }
-        }
-        elseif ($request->order_type == 'easymenu')
-        {
+        } elseif ($request->order_type == 'easymenu') {
             $orders = $order->restaurant->orders + 1;
             $order->restaurant->update([
                 'orders' => $orders,
             ]);
-            if ($request->previous_type == 'delivery' || $request->previous_type == 'takeaway')
-            {
-                
+            if ($request->previous_type == 'delivery' || $request->previous_type == 'takeaway') {
+
                 // check for payment method
-                if ($request->payment_method == 'loyalty_point')
-                {
-                    if ($request->previous_type == 'delivery')
-                    {
+                if ($request->payment_method == 'loyalty_point') {
+                    if ($request->previous_type == 'delivery') {
                         $total_price = $order->total_price + $order_setting->delivery_value;
-                    }else{
+                    } else {
                         $total_price = $order->total_price;
                     }
-                    if($request->payment_method == 'loyalty_point' and $loyaltyBalance = LoyaltyPoint::where('restaurant_id' , $order->restaurant_id)->where('user_id' , $order->user_id)->where('type' , 'balance')->first()):
-                        if($total_price > $loyaltyBalance->amount){
+                    if ($request->payment_method == 'loyalty_point' and $loyaltyBalance = LoyaltyPoint::where('restaurant_id', $order->restaurant_id)->where('user_id', $order->user_id)->where('type', 'balance')->first()) :
+                        if ($total_price > $loyaltyBalance->amount) {
                             throw ValidationException::withMessages([
                                 'payment_method' => trans('messages.empty_balance')
                             ]);
@@ -395,10 +432,8 @@ class OrderController extends Controller
                         // 'total_price' =>  $total_price , 
                     ]);
                     flash(trans('messages.order_received_successfully'))->success();
-                    return redirect()->route('GoldReceivedOrder' , $order->id);
-                }
-                elseif ($request->payment_method == 'receipt_payment')
-                {
+                    return redirect()->route('GoldReceivedOrder', $order->id);
+                } elseif ($request->payment_method == 'receipt_payment') {
                     // receipt_payment
                     $order->update([
                         'type'      => $request->previous_type,
@@ -409,31 +444,26 @@ class OrderController extends Controller
                         'delivery_value' => $request->previous_type == 'delivery' ? $order_setting->delivery_value : null,
                     ]);
                     flash(trans('messages.order_received_successfully'))->success();
-                    return redirect()->route('GoldReceivedOrder' , $order->id);
-                }
-                elseif ($request->payment_method == 'online_payment')
-                {
+                    return redirect()->route('GoldReceivedOrder', $order->id);
+                } elseif ($request->payment_method == 'online_payment') {
                     // online_payment
                     /**
                      * @check setting payment type
                      */
-                    if ($request->previous_type == 'delivery')
-                    {
+                    if ($request->previous_type == 'delivery') {
                         $amount = $order->total_price + $order_setting->delivery_value;
-                    }else{
+                    } else {
                         $amount = $order->total_price;
                     }
-                    if ($order_setting->payment_company == 'tap')
-                    {
+                    if ($order_setting->payment_company == 'tap') {
                         $order->update([
                             'type'       => $request->previous_type,
                             'latitude'   => $request->latitude,
                             'longitude'  => $request->longitude,
                             'delivery_value' => $request->previous_type == 'delivery' ? $order_setting->delivery_value : null,
                         ]);
-                        return redirect()->to(tap_payment($order_setting->online_token , $amount , $order->user->name , $order->user->email , $order->user->country->code , $order->user->phone_number , 'tapRedirectBackGoldOrder' , $order->id));
-                    }elseif ($order_setting->payment_company == 'express')
-                    {
+                        return redirect()->to(tap_payment($order_setting->online_token, $amount, $order->user->name, $order->user->email, $order->user->country->code, $order->user->phone_number, 'tapRedirectBackGoldOrder', $order->id));
+                    } elseif ($order_setting->payment_company == 'express') {
                         $order->update([
                             'type'       => $request->previous_type,
                             'latitude'   => $request->latitude,
@@ -441,10 +471,8 @@ class OrderController extends Controller
                             'delivery_value' => $request->previous_type == 'delivery' ? $order_setting->delivery_value : null,
                         ]);
                         $amount = number_format((float)$amount, 2, '.', '');
-                        return redirect()->to(express_payment($order_setting->merchant_key , $order_setting->express_password , $amount,'express_success' , $order->id , $order->user->name , $order->user->email));
-                    }
-                    elseif ($order_setting->payment_company == 'myFatoourah')
-                    {
+                        return redirect()->to(express_payment($order_setting->merchant_key, $order_setting->express_password, $amount, 'express_success', $order->id, $order->user->name, $order->user->email));
+                    } elseif ($order_setting->payment_company == 'myFatoourah') {
                         if ($request->payment_type == 'visa') {
                             $charge = 2;
                         } elseif ($request->payment_type == 'mada') {
@@ -464,21 +492,21 @@ class OrderController extends Controller
                             'CustomerMobile' => $order->user->phone_number,
                             'CustomerEmail' => $order->user->email,
                             'InvoiceValue' => $amount,
-                            'CallBackUrl' => route('checkUserOrderStatus' , $order_setting->id),
+                            'CallBackUrl' => route('checkUserOrderStatus', $order_setting->id),
                             'ErrorUrl' => url('/error'),
-                            'Language'=> app()->getLocale(),
-                            'CustomerReference'=>'ref 1',
-                            'CustomerCivilId'=>'12345678',
-                            'UserDefinedField'=>'Custom field',
-                            'ExpireDate'=>'',
-                            'CustomerAddress' =>array(
-                                'Block' =>'',
-                                'Street' =>'',
-                                'HouseBuildingNo' =>'',
-                                'Address' =>'',
-                                'AddressInstructions' =>'',
+                            'Language' => app()->getLocale(),
+                            'CustomerReference' => 'ref 1',
+                            'CustomerCivilId' => '12345678',
+                            'UserDefinedField' => 'Custom field',
+                            'ExpireDate' => '',
+                            'CustomerAddress' => array(
+                                'Block' => '',
+                                'Street' => '',
+                                'HouseBuildingNo' => '',
+                                'Address' => '',
+                                'AddressInstructions' => '',
                             ),
-                            'InvoiceItems'=>[array(
+                            'InvoiceItems' => [array(
                                 'ItemName' => $order->user->phone_number,
                                 'Quantity' => '1',
                                 'UnitPrice' => $amount,
@@ -497,18 +525,14 @@ class OrderController extends Controller
                                 'delivery_value' => $request->previous_type == 'delivery' ? $order_setting->delivery_value : null,
                             ]);
                             return redirect()->to($result->Data->PaymentURL);
-                        }
-                        else {
+                        } else {
                             return redirect()->to(url('/error'));
                         }
                     }
                 }
-            }
-            elseif ($request->previous_type == 'previous')
-            {
+            } elseif ($request->previous_type == 'previous') {
                 // check for payment method
-                if ($request->payment_method == 'receipt_payment')
-                {
+                if ($request->payment_method == 'receipt_payment') {
                     // receipt_payment
                     $order->update([
                         'type'      => $request->previous_type,
@@ -522,18 +546,15 @@ class OrderController extends Controller
                         'delivery_value' => $request->previous_type_method == 'delivery' ? $order_setting->delivery_value : null,
                     ]);
                     flash(trans('messages.order_received_successfully'))->success();
-                    return redirect()->route('GoldReceivedOrder' , $order->id);
-                }
-                elseif ($request->payment_method == 'loyalty_point')
-                {
-                    if ($request->previous_type_method == 'delivery')
-                    {
+                    return redirect()->route('GoldReceivedOrder', $order->id);
+                } elseif ($request->payment_method == 'loyalty_point') {
+                    if ($request->previous_type_method == 'delivery') {
                         $total_price = $order->total_price + $order_setting->delivery_value;
-                    }else{
+                    } else {
                         $total_price = $order->total_price;
                     }
-                    if($request->payment_method == 'loyalty_point' and $loyaltyBalance = LoyaltyPoint::where('restaurant_id' , $order->restaurant_id)->where('user_id' , $order->user_id)->where('type' , 'balance')->first()):
-                        if($total_price > $loyaltyBalance->amount){
+                    if ($request->payment_method == 'loyalty_point' and $loyaltyBalance = LoyaltyPoint::where('restaurant_id', $order->restaurant_id)->where('user_id', $order->user_id)->where('type', 'balance')->first()) :
+                        if ($total_price > $loyaltyBalance->amount) {
                             throw ValidationException::withMessages([
                                 'payment_method' => trans('messages.empty_balance')
                             ]);
@@ -551,22 +572,18 @@ class OrderController extends Controller
                         'longitude' => $request->longitude,
                         'payment_method' => 'loyalty_point',
                         'delivery_value' => $request->previous_type == 'delivery' ? $order_setting->delivery_value : null,
-                        'total_price' =>  $total_price , 
+                        'total_price' =>  $total_price,
                     ]);
                     flash(trans('messages.order_received_successfully'))->success();
-                    return redirect()->route('GoldReceivedOrder' , $order->id);
-                }
-                elseif ($request->payment_method == 'online_payment')
-                {
+                    return redirect()->route('GoldReceivedOrder', $order->id);
+                } elseif ($request->payment_method == 'online_payment') {
                     // online_payment
-                    if ($request->previous_type_method == 'delivery')
-                    {
+                    if ($request->previous_type_method == 'delivery') {
                         $amount = $order->total_price + $order_setting->delivery_value;
-                    }else{
+                    } else {
                         $amount = $order->total_price;
                     }
-                    if ($order_setting->payment_company == 'tap')
-                    {
+                    if ($order_setting->payment_company == 'tap') {
                         $order->update([
                             'type'       => $request->previous_type,
                             'latitude'   => $request->latitude,
@@ -576,10 +593,8 @@ class OrderController extends Controller
                             'day_id'       => $request->day_id,
                             'delivery_value' => $request->previous_type_method == 'delivery' ? $order_setting->delivery_value : null,
                         ]);
-                        return redirect()->to(tap_payment($order_setting->online_token , $amount , $order->user->name , $order->user->email , $order->user->country->code , $order->user->phone_number , 'tapRedirectBackGoldOrder' , $order->id));
-                    }
-                    elseif ($order_setting->payment_company == 'myFatoourah')
-                    {
+                        return redirect()->to(tap_payment($order_setting->online_token, $amount, $order->user->name, $order->user->email, $order->user->country->code, $order->user->phone_number, 'tapRedirectBackGoldOrder', $order->id));
+                    } elseif ($order_setting->payment_company == 'myFatoourah') {
                         if ($request->payment_type == 'visa') {
                             $charge = 2;
                         } elseif ($request->payment_type == 'mada') {
@@ -599,21 +614,21 @@ class OrderController extends Controller
                             'CustomerMobile' => $order->user->phone_number,
                             'CustomerEmail' => $order->user->email,
                             'InvoiceValue' => $amount,
-                            'CallBackUrl' => route('checkUserOrderStatus' , $order_setting->id),
+                            'CallBackUrl' => route('checkUserOrderStatus', $order_setting->id),
                             'ErrorUrl' => url('/error'),
-                            'Language'=> app()->getLocale(),
-                            'CustomerReference'=>'ref 1',
-                            'CustomerCivilId'=>'12345678',
-                            'UserDefinedField'=>'Custom field',
-                            'ExpireDate'=>'',
-                            'CustomerAddress' =>array(
-                                'Block' =>'',
-                                'Street' =>'',
-                                'HouseBuildingNo' =>'',
-                                'Address' =>'',
-                                'AddressInstructions' =>'',
+                            'Language' => app()->getLocale(),
+                            'CustomerReference' => 'ref 1',
+                            'CustomerCivilId' => '12345678',
+                            'UserDefinedField' => 'Custom field',
+                            'ExpireDate' => '',
+                            'CustomerAddress' => array(
+                                'Block' => '',
+                                'Street' => '',
+                                'HouseBuildingNo' => '',
+                                'Address' => '',
+                                'AddressInstructions' => '',
                             ),
-                            'InvoiceItems'=>[array(
+                            'InvoiceItems' => [array(
                                 'ItemName' => $order->user->phone_number,
                                 'Quantity' => '1',
                                 'UnitPrice' => $amount,
@@ -635,8 +650,7 @@ class OrderController extends Controller
                                 'delivery_value' => $request->previous_type_method == 'delivery' ? $order_setting->delivery_value : null,
                             ]);
                             return redirect()->to($result->Data->PaymentURL);
-                        }
-                        else {
+                        } else {
                             return redirect()->to(url('/error'));
                         }
                     }
@@ -645,7 +659,7 @@ class OrderController extends Controller
         }
     }
 
-    public function check_status(Request $request , $id)
+    public function check_status(Request $request, $id)
     {
         $setting = RestaurantOrderSetting::find($id);
         $token = $setting->online_token;
@@ -655,87 +669,128 @@ class OrderController extends Controller
 
         $result = json_decode($resData);
 
-        if (isset($result->IsSuccess) and $result->IsSuccess === true && $result->Data->InvoiceStatus === "Paid" ) {
+        if (isset($result->IsSuccess) and $result->IsSuccess === true && $result->Data->InvoiceStatus === "Paid") {
             $InvoiceId = $result->Data->InvoiceId;
             // $InvoiceId = 13274509;
             $order = Order::where('invoice_id', $InvoiceId)->firstOrFail();
 
-            $order->update([
-                'invoice_id' => null,
-                'status'  => $order->type == 'whastapp' ? 'completed': 'new',
-                'payment_method'  => 'online_payment',
 
-            ]);
             $branch  = $order->branch;
-            if($order->type == 'whatsapp'):
+            if ($order->type == 'whatsapp') :
                 // send to whatsapp
                 $order_setting = RestaurantOrderSetting::whereRestaurantId($order->restaurant_id)
-                    ->where('branch_id' , $order->branch_id)
-                    ->where('order_type' , $order->type)
+                    ->where('branch_id', $order->branch_id)
+                    ->where('order_type', $order->type)
                     ->firstOrFail();
                 $whatsappPhone = $order_setting->whatsapp_number;
-                if($whatsappBranch = $order->whatsappBranch->id):
-                    $whatsappPhone = $whatsappBranch->phone;
-                  
+                if (!empty($order->whatsapp_number)) :
+
+                    $whatsappPhone = $order->whatsapp_number;
                 endif;
+                // return $whatsappPhone;
                 $order->update([
                     'whatsapp_number' => $whatsappPhone
                 ]);
-                $url = 'https://api.whatsapp.com/send?phone='.$whatsappPhone.'&text=' ;
-                $items = $order->order_items()->with('size' , 'product' , 'order_item_options.option')->get();
-                $content = '' ;
-                foreach($items as $index => $item):
-                    $content .= '*' .($index + 1) . '-  '.$item->product->name.' '  . $item->product_count . 'x* %0a';
+                $url = 'https://api.whatsapp.com/send?phone=' . $whatsappPhone . '&text=';
+                $items = $order->order_items()->with('size', 'product', 'order_item_options.option')->get();
+                $content = '';
+                foreach ($items as $index => $item) :
+                    $content .= '*' . ($index + 1) . '-  ' . $item->product->name . ' '  . $item->product_count . 'x* %0a';
                     $content .= 'السعر : ' . $item->price  . ' %0a';
-                    if(isset($item->size->id)):
-                        $content .= 'الحجم : ' . $item->size->name ;
+                    if (isset($item->size->id)) :
+                        $content .= 'الحجم : ' . $item->size->name;
                     endif;
-                    if($item->order_item_options->count() > 0){
-                        $content .= '%0a_الإضافات_%0a' ;
+                    if ($item->order_item_options->count() > 0) {
+                        $content .= '%0a_الإضافات_%0a';
                     }
-                    foreach($item->order_item_options as $op):
-                        $content .= $op->option->name . ' ' . $op->option_count . 'x '  . '%0a' ;
+                    foreach ($item->order_item_options as $op) :
+                        $content .= $op->option->name . ' ' . $op->option_count . 'x '  . '%0a';
                     endforeach;
 
-                    // $content .= '%0a';
+                // $content .= '%0a';
                 endforeach;
 
-                $content .= '%0aرقم الجوال العميل : ' . $order->user->phone_number . '  %0a';
+                $content .= '%0aرقم جوال العميل : ' . $order->user->phone_number . '  %0a';
 
-                $content .= '%0aطريقة التسليم  : ' .trans('messages.'.$order->previous_type);
-                if($order->previous_type == 'delivery'):
-                    $content .= '%0aلوكيشن العميل : '.urlencode('https://www.google.com/maps/search/?api=1&query=' .$order->latitude. ','.$order->longitude) . '';
-                elseif($order->previous_type == 'takeaway'):
+                $content .= '%0aطريقة التسليم  : ' . trans('messages.' . $order->previous_type);
+                if ($order->previous_type == 'delivery') :
+                    $content .= '%0aلوكيشن العميل : ' . urlencode('https://www.google.com/maps/search/?api=1&query=' . $order->latitude . ',' . $order->longitude) . '';
+                elseif ($order->previous_type == 'takeaway') :
                     $content .= '%0aاسم الفرع : ' . $branch->name;
                 endif;
-                $content .= '%0aطريقة الدفع: ' . trans('messages.' . $order->payment_method)  . ' , رقم العملية : ' .$InvoiceId;
-                $content .= '%0aحالة الدفع: مدفوع' ;
+                $content .= '%0aطريقة الدفع: ' . trans('messages.' . $order->payment_method)  . ' , رقم العملية : ' . $InvoiceId;
+                $content .= '%0aحالة الدفع: مدفوع';
 
-                if($order->discount_value > 0)
-                    $content .= '%0aالخصم : ' .$order->discount_value;
+                if ($order->discount_value > 0)
+                    $content .= '%0aالخصم : ' . $order->discount_value;
                 // $content .= '%0aسعر الوجبات: ' .$order->order_price;
-                $content .= '%0aقيمة الطلب : ' .$order->order_price;
-                if($order->previous_type == 'delivery'):
-                    $content .= '%0aسعر التوصيل: ' .$order->delivery_value;
+                $content .= '%0aقيمة الطلب : ' . $order->order_price;
+                if ($order->previous_type == 'delivery') :
+                    $content .= '%0aسعر التوصيل: ' . $order->delivery_value;
                 endif;
-                if($order->tax > 0):
-                    $content .= '%0aالضريبة: ' .$order->tax;
+                if ($order->tax > 0) :
+                    $content .= '%0aالضريبة: ' . $order->tax;
                 endif;
-                $content .= '%0aإجمالي السعر: ' .$order->total_price;
+                $content .= '%0aإجمالي السعر: ' . $order->total_price;
 
+                // content en
+                $content .= ' %0a %0a %0a %0a %0a ';
+                $content .= 'Order Num : ' . $order->id  . ' %0a';
+                foreach ($items as $index => $item) :
+                    $content .= '*' . ($index + 1) . '-  ' . $item->product->name_en . ' '  . $item->product_count . 'x* %0a';
+                    $content .= 'Price : ' . $item->price  . ' %0a';
+                    if (isset($item->size->id)) :
+                        $content .= 'Size : ' . $item->size->name_en;
+                    endif;
+                    if ($item->order_item_options->count() > 0) {
+                        $content .= '%0a_Options_%0a';
+                    }
+                    foreach ($item->order_item_options as $op) :
+                        $content .= $op->option->name_en . ' ' . $op->option_count . 'x '  . '%0a';
+                    endforeach;
 
+                // $content .= '%0a';
+                endforeach;
+
+                $content .= '%0aClient Phone : ' . $order->user->phone_number . '  %0a';
+
+                $content .= '%0aDelivery Method  : ' . trans('messages.' . $order->previous_type, [], 'en');
+                if ($order->previous_type == 'delivery') :
+                    $content .= '%0aClient Location : ' . urlencode('https://www.google.com/maps/search/?api=1&query=' . $order->latitude . ',' . $order->longitude) . '';
+                elseif ($order->previous_type == 'takeaway') :
+                    $content .= '%0aBranch Name : ' . $branch->name_en;
+                endif;
+                $content .= '%0aPayment Method: ' . trans('messages.' . $order->payment_method, [], 'en')  . ' , Invoice id : ' . $InvoiceId;
+                $content .= '%0aPayment status : paid';
+
+                if ($order->discount_value > 0)
+                    $content .= '%0aDiscount : ' . $order->discount_value;
+                // $content .= '%0aسعر الوجبات: ' .$order->order_price;
+                $content .= '%0aMeals Price : ' . $order->order_price;
+                if ($order->previous_type == 'delivery') :
+                    $content .= '%0aDelivery price: ' . $order->delivery_value;
+                endif;
+                if ($order->tax > 0) :
+                    $content .= '%0aTax : ' . $order->tax;
+                endif;
+                $content .= '%0aTotal Price: ' . $order->total_price;
 
                 return redirect($url . $content);
             endif;
+            $order->update([
+                'invoice_id' => null,
+                'status'  => $order->type == 'whastapp' ? 'completed' : 'new',
+                'payment_method'  => 'online_payment',
 
+            ]);
             flash(trans('messages.order_received_successfully'))->success();
-            return redirect()->route('GoldReceivedOrder' , $order->id);
+            return redirect()->route('GoldReceivedOrder', $order->id);
         }
     }
     /**
      * @tap payment callback url
      */
-    public function gold_order_tap(Request $request , $order_id , $token = null)
+    public function gold_order_tap(Request $request, $order_id, $token = null)
     {
         $input = $request->all();
         $tap_id = $input['tap_id'];
@@ -767,75 +822,117 @@ class OrderController extends Controller
         } else {
             $order = Order::find($order_id);
             $response = json_decode($response);
-            if ($response->response->code == '000')
-            {
+            if ($response->response->code == '000') {
                 $order->update([
                     'invoice_id' => null,
-                    'status'  => $order->type == 'whastapp' ? 'completed': 'new',
+                    'status'  => $order->type == 'whastapp' ? 'completed' : 'new',
                     'payment_method'  => 'online_payment',
 
                 ]);
                 $branch  = $order->branch;
-                if($order->type == 'whatsapp'):
+                if ($order->type == 'whatsapp') :
                     // send to whatsapp
                     $order_setting = RestaurantOrderSetting::whereRestaurantId($order->restaurant_id)
-                        ->where('branch_id' , $order->branch_id)
-                        ->where('order_type' , $order->type)
+                        ->where('branch_id', $order->branch_id)
+                        ->where('order_type', $order->type)
                         ->firstOrFail();
                     $whatsappPhone = $order_setting->whatsapp_number;
-                    if($whatsappBranch = $order->whatsappBranch->id):
+                    if ($whatsappBranch = $order->whatsappBranch->id) :
                         $whatsappPhone = $whatsappBranch->phone;
 
                     endif;
                     $order->update([
                         'whatsapp_number' => $whatsappPhone
                     ]);
-                    $url = 'https://api.whatsapp.com/send?phone='.$whatsappPhone.'&text=' ;
-                    $items = $order->order_items()->with('size' , 'product' , 'order_item_options.option')->get();
-                    $content = '' ;
-                    foreach($items as $index => $item):
-                        $content .= '*' .($index + 1) . '-  '.$item->product->name.' '  . $item->product_count . 'x* %0a';
+                    $url = 'https://api.whatsapp.com/send?phone=' . $whatsappPhone . '&text=';
+                    $items = $order->order_items()->with('size', 'product', 'order_item_options.option')->get();
+                    $content = '';
+                    // content ar
+                    foreach ($items as $index => $item) :
+                        $content .= '*' . ($index + 1) . '-  ' . $item->product->name . ' '  . $item->product_count . 'x* %0a';
                         $content .= 'السعر : ' . $item->price  . ' %0a';
-                        if(isset($item->size->id)):
-                            $content .= 'الحجم : ' . $item->size->name ;
+                        if (isset($item->size->id)) :
+                            $content .= 'الحجم : ' . $item->size->name;
                         endif;
-                        if($item->order_item_options->count() > 0){
-                            $content .= '%0a_الإضافات_%0a' ;
+                        if ($item->order_item_options->count() > 0) {
+                            $content .= '%0a_الإضافات_%0a';
                         }
-                        foreach($item->order_item_options as $op):
-                            $content .= $op->option->name . ' ' . $op->option_count . 'x '  . '%0a' ;
+                        foreach ($item->order_item_options as $op) :
+                            $content .= $op->option->name . ' ' . $op->option_count . 'x '  . '%0a';
                         endforeach;
 
-                        // $content .= '%0a';
+                    // $content .= '%0a';
                     endforeach;
 
-                    $content .= '%0aرقم الجوال العميل : ' . $order->user->phone_number . '  %0a';
+                    $content .= '%0aرقم جوال العميل : ' . $order->user->phone_number . '  %0a';
 
-                    $content .= '%0aطريقة التسليم  : ' .trans('messages.'.$order->previous_type);
-                    if($order->previous_type == 'delivery'):
-                        $content .= '%0aلوكيشن العميل : '.urlencode('https://www.google.com/maps/search/?api=1&query=' .$order->latitude. ','.$order->longitude) . '';
-                    elseif($order->previous_type == 'takeaway'):
+                    $content .= '%0aطريقة التسليم  : ' . trans('messages.' . $order->previous_type);
+                    if ($order->previous_type == 'delivery') :
+                        $content .= '%0aلوكيشن العميل : ' . urlencode('https://www.google.com/maps/search/?api=1&query=' . $order->latitude . ',' . $order->longitude) . '';
+                    elseif ($order->previous_type == 'takeaway') :
                         $content .= '%0aاسم الفرع : ' . $branch->name;
                     endif;
                     $content .= '%0aطريقة الدفع: ' . trans('messages.' . $order->payment_method);
-                    $content .= '%0aحالة الدفع: مدفوع' ;
+                    $content .= '%0aحالة الدفع: مدفوع';
 
-                    if($order->discount_value > 0)
-                        $content .= '%0aالخصم : ' .$order->discount_value;
+                    if ($order->discount_value > 0)
+                        $content .= '%0aالخصم : ' . $order->discount_value;
                     // $content .= '%0aسعر الوجبات: ' .$order->order_price;
-                    $content .= '%0aقيمة الطلب : ' .$order->order_price;
-                    if($order->previous_type == 'delivery'):
-                        $content .= '%0aسعر التوصيل: ' .$order->delivery_value;
+                    $content .= '%0aقيمة الطلب : ' . $order->order_price;
+                    if ($order->previous_type == 'delivery') :
+                        $content .= '%0aسعر التوصيل: ' . $order->delivery_value;
                     endif;
-                    if($order->tax > 0):
-                        $content .= '%0aالضريبة: ' .$order->tax;
+                    if ($order->tax > 0) :
+                        $content .= '%0aالضريبة: ' . $order->tax;
                     endif;
-                    $content .= '%0aإجمالي السعر: ' .$order->total_price;
+                    $content .= '%0aإجمالي السعر: ' . $order->total_price;
+                    // content en
+                    // content en
+                    $content .= ' %0a %0a %0a %0a %0a ';
+                    $content .= 'Order Num : ' . $order->id  . ' %0a';
+                    foreach ($items as $index => $item) :
+                        $content .= '*' . ($index + 1) . '-  ' . $item->product->name_en . ' '  . $item->product_count . 'x* %0a';
+                        $content .= 'Price : ' . $item->price  . ' %0a';
+                        if (isset($item->size->id)) :
+                            $content .= 'Size : ' . $item->size->name_en;
+                        endif;
+                        if ($item->order_item_options->count() > 0) {
+                            $content .= '%0a_Options_%0a';
+                        }
+                        foreach ($item->order_item_options as $op) :
+                            $content .= $op->option->name_en . ' ' . $op->option_count . 'x '  . '%0a';
+                        endforeach;
+
+                    // $content .= '%0a';
+                    endforeach;
+
+                    $content .= '%0aClient Phone : ' . $order->user->phone_number . '  %0a';
+
+                    $content .= '%0aDelivery Method  : ' . trans('messages.' . $order->previous_type, [], 'en');
+                    if ($order->previous_type == 'delivery') :
+                        $content .= '%0aClient Location : ' . urlencode('https://www.google.com/maps/search/?api=1&query=' . $order->latitude . ',' . $order->longitude) . '';
+                    elseif ($order->previous_type == 'takeaway') :
+                        $content .= '%0aBranch Name : ' . $branch->name_en;
+                    endif;
+                    $content .= '%0aPayment Method: ' . trans('messages.' . $order->payment_method, [], 'en');
+                    $content .= '%0aPayment status : paid';
+
+                    if ($order->discount_value > 0)
+                        $content .= '%0aDiscount : ' . $order->discount_value;
+                    // $content .= '%0aسعر الوجبات: ' .$order->order_price;
+                    $content .= '%0aMeals Price : ' . $order->order_price;
+                    if ($order->previous_type == 'delivery') :
+                        $content .= '%0aDelivery price: ' . $order->delivery_value;
+                    endif;
+                    if ($order->tax > 0) :
+                        $content .= '%0aTax : ' . $order->tax;
+                    endif;
+                    $content .= '%0aTotal Price: ' . $order->total_price;
 
                     return redirect($url . $content);
                 endif;
                 flash(trans('messages.order_received_successfully'))->success();
-                return redirect()->route('GoldReceivedOrder' , $order->id);
+                return redirect()->route('GoldReceivedOrder', $order->id);
             }
         }
     }
@@ -845,71 +942,112 @@ class OrderController extends Controller
         $order = Order::find($order_id);
         $order->update([
             'invoice_id' => null,
-            'status'  => $order->type == 'whastapp' ? 'completed': 'new',
+            'status'  => $order->type == 'whastapp' ? 'completed' : 'new',
             'payment_method'  => 'online_payment',
 
         ]);
         $branch  = $order->branch;
-        if($order->type == 'whatsapp'):
+        if ($order->type == 'whatsapp') :
             // send to whatsapp
             $order_setting = RestaurantOrderSetting::whereRestaurantId($order->restaurant_id)
-                ->where('branch_id' , $order->branch_id)
-                ->where('order_type' , $order->type)
+                ->where('branch_id', $order->branch_id)
+                ->where('order_type', $order->type)
                 ->firstOrFail();
             $whatsappPhone = $order_setting->whatsapp_number;
-            if($whatsappBranch = $order->whatsappBranch->id):
+            if ($whatsappBranch = $order->whatsappBranch->id) :
                 $whatsappPhone = $whatsappBranch->phone;
-                
+
             endif;
             $order->update([
                 'whatsapp_number' => $whatsappPhone
             ]);
-            $url = 'https://api.whatsapp.com/send?phone='.$whatsappPhone.'&text=' ;
-            $items = $order->order_items()->with('size' , 'product' , 'order_item_options.option')->get();
-            $content = '' ;
-            foreach($items as $index => $item):
-                $content .= '*' .($index + 1) . '-  '.$item->product->name.' '  . $item->product_count . 'x* %0a';
+            $url = 'https://api.whatsapp.com/send?phone=' . $whatsappPhone . '&text=';
+            $items = $order->order_items()->with('size', 'product', 'order_item_options.option')->get();
+            $content = '';
+            foreach ($items as $index => $item) :
+                $content .= '*' . ($index + 1) . '-  ' . $item->product->name . ' '  . $item->product_count . 'x* %0a';
                 $content .= 'السعر : ' . $item->price  . ' %0a';
-                if(isset($item->size->id)):
-                    $content .= 'الحجم : ' . $item->size->name ;
+                if (isset($item->size->id)) :
+                    $content .= 'الحجم : ' . $item->size->name;
                 endif;
-                if($item->order_item_options->count() > 0){
-                    $content .= '%0a_الإضافات_%0a' ;
+                if ($item->order_item_options->count() > 0) {
+                    $content .= '%0a_الإضافات_%0a';
                 }
-                foreach($item->order_item_options as $op):
-                    $content .= $op->option->name . ' ' . $op->option_count . 'x '  . '%0a' ;
+                foreach ($item->order_item_options as $op) :
+                    $content .= $op->option->name . ' ' . $op->option_count . 'x '  . '%0a';
                 endforeach;
 
-                // $content .= '%0a';
+            // $content .= '%0a';
             endforeach;
 
-            $content .= '%0aرقم الجوال العميل : ' . $order->user->phone_number . '  %0a';
+            $content .= '%0aرقم جوال العميل : ' . $order->user->phone_number . '  %0a';
 
-            $content .= '%0aطريقة التسليم  : ' .trans('messages.'.$order->previous_type);
-            if($order->previous_type == 'delivery'):
-                $content .= '%0aلوكيشن العميل : '.urlencode('https://www.google.com/maps/search/?api=1&query=' .$order->latitude. ','.$order->longitude) . '';
-            elseif($order->previous_type == 'takeaway'):
+            $content .= '%0aطريقة التسليم  : ' . trans('messages.' . $order->previous_type);
+            if ($order->previous_type == 'delivery') :
+                $content .= '%0aلوكيشن العميل : ' . urlencode('https://www.google.com/maps/search/?api=1&query=' . $order->latitude . ',' . $order->longitude) . '';
+            elseif ($order->previous_type == 'takeaway') :
                 $content .= '%0aاسم الفرع : ' . $branch->name;
             endif;
             $content .= '%0aطريقة الدفع: ' . trans('messages.' . $order->payment_method);
-            $content .= '%0aحالة الدفع: مدفوع' ;
+            $content .= '%0aحالة الدفع: مدفوع';
 
-            if($order->discount_value > 0)
-                $content .= '%0aالخصم : ' .$order->discount_value;
+            if ($order->discount_value > 0)
+                $content .= '%0aالخصم : ' . $order->discount_value;
             // $content .= '%0aسعر الوجبات: ' .$order->order_price;
-            $content .= '%0aقيمة الطلب : ' .$order->order_price;
-            if($order->previous_type == 'delivery'):
-                $content .= '%0aسعر التوصيل: ' .$order->delivery_value;
+            $content .= '%0aقيمة الطلب : ' . $order->order_price;
+            if ($order->previous_type == 'delivery') :
+                $content .= '%0aسعر التوصيل: ' . $order->delivery_value;
             endif;
-            if($order->tax > 0):
-                $content .= '%0aالضريبة: ' .$order->tax;
+            if ($order->tax > 0) :
+                $content .= '%0aالضريبة: ' . $order->tax;
             endif;
-            $content .= '%0aإجمالي السعر: ' .$order->total_price;
+            $content .= '%0aإجمالي السعر: ' . $order->total_price;
+            // content en
+            $content .= ' %0a %0a %0a %0a %0a ';
+            $content .= 'Order Num : ' . $order->id  . ' %0a';
+            foreach ($items as $index => $item) :
+                $content .= '*' . ($index + 1) . '-  ' . $item->product->name_en . ' '  . $item->product_count . 'x* %0a';
+                $content .= 'Price : ' . $item->price  . ' %0a';
+                if (isset($item->size->id)) :
+                    $content .= 'Size : ' . $item->size->name_en;
+                endif;
+                if ($item->order_item_options->count() > 0) {
+                    $content .= '%0a_Options_%0a';
+                }
+                foreach ($item->order_item_options as $op) :
+                    $content .= $op->option->name_en . ' ' . $op->option_count . 'x '  . '%0a';
+                endforeach;
+
+            // $content .= '%0a';
+            endforeach;
+
+            $content .= '%0aClient Phone : ' . $order->user->phone_number . '  %0a';
+
+            $content .= '%0aDelivery Method  : ' . trans('messages.' . $order->previous_type, [], 'en');
+            if ($order->previous_type == 'delivery') :
+                $content .= '%0aClient Location : ' . urlencode('https://www.google.com/maps/search/?api=1&query=' . $order->latitude . ',' . $order->longitude) . '';
+            elseif ($order->previous_type == 'takeaway') :
+                $content .= '%0aBranch Name : ' . $branch->name_en;
+            endif;
+            $content .= '%0aPayment Method: ' . trans('messages.' . $order->payment_method, [], 'en');
+            $content .= '%0aPayment status : paid';
+
+            if ($order->discount_value > 0)
+                $content .= '%0aDiscount : ' . $order->discount_value;
+            // $content .= '%0aسعر الوجبات: ' .$order->order_price;
+            $content .= '%0aMeals Price : ' . $order->order_price;
+            if ($order->previous_type == 'delivery') :
+                $content .= '%0aDelivery price: ' . $order->delivery_value;
+            endif;
+            if ($order->tax > 0) :
+                $content .= '%0aTax : ' . $order->tax;
+            endif;
+            $content .= '%0aTotal Price: ' . $order->total_price;
 
             return redirect($url . $content);
         endif;
         flash(trans('messages.order_received_successfully'))->success();
-        return redirect()->route('GoldReceivedOrder' , $order->id);
+        return redirect()->route('GoldReceivedOrder', $order->id);
     }
 
     public function express_error()
@@ -925,7 +1063,7 @@ class OrderController extends Controller
         $this->checkTheme($restaurant);
         $branch = $order->branch;
         $items = $order->order_items;
-        return view('website.'.session('theme_path').'gold.accessories.received' , compact('order' ,'items', 'restaurant' , 'branch'));
+        return view('website.' . session('theme_path') . 'gold.accessories.received', compact('order', 'items', 'restaurant', 'branch'));
     }
     public function empty_cart($id)
     {
@@ -946,16 +1084,13 @@ class OrderController extends Controller
          */
         $options_price = 0;
         $tax = 0;
-        if($item->order_item_options)
-        {
-            foreach ($item->order_item_options as $option)
-            {
+        if ($item->order_item_options) {
+            foreach ($item->order_item_options as $option) {
                 $options_price += $option->option_count * $option->option->price;
             }
         }
         $item_price = ($item->product_count * $item->price) + $options_price;
-        if ($order->branch->tax == 'true' and $order->branch->tax_value > 0)
-        {
+        if ($order->branch->tax == 'true' and $order->branch->tax_value > 0) {
             $tax = ($item_price * $order->branch->tax_value) / 100;
         }
         $order_price = $item->order->order_price - $item_price;
@@ -967,8 +1102,7 @@ class OrderController extends Controller
             'tax'         => $tax_value,
         ]);
         $item->delete();
-        if ($order->order_items->count() == 0)
-        {
+        if ($order->order_items->count() == 0) {
             $order->delete();
         }
         flash(trans('messages.deleted'))->success();

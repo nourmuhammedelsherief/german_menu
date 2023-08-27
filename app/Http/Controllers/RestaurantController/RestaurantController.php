@@ -13,6 +13,7 @@ use App\Models\Order;
 use App\Models\Package;
 use App\Models\Report;
 use App\Models\Restaurant;
+use App\Models\RestaurantBioColor;
 use App\Models\RestaurantColors;
 use App\Models\RestaurantPermission;
 use App\Models\RestaurantUser;
@@ -664,7 +665,8 @@ class RestaurantController extends Controller
             'show_branches_list' => 'nullable|in:true,false',
             'description_ar' => 'nullable|string',
             'description_en' => 'nullable|string',
-            'latitude' => 'sometimes'
+            'latitude' => 'sometimes' ,
+            'product_menu_view' => 'nullable|string'
         ]);
 //        dd($request->all());
         if ($id != null) {
@@ -688,6 +690,7 @@ class RestaurantController extends Controller
             'longitude' => $request->longitude,
             'description_ar' => $request->description_ar == null ? $restaurant->description_ar : $request->description_ar,
             'description_en' => $request->description_en == null ? $restaurant->description_en : $request->description_en,
+            'product_menu_view' => $request->product_menu_view ?? 'theme-1'
         ]);
         $main_branch = Branch::whereRestaurantId($restaurant->id)
             ->where('main', 'true')
@@ -737,6 +740,49 @@ class RestaurantController extends Controller
         flash(trans('messages.updated'))->success();
         return redirect()->back();
     }
+    public function RestaurantChangeBioColors(Request $request, $id)
+    {
+        if(!auth('admin')->check() and !auth('restaurant')->check()){
+            abort(401);
+        }
+        $this->validate($request, [
+            'restaurant_id' => 'sometimes',
+            'main_line'     => 'sometimes',
+            'background'    => 'sometimes',
+            'main_cats'     => 'sometimes',
+            'sub_cats'      => 'sometimes',
+            'sub_background' => 'sometimes',
+            'sub_cats_line' => 'sometimes',
+            'background_image' => 'nullable|mimes:jpg,jpeg,png,gif,tif,psd,pmp|max:50000',
+        ]);
+        $restaurant = Restaurant::findOrFail($id);
+        if ($restaurant->type == 'employee'):
+            if (check_restaurant_permission($restaurant->id , 2) == false):
+                abort(404);
+            endif;
+            $restaurant = Restaurant::find($restaurant->restaurant_id);
+        endif;
+        $bio = RestaurantBioColor::updateOrCreate(
+            ['restaurant_id' => $restaurant->id],
+            [
+                'main_line'      => $request->main_line,
+                'background'     => $request->background,
+                'main_cats'      => $request->main_cats,
+                'sub_cats'       => $request->sub_cats,
+                'sub_background' => $request->sub_background,
+                'sub_cats_line'  => $request->sub_cats_line,
+            ]
+        );
+        if ($request->file('background_image') != null)
+        {
+            $bio->update([
+                'background_image' => UploadImageEdit($request->file('background_image') , 'background' , '/uploads/bio_backgrounds' , $bio->background_image)
+            ]);
+        }
+        flash(trans('messages.updated'))->success();
+        return redirect()->back();
+    }
+
 
     public function Reset_to_main($id)
     {
@@ -748,7 +794,17 @@ class RestaurantController extends Controller
             flash(trans('messages.updated'))->success();
             return redirect()->back();
         }
-
+    }
+    public function Reset_to_bio_main($id)
+    {
+        $restaurant = Restaurant::findOrFail($id);
+        if ($restaurant) {
+            if ($restaurant->bio_color != null) {
+                $restaurant->bio_color->delete();
+            }
+            flash(trans('messages.updated'))->success();
+            return redirect()->back();
+        }
     }
 
     public function uploadImage(Request $request){
@@ -794,6 +850,7 @@ class RestaurantController extends Controller
             'merchant_key' => 'nullable|string',
             'express_password' => 'nullable|string',
             'enable_reservation_online_pay' => 'required|in:true,false',
+            'enable_party_payment_online' => 'required|in:true,false',
             'online_payment_fees' => 'nullable|numeric|min:0.01|max:100' ,
         ]);
         $restaurant = auth('restaurant')->user();
@@ -801,5 +858,7 @@ class RestaurantController extends Controller
         flash(trans('messages.updated'))->success();
         return redirect()->back();
     }
+
+
 
 }

@@ -66,6 +66,7 @@
                             <h3 class="card-title">@lang('messages.add') @lang('messages.products') </h3>
                         </div>
                         <!-- /.card-header -->
+                    
                         <!-- form start -->
                         <form role="form" id="post-form" action="{{route('products.store')}}" method="post"
                               enctype="multipart/form-data">
@@ -73,6 +74,7 @@
                             <input type="hidden" name="image_name" value="">
                             <input type="hidden" name="video_path" value="">
                             <input type="hidden" name="gif_path" value="">
+                            
                             
                             <div class="card-body">
                                 <div class="form-group">
@@ -100,7 +102,7 @@
                                 <div class="form-group">
                                     <label class="control-label"> @lang('messages.menu_category') </label>
                                     <select id="menu_category_id" name="menu_category_id[]" class="select2 form-control" multiple required>
-{{--                                        <option disabled selected> @lang('messages.choose_one') </option>--}}
+                            {{--                                        <option disabled selected> @lang('messages.choose_one') </option>--}}
                                         @if($branches->count() == 1)
                                             <?php $categories = \App\Models\MenuCategory::whereRestaurantId($restaurant->id)->get(); ?>
                                             @foreach($categories as $category)
@@ -377,10 +379,19 @@
                                         </div>
                                     </div> 
                                 </div>
-                               
+                                {{-- image --}}
+                                <div class="image-editor-preview display-none">
+                                    <div class="col-md-12">
+                                        <span class="fileinput-new"> {{ trans('messages.photo') }}</span>
+                                        <br>
+                                        <div dir=rtl class="file-loading">
+                                            <input type="file" name="photo" id="normal-image" accept=".png,.jpg,.jpeg" class="file" data-browse-on-zone-click="true" >
+                                        </div>
+                                    </div> 
+                                </div>
 
                                 {{-- image editor --}}
-                                <div class="form-group image-editor-preview display-none">
+                                {{-- <div class="form-group image-editor-preview display-none">
                                     <label for="">{{ trans('messages.photo') }}</label>
                                     <label class="custom-label" data-toggle="tooltip" title="{{trans('dashboard.change_image')}}">
                                         <img class="rounded" id="avatar" src="{{asset($restaurant->image_path)}}" alt="avatar" >
@@ -393,15 +404,24 @@
                                         <div class="progress-bar progress-bar-striped progress-bar-animated" role="progressbar" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100">0%</div>
                                     </div>
                                     <div class="alert text-center" role="alert"></div>
-                                </div>
+                                </div> --}}
                             </div>
                             <!-- /.card-body -->
-
+                            <div class="alert alert-warning" role="alert">
+                                <h4 class="alert-heading">{{ trans('dashboard.explain') }}</h4>
+                                <p>{{ trans('dashboard.image_warning_size', ['size' => 'الطول يساوي العرض ']) }}</p>
+                                <hr>
+                                <p class="mb-0">{!! trans('dashboard.image_resize_hint') !!}
+                                    <a href="https://redketchup.io/image-resizer" target="__blank" style="color : #007bff;"
+                                        title="موقع لتغير حجم الصور"> موقع لتغير حجم الصور</a>
+                                </p>
+                            </div>
                             <div class="card-footer">
                                 <button type="submit" class="btn btn-primary">@lang('messages.save')</button>
                             </div>
 
                         </form>
+                  
                     </div>
 
                 </div>
@@ -475,6 +495,53 @@
                         console.log('completed');
                     });
 
+                    $("#normal-image").fileinput({
+                        uploadUrl: "{{route('restaurant.product.update_image')}}",
+                        // enableResumableUpload: true,
+                        resumableUploadOptions: {
+                        // uncomment below if you wish to test the file for previous partial uploaded chunks
+                        // to the server and resume uploads from that point afterwards
+                        // testUrl: "http://localhost/test-upload.php"
+                        },
+                        uploadExtraData: {
+                            '_token': '{{csrf_token()}}', // for access control / security 
+                            'action' : 'create' , 
+                            
+                        },
+                        rtl: true,
+                        language: 'ar' , 
+                        maxFileCount: 1,
+                        allowedFileTypes: ['image'],
+                        allowedFileExtensions : ['image'] , 
+                        showCancel: true,
+                        showRemove: true,
+                        showUpload: true,
+                        showCancel: true,
+                        
+                        maxFilePreviewSize: 50240,
+                        initialPreviewAsData: true,
+                        overwriteInitial: true,            
+                   
+                        initialPreviewAsData: true,
+                        initialPreviewFileType: 'image',
+                   
+                   
+                        theme: 'fa',
+                        // deleteUrl: "http://localhost/file-delete.php"
+                    }).on('fileuploaded', function(event, previewId, index, fileId) {
+                        var response = previewId.response;
+                        console.log(response);
+                        if(response.status == true){
+                            $('input[name=image_name]').val(response.photo);
+                        }
+                    }).on('fileuploaderror', function(event, data, msg) {
+                        // console.log('File Upload Error', 'ID: ' + data.fileId + ', Thumb ID: ' + data.previewId);
+                        console.log(msg);
+                        console.log(data);
+                    }).on('filebatchuploadcomplete', function(event, preview, config, tags, extraData) {
+                        console.log('completed');
+                    });
+
                     $("#gif_image").fileinput({
                         uploadUrl: "{{route('products.uploadVideo')}}",
                         // enableResumableUpload: true,
@@ -510,6 +577,7 @@
                         // deleteUrl: "http://localhost/file-delete.php"
                     }).on('fileuploaded', function(event, previewId, index, fileId) {
                         var response = previewId.response;
+                        console.log(response);
                         if(response.status == 1){
                             $('input[name=gif_path]').val(response.video_path);
                         }
@@ -521,114 +589,114 @@
                         console.log('completed');
                     });
 
-                if ($("#post-form").length > 0 && false) {
-                    $("#post-form").validate({
+                // if ($("#post-form").length > 0 && false) {
+                //     $("#post-form").validate({
 
-                        rules: {
-                            name_ar: {
-                                required: {{\Illuminate\Support\Facades\Auth::guard('restaurant')->user()->ar == 'true' ? true : false}},
-                                maxlength: 191,
-                                // unique: true,
-                            },
-                            name_en: {
-                                required: {{\Illuminate\Support\Facades\Auth::guard('restaurant')->user()->ar == 'true' ? true : false}},
-                                maxlength: 191
-                            },
-                            {{--description_ar: {--}}
-                                {{--    required: {{\Illuminate\Support\Facades\Auth::guard('restaurant')->user()->ar == 'true' ? true : false}},--}}
-                                {{--    // unique: true,--}}
-                                {{--},--}}
-                                {{--description_en: {--}}
-                                {{--    required: {{\Illuminate\Support\Facades\Auth::guard('restaurant')->user()->ar == 'true' ? true : false}},--}}
-                                {{--},--}}
-                            branch_id: {
-                                required: true,
-                            },
-                            menu_category_id: {
-                                required: true,
-                            },
-                            poster_id: {
-                                required: false,
-                            },
-                            sub_category_id: {
-                                required: false,
-                            },
-                            price: {
-                                required: true,
-                                maxlength: 11
-                            },
-                            active: {
-                                required: true,
-                            },
+                //         rules: {
+                //             name_ar: {
+                //                 required: {{\Illuminate\Support\Facades\Auth::guard('restaurant')->user()->ar == 'true' ? true : false}},
+                //                 maxlength: 191,
+                //                 // unique: true,
+                //             },
+                //             name_en: {
+                //                 required: {{\Illuminate\Support\Facades\Auth::guard('restaurant')->user()->ar == 'true' ? true : false}},
+                //                 maxlength: 191
+                //             },
+                //             {{--description_ar: {--}}
+                //                 {{--    required: {{\Illuminate\Support\Facades\Auth::guard('restaurant')->user()->ar == 'true' ? true : false}},--}}
+                //                 {{--    // unique: true,--}}
+                //                 {{--},--}}
+                //                 {{--description_en: {--}}
+                //                 {{--    required: {{\Illuminate\Support\Facades\Auth::guard('restaurant')->user()->ar == 'true' ? true : false}},--}}
+                //                 {{--},--}}
+                //             branch_id: {
+                //                 required: true,
+                //             },
+                //             menu_category_id: {
+                //                 required: true,
+                //             },
+                //             poster_id: {
+                //                 required: false,
+                //             },
+                //             sub_category_id: {
+                //                 required: false,
+                //             },
+                //             price: {
+                //                 required: true,
+                //                 maxlength: 11
+                //             },
+                //             active: {
+                //                 required: true,
+                //             },
 
-                        },
-                        messages: {
-                            name_ar: {
-                                required: "{{trans('messages.name_ar')}}" + " " + "{{trans('messages.required')}}",
-                                maxlength: "{{trans('messages.max_length')}}" + " " + "{{trans('messages.name_ar')}}" + "191",
-                            },
-                            name_en: {
-                                required: "{{trans('messages.name_en')}}" + " " + "{{trans('messages.required')}}",
-                                maxlength: "{{trans('messages.max_length')}}" + " " + "{{trans('messages.name_en')}}" + "191",
-                            },
-                            branch_id: {
-                                required: "{{trans('messages.branch')}}" + " " + "{{trans('messages.required')}}",
-                            },
-                            menu_category_id: {
-                                required: "{{trans('messages.menu_category')}}" + " " + "{{trans('messages.required')}}",
-                            },
-                            price: {
-                                required: "{{trans('messages.price')}}" + " " + "{{trans('messages.required')}}",
-                                maxlength: "{{trans('messages.max_length')}}" + " " + "{{trans('messages.price')}}" + "8",
-                            },
+                //         },
+                //         messages: {
+                //             name_ar: {
+                //                 required: "{{trans('messages.name_ar')}}" + " " + "{{trans('messages.required')}}",
+                //                 maxlength: "{{trans('messages.max_length')}}" + " " + "{{trans('messages.name_ar')}}" + "191",
+                //             },
+                //             name_en: {
+                //                 required: "{{trans('messages.name_en')}}" + " " + "{{trans('messages.required')}}",
+                //                 maxlength: "{{trans('messages.max_length')}}" + " " + "{{trans('messages.name_en')}}" + "191",
+                //             },
+                //             branch_id: {
+                //                 required: "{{trans('messages.branch')}}" + " " + "{{trans('messages.required')}}",
+                //             },
+                //             menu_category_id: {
+                //                 required: "{{trans('messages.menu_category')}}" + " " + "{{trans('messages.required')}}",
+                //             },
+                //             price: {
+                //                 required: "{{trans('messages.price')}}" + " " + "{{trans('messages.required')}}",
+                //                 maxlength: "{{trans('messages.max_length')}}" + " " + "{{trans('messages.price')}}" + "8",
+                //             },
 
-                            {{--description_ar: {--}}
-                                {{--    required: "{{trans('messages.description_ar')}}" +" "+ "{{trans('messages.required')}}",--}}
-                                {{--},--}}
-                                {{--description_en: {--}}
-                                {{--    required: "{{trans('messages.description_en')}}" +" "+ "{{trans('messages.required')}}",--}}
-                                {{--},--}}
-                            active: {
-                                required: "{{trans('messages.active')}}" + " " + "{{trans('messages.required')}}",
-                            },
-                        },
-                        submitHandler: function (form) {
-                            $.ajaxSetup({
-                                headers: {
-                                    'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
-                                }
-                            });
-                            var formData = new FormData($(this)[0]);
+                //             {{--description_ar: {--}}
+                //                 {{--    required: "{{trans('messages.description_ar')}}" +" "+ "{{trans('messages.required')}}",--}}
+                //                 {{--},--}}
+                //                 {{--description_en: {--}}
+                //                 {{--    required: "{{trans('messages.description_en')}}" +" "+ "{{trans('messages.required')}}",--}}
+                //                 {{--},--}}
+                //             active: {
+                //                 required: "{{trans('messages.active')}}" + " " + "{{trans('messages.required')}}",
+                //             },
+                //         },
+                //         submitHandler: function (form) {
+                //             $.ajaxSetup({
+                //                 headers: {
+                //                     'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+                //                 }
+                //             });
+                //             var formData = new FormData($(this)[0]);
 
-                            $('#send_form').html('Sending..');
-                            $.ajax({
-                                url: "{{ route('products.store') }}",
-                                type: "POST",
-                                data: $('#post-form').serialize(),
-                                success: function (response) {
-                                    if (response.errors && response.errors.length > 0) {
-                                        jQuery.each(response.errors, function (key, value) {
-                                            jQuery('.alert-danger').show();
-                                            jQuery('.alert-danger').append('<p>' + value + '</p>');
-                                        });
-                                    } else {
-                                        $('#send_form').html('Submit');
-                                        $('#res_message').show();
-                                        $('#res_message').html(response.msg);
-                                        $('#msg_div').removeClass('d-none');
+                //             $('#send_form').html('Sending..');
+                //             $.ajax({
+                //                 url: "{{ route('products.store') }}",
+                //                 type: "POST",
+                //                 data: $('#post-form').serialize(),
+                //                 success: function (response) {
+                //                     if (response.errors && response.errors.length > 0) {
+                //                         jQuery.each(response.errors, function (key, value) {
+                //                             jQuery('.alert-danger').show();
+                //                             jQuery('.alert-danger').append('<p>' + value + '</p>');
+                //                         });
+                //                     } else {
+                //                         $('#send_form').html('Submit');
+                //                         $('#res_message').show();
+                //                         $('#res_message').html(response.msg);
+                //                         $('#msg_div').removeClass('d-none');
 
-                                        document.getElementById("post-form").reset();
-                                        setTimeout(function () {
-                                            $('#res_message').hide();
-                                            $('#msg_div').hide();
-                                        }, 10000);
-                                        window.location = response.url;
-                                    }
-                                }
-                            });
-                        }
-                    })
-                }
+                //                         document.getElementById("post-form").reset();
+                //                         setTimeout(function () {
+                //                             $('#res_message').hide();
+                //                             $('#msg_div').hide();
+                //                         }, 10000);
+                //                         window.location = response.url;
+                //                     }
+                //                 }
+                //             });
+                //         }
+                //     })
+                // }
             </script>
 
         </div><!-- /.container-fluid -->

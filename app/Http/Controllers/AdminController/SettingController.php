@@ -52,6 +52,7 @@ class SettingController extends Controller
             'technical_support_number' => 'required',
             'customer_services_number' => 'required',
             'tax'  => 'required',
+            'foodics_sandbox' => 'required|in:true,false'
         ]);
         $setting = Setting::find(1);
         $setting->update($request->all());

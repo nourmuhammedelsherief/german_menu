@@ -17,7 +17,7 @@ class ClientController extends Controller
      */
     public function index()
     {
-        $users = User::orderBy('id' , 'desc')->paginate(500);
+        $users = User::with('registerRestaurant')->orderBy('id' , 'desc')->paginate(500);
         return view('admin.users.index' , compact('users'));
     }
 

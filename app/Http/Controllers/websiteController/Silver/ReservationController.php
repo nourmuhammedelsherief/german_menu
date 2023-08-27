@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\websiteController\Silver;
 
 use App\Http\Controllers\Controller;
+use App\Jobs\SendMailReservationNewRequest;
 use App\Models\Bank;
 use App\Models\Branch;
 use App\Models\Reservation\ReservationBranch;
@@ -290,6 +291,10 @@ class ReservationController extends Controller
         $reservation = $order;
 
         if ($request->method() == 'POST' and $reservation->is_order == 0):
+            if($restaurant->enable_reservation_email_notification == 'true'):
+                dispatch(new SendMailReservationNewRequest($restaurant->reservation_email_notification , $order));
+            endif;
+            
             if ($reservation->payment_type == 'online'):
                 if($restaurant->online_payment_fees > 0){
                     $totalPrice = ( ($reservation->total_price * $restaurant->online_payment_fees) / 100 ) + $reservation->total_price;

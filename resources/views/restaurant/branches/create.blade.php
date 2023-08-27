@@ -119,6 +119,33 @@
                                         </span>
                                     @endif
                                 </div>
+
+                                @if (auth('restaurant')->user()->ar == 'true')
+                                <div class="form-group">
+                                    <label class="control-label"> @lang('messages.description_ar') </label>
+                                    <textarea class="textarea" name="description_ar" placeholder="@lang('messages.description_ar')"
+                                        style="width: 100%; height: 200px; font-size: 14px; line-height: 18px; border: 1px solid #dddddd; pediting: 10px;">{{ old('description_ar') }}</textarea>
+                                    @if ($errors->has('description_ar'))
+                                        <span class="help-block">
+                                            <strong
+                                                style="color: red;">{{ $errors->first('description_ar') }}</strong>
+                                        </span>
+                                    @endif
+                                </div>
+                            @endif
+                            @if (auth('restaurant')->user()->en == 'true')
+                                <div class="form-group">
+                                    <label class="control-label"> @lang('messages.description_en') </label>
+                                    <textarea class="textarea" name="description_en" placeholder="@lang('messages.description_en')"
+                                        style="width: 100%; height: 200px; font-size: 14px; line-height: 18px; border: 1px solid #dddddd; pediting: 10px;">{{ old('description_en') }}</textarea>
+                                    @if ($errors->has('description_en'))
+                                        <span class="help-block">
+                                            <strong
+                                                style="color: red;">{{ $errors->first('description_en') }}</strong>
+                                        </span>
+                                    @endif
+                                </div>
+                            @endif
                                 {{--                                <div class="form-group">--}}
                                 {{--                                    <label class="control-label"> @lang('messages.name_barcode_branch') </label>--}}
                                 {{--                                    <input name="name_barcode" type="text" class="form-control" value="{{old('name_barcode')}}" placeholder="@lang('messages.name_barcode_branch')">--}}

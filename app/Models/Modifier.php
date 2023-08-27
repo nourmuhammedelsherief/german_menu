@@ -22,4 +22,7 @@ class Modifier extends Model
     {
         return $this->belongsTo(Restaurant::class , 'restaurant_id');
     }
+    public function options(){
+        return $this->hasMany(Option::class , 'modifier_id');
+    }
 }

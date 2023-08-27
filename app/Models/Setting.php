@@ -21,6 +21,7 @@ class Setting extends Model
         'customer_services_number',
         'tax',
         'branch_service_tentative_period',
+        'foodics_sandbox' , // eunm [true , false]
     ];
 
     protected $casts = [

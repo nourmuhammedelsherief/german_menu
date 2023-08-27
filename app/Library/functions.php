@@ -13,6 +13,7 @@ use LaravelFCM\Message\PayloadDataBuilder;
 use LaravelFCM\Message\PayloadNotificationBuilder;
 use LaravelFCM\Facades\FCM;
 use App\Models\Setting;
+use App\Models\SilverOrderFoodics;
 use App\Models\TableOrder;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Http;
@@ -21,11 +22,19 @@ use Illuminate\Support\Facades\Storage;
 
 const myfatooraTokenTest = "rLtt6JWvbUHDDhsZnfpAhpYk4dxYDQkbcPTyGaKp2TYqQgG7FGZ5Th_WD53Oq8Ebz6A53njUoo1w3pjU1D4vs_ZMqFiz_j0urb_BH9Oq9VZoKFoJEDAbRZepGcQanImyYrry7Kt6MnMdgfG5jn4HngWoRdKduNNyP4kzcp3mRv7x00ahkm9LAK7ZRieg7k1PDAnBIOG3EyVSJ5kK4WLMvYr7sCwHbHcu4A5WwelxYK0GMJy37bNAarSJDFQsJ2ZvJjvMDmfWwDVFEVe_5tOomfVNt6bOg9mexbGjMrnHBnKnZR1vQbBtQieDlQepzTZMuQrSuKn-t5XZM7V6fCW7oP-uXGX-sMOajeX65JOf6XVpk29DP6ro8WTAflCDANC193yof8-f5_EYY-3hXhJj7RBXmizDpneEQDSaSz5sFk0sV5qPcARJ9zGG73vuGFyenjPPmtDtXtpx35A-BVcOSBYVIWe9kndG3nclfefjKEuZ3m4jL9Gg1h2JBvmXSMYiZtp9MR5I6pvbvylU_PP5xJFSjVTIz7IQSjcVGO41npnwIxRXNRxFOdIUHn0tjQ-7LwvEcTXyPsHXcMD8WtgBh-wxR8aKX7WPSsT1O8d8reb2aR7K3rkV3K82K_0OgawImEpwSvp9MNKynEAJQS6ZHe_J_l77652xwPNxMRTMASk1ZsJL";
 const myfatooraUrlTest  = 'https://apitest.myfatoorah.com';
+
+const foodicsSandboxClientId = '9420d9c2-b5bb-4feb-8c26-72526c3e572b';
+const foodicsSandboxSecret = 'tTfFHFxa2XVkOm4NbCI27RcJbhsacgGZPfkjZ8wT';
 //use FCM;
 function SetUserName($id)
 {
     \Illuminate\Support\Facades\Session::forget('pid');
     \Illuminate\Support\Facades\Session::put('pid', $id);
+}
+
+function isFoodicsSandbox()
+{
+    return Setting::where('foodics_sandbox', 'true')->count() > 0 ? true : false;
 }
 
 function explodeByComma($str)
@@ -42,7 +51,7 @@ function imgPath($folderName)
 {
 
     //عشان ال sub domain  بس هيشها مؤقتا
-//    return '/uploads/' . $folderName . '/';
+    //    return '/uploads/' . $folderName . '/';
     return '/public/uploads/' . $folderName . '/';
 }
 
@@ -123,15 +132,14 @@ function UploadBase64Image($base64Str, $prefix, $folderName)
 }
 
 
-function gold_services($id , $service_id , $end_at)
+function gold_services($id, $service_id, $end_at)
 {
     $restaurant = Restaurant::find($id);
     $service = \App\Models\Service::find($service_id);
     $check_subscription = \App\Models\ServiceSubscription::whereRestaurantId($restaurant->id)
         ->whereServiceId($service->id)
         ->first();
-    if ($check_subscription == null)
-    {
+    if ($check_subscription == null) {
         \App\Models\ServiceSubscription::create([
             'restaurant_id' => $restaurant->id,
             'service_id' => $service->id,
@@ -143,7 +151,7 @@ function gold_services($id , $service_id , $end_at)
             'end_at' => $end_at,
             'status' => 'active',
         ]);
-    }else{
+    } else {
         $check_subscription->update([
             'end_at' => $end_at,
             'status' => 'active',
@@ -155,9 +163,14 @@ function gold_services($id , $service_id , $end_at)
 function UploadImage($inputRequest, $prefix, $folderNam)
 {
 
-    if(in_array($inputRequest->getClientOriginalExtension() , ['gif'])):
-        return basename(Storage::disk('public_storage')->put($folderNam , $inputRequest ));
+    if (in_array($inputRequest->getClientOriginalExtension(), ['gif'])) :
+        return basename(Storage::disk('public_storage')->put($folderNam, $inputRequest));
     endif;
+    $folderPath = public_path($folderNam);
+    if (!File::isDirectory($folderPath)) {
+
+        File::makeDirectory($folderPath, 0777, true, true);
+    }
     $image = time() . '' . rand(11111, 99999) . '.' . $inputRequest->getClientOriginalExtension();
     $destinationPath = public_path('/' . $folderNam);
     $img = Image::make($inputRequest->getRealPath());
@@ -166,24 +179,22 @@ function UploadImage($inputRequest, $prefix, $folderNam)
     })->save($destinationPath . '/' . $image);
 
     return $image ? $image : false;
-
 }
 
 function copyImage($filename, $prefix, $folderNam)
 {
-    if(!Storage::disk('public_storage')->exists($filename)) return '';
-    $temp = explode('.' , $filename);
+    if (!Storage::disk('public_storage')->exists($filename)) return '';
+    $temp = explode('.', $filename);
     $ext = $temp[count($temp) - 1];
     $image = 'copy_' . time() . '' . rand(11111, 99999) . '.' . $ext;
     $destinationPath = public_path('/' . $folderNam);
-    if(!Storage::disk('public_storage')->exists($folderNam)):
+    if (!Storage::disk('public_storage')->exists($folderNam)) :
         File::isDirectory($destinationPath) or File::makeDirectory($destinationPath, 0777, true, true);
     endif;
     $img = Image::make(public_path($filename));
     $img->save($destinationPath . '/' . $image);
 
     return $image ? $image : false;
-
 }
 
 function UploadFile($inputRequest, $prefix, $folderNam)
@@ -236,25 +247,24 @@ function UploadVideoEdit($file, $old)
     }
 }
 
-function UploadImageEdit($inputRequest, $prefix, $folderNam, $oldImage , $height = 700 , $width = 700)
+function UploadImageEdit($inputRequest, $prefix, $folderNam, $oldImage, $height = null, $width = 1500)
 {
-    if ($oldImage != 'logo.png' && $oldImage != 'slider2.png' && $oldImage != 'slider1.png' && $oldImage != 'fish.png' && $oldImage != 'egg.png' && $oldImage != 'hop.png' && $oldImage != 'aqra.png' && $oldImage != 'milk.png' && $oldImage != 'kardal.png' && $oldImage != 'raky.png' && $oldImage != 'butter.png' && $oldImage != 'capret.png' && $oldImage != 'rfs.png' && $oldImage != 'kago.png' && $oldImage != 'smsm.png' && $oldImage != 'soia.png' && $oldImage != 'terms.png')
-    {
+    if ($oldImage != 'logo.png' && $oldImage != 'slider2.png' && $oldImage != 'slider1.png' && $oldImage != 'fish.png' && $oldImage != 'egg.png' && $oldImage != 'hop.png' && $oldImage != 'aqra.png' && $oldImage != 'milk.png' && $oldImage != 'kardal.png' && $oldImage != 'raky.png' && $oldImage != 'butter.png' && $oldImage != 'capret.png' && $oldImage != 'rfs.png' && $oldImage != 'kago.png' && $oldImage != 'smsm.png' && $oldImage != 'soia.png' && $oldImage != 'terms.png') {
         @unlink(public_path('/' . $folderNam . '/' . $oldImage));
     }
-    $path = public_path().$folderNam;
+    $path = public_path() . $folderNam;
 
 
-    if(!file_exists($path)):
+    if (!file_exists($path)) :
         File::isDirectory($path) or File::makeDirectory($path, 0777, true, true);
     endif;
-    if(in_array($inputRequest->getClientOriginalExtension() , ['gif'])){
-        return basename(Storage::disk('public_storage')->put($folderNam , $inputRequest));
+    if (in_array($inputRequest->getClientOriginalExtension(), ['gif'])) {
+        return basename(Storage::disk('public_storage')->put($folderNam, $inputRequest));
     }
     $image = time() . '' . rand(11111, 99999) . '.' . $inputRequest->getClientOriginalExtension();
     $destinationPath = public_path('/' . $folderNam);
     $img = Image::make($inputRequest->getRealPath());
-    $img->resize($height , $width, function ($constraint) {
+    $img->resize($height, $width, function ($constraint) {
         $constraint->aspectRatio();
         // $constraint->upsize();
     })->save($destinationPath . '/' . $image);
@@ -288,16 +298,16 @@ function sendNotification($notificationTitle, $notificationBody, $deviceToken)
     $downstreamResponse->numberFailure();
     $downstreamResponse->numberModification();
 
-//return Array - you must remove all this tokens in your database
+    //return Array - you must remove all this tokens in your database
     $downstreamResponse->tokensToDelete();
 
-//return Array (key : oldToken, value : new token - you must change the token in your database )
+    //return Array (key : oldToken, value : new token - you must change the token in your database )
     $downstreamResponse->tokensToModify();
 
-//return Array - you should try to resend the message to the tokens in the array
+    //return Array - you should try to resend the message to the tokens in the array
     $downstreamResponse->tokensToRetry();
 
-// return Array (key:token, value:errror) - in production you should remove from your database the tokens
+    // return Array (key:token, value:errror) - in production you should remove from your database the tokens
 }
 
 function sendMultiNotification($notificationTitle, $notificationBody, $devicesTokens)
@@ -317,7 +327,7 @@ function sendMultiNotification($notificationTitle, $notificationBody, $devicesTo
     $notification = $notificationBuilder->build();
     $data = $dataBuilder->build();
 
-// You must change it to get your tokens
+    // You must change it to get your tokens
     $tokens = $devicesTokens;
 
     $downstreamResponse = FCM::sendTo($tokens, $option, $notification, $data);
@@ -326,16 +336,16 @@ function sendMultiNotification($notificationTitle, $notificationBody, $devicesTo
     $downstreamResponse->numberFailure();
     $downstreamResponse->numberModification();
 
-//return Array - you must remove all this tokens in your database
+    //return Array - you must remove all this tokens in your database
     $downstreamResponse->tokensToDelete();
 
-//return Array (key : oldToken, value : new token - you must change the token in your database )
+    //return Array (key : oldToken, value : new token - you must change the token in your database )
     $downstreamResponse->tokensToModify();
 
-//return Array - you should try to resend the message to the tokens in the array
+    //return Array - you should try to resend the message to the tokens in the array
     $downstreamResponse->tokensToRetry();
 
-// return Array (key:token, value:errror) - in production you should remove from your database the tokens present in this array
+    // return Array (key:token, value:errror) - in production you should remove from your database the tokens present in this array
     $downstreamResponse->tokensWithError();
 
     return ['success' => $downstreamResponse->numberSuccess(), 'fail' => $downstreamResponse->numberFailure()];
@@ -355,30 +365,26 @@ function saveNotification($userId, $title, $message, $type, $order_id = null, $d
     return $created;
 }
 
-function check_time_between($start_at , $end_at)
+function check_time_between($start_at, $end_at)
 {
-    if ($start_at == null and $end_at == null)
-    {
+    if ($start_at == null and $end_at == null) {
         return true;
     }
     $now = \Carbon\Carbon::now()->format('H:i:s');
-    if ($start_at > $end_at)
-    {
+    if ($start_at > $end_at) {
         // the end at another day
-        if ($start_at < $now)
-        {
-            $start = \Carbon\Carbon::now()->format('Y-m-d'.' '.$start_at);
-            $end  = \Carbon\Carbon::now()->addDay()->format('Y-m-d'.' '.$end_at);
+        if ($start_at < $now) {
+            $start = \Carbon\Carbon::now()->format('Y-m-d' . ' ' . $start_at);
+            $end  = \Carbon\Carbon::now()->addDay()->format('Y-m-d' . ' ' . $end_at);
             $check = \Carbon\Carbon::now()->between($start, $end, true);
-        }else{
-            $start = \Carbon\Carbon::now()->addDays(-1)->format('Y-m-d'.' '.$start_at);
-            $end  = \Carbon\Carbon::now()->format('Y-m-d'.' '.$end_at);
+        } else {
+            $start = \Carbon\Carbon::now()->addDays(-1)->format('Y-m-d' . ' ' . $start_at);
+            $end  = \Carbon\Carbon::now()->format('Y-m-d' . ' ' . $end_at);
             $check = \Carbon\Carbon::now()->between($start, $end, true);
         }
-    }
-    else{
-        $start = \Carbon\Carbon::now()->format('Y-m-d'.' '.$start_at);
-        $end  = \Carbon\Carbon::now()->format('Y-m-d'.' '.$end_at);
+    } else {
+        $start = \Carbon\Carbon::now()->format('Y-m-d' . ' ' . $start_at);
+        $end  = \Carbon\Carbon::now()->format('Y-m-d' . ' ' . $end_at);
         $check = \Carbon\Carbon::now()->between($start, $end, true);
     }
     return $check;
@@ -391,7 +397,7 @@ function MyFatoorahStatus($api, $PaymentId)
     // dd($PaymentId);
     $token = $api;
     $basURL = "https://api-sa.myfatoorah.com";
-    if(env('APP_PAYMENT_TEST' , false)){
+    if (env('APP_PAYMENT_TEST', false)) {
         $basURL = myfatooraUrlTest;
         $token = myfatooraTokenTest;
     }
@@ -406,9 +412,9 @@ function MyFatoorahStatus($api, $PaymentId)
     $response = curl_exec($curl);
     $err = curl_error($curl);
     curl_close($curl);
-   
+
     if ($err) {
-       
+
         return $err;
     } else {
         return $response;
@@ -421,7 +427,7 @@ function MyFatoorah($api, $userData)
     $token = $api;
     // $token = Controller
     $basURL = "https://api-sa.myfatoorah.com";
-    if(env('APP_PAYMENT_TEST' , false)){
+    if (env('APP_PAYMENT_TEST', false)) {
         $basURL = myfatooraUrlTest;
         $token = myfatooraTokenTest;
     }
@@ -484,32 +490,30 @@ function taqnyatSms($msgBody, $reciver)
     return $message;
 }
 
-function checkOrderService($restaurant_id, $service_id , $branch_id = null)
+function checkOrderService($restaurant_id, $service_id, $branch_id = null)
 {
-    if ($branch_id)
-    {
+    if ($branch_id) {
         $service = \App\Models\ServiceSubscription::whereRestaurantId($restaurant_id)
             ->where('service_id', $service_id)
-            ->whereIn('status',['active' , 'tentative'])
+            ->whereIn('status', ['active', 'tentative'])
             ->whereBranchId($branch_id)
             ->first();
-    }else{
+    } else {
         $service = \App\Models\ServiceSubscription::whereRestaurantId($restaurant_id)
             ->where('service_id', $service_id)
-            ->whereIn('status',['active' , 'tentative'])
+            ->whereIn('status', ['active', 'tentative'])
             ->first();
     }
     return !($service == null) ? true : false;
 }
-function checkOrderSetting($restaurant_id, $type , $branch_id = null)
+function checkOrderSetting($restaurant_id, $type, $branch_id = null)
 {
-    if ($branch_id)
-    {
+    if ($branch_id) {
         $setting = \App\Models\RestaurantOrderSetting::whereRestaurantId($restaurant_id)
             ->where('order_type', $type)
             ->whereBranchId($branch_id)
             ->first();
-    }else{
+    } else {
         $setting = \App\Models\RestaurantOrderSetting::whereRestaurantId($restaurant_id)
             ->where('order_type', $type)
             ->first();
@@ -525,31 +529,30 @@ function check_branch_periods($id)
     $current_day = \Carbon\Carbon::now()->format('l');
     $day = \App\Models\Day::whereNameEn($current_day)->first()->id;
     $periods = \App\Models\RestaurantPeriod::with('days')
-        ->whereHas('days' , function ($q) use ($day){
-            $q->where('day_id' , $day);
+        ->whereHas('days', function ($q) use ($day) {
+            $q->where('day_id', $day);
         })
-        ->where('restaurant_id' , $branch->restaurant_id)
-        ->where('branch_id' , $branch->id)
+        ->where('restaurant_id', $branch->restaurant_id)
+        ->where('branch_id', $branch->id)
         ->get();
-    if ($periods->count() > 0)
-    {
+    if ($periods->count() > 0) {
         foreach ($periods as $period) {
-            $state = check_time_between($period->start_at , $period->end_at);
-            if ($state == true)
-            {
+            $state = check_time_between($period->start_at, $period->end_at);
+            if ($state == true) {
                 return $state;
             }
         }
         return false;
-    }else{
-        $check_period = \App\Models\RestaurantPeriod::where('restaurant_id' , $branch->restaurant_id)
-            ->where('branch_id' , $branch->id)
+    } else {
+        $check_period = \App\Models\RestaurantPeriod::where('restaurant_id', $branch->restaurant_id)
+            ->where('branch_id', $branch->id)
             ->count();
         return $check_period > 0 ? false : true;
     }
 }
 
-function check_restaurant_permission($res_id , $permission_id){
+function check_restaurant_permission($res_id, $permission_id)
+{
     $permission = \App\Models\RestaurantPermission::whereRestaurantId($res_id)
         ->wherePermissionId($permission_id)
         ->first();
@@ -664,8 +667,7 @@ function meal_accessories($id, $product)
             if (is_countable(get_meals_photos($id))) {
                 foreach (get_meals_photos($id) as $photo) {
                     $infoM = pathinfo('https://old.easymenu.site/uploads/meals/' . $photo['image']);
-                    if ($infoM['extension'] != 'jpg_1700Wx1700H' && $infoM['extension'] != 'crdownload' && $infoM['extension'] != 'application/x-empty')
-                    {
+                    if ($infoM['extension'] != 'jpg_1700Wx1700H' && $infoM['extension'] != 'crdownload' && $infoM['extension'] != 'application/x-empty') {
                         if ($infoM['extension'] == 'JPG' || $infoM['extension'] == 'JPEG' || $infoM['extension'] == 'PNG' || $infoM['extension'] == 'wepb' || $infoM['extension'] == 'png' || $infoM['extension'] == 'jpg' || $infoM['extension'] == 'gif' || $infoM['extension'] == 'tif') {
                             $contentsM = file_get_contents('https://old.easymenu.site/uploads/meals/' . $photo['image']);
                             $fileM = '/tmp/' . $infoM['basename'];
@@ -683,11 +685,8 @@ function meal_accessories($id, $product)
                             $product->update([
                                 'photo' => $imageM,
                             ]);
-
-
                         }
                     }
-
                 }
             }
         }
@@ -704,7 +703,6 @@ function meal_accessories($id, $product)
                     'product_id' => $product->id,
                 ]);
             }
-
         }
     }
     if (get_meals_modifiers($id) != []) {
@@ -717,7 +715,6 @@ function meal_accessories($id, $product)
                     'modifier_id' => $pm['main_addition_id']
                 ]);
             }
-
         }
     }
     if (get_meals_options($id) != []) {
@@ -863,43 +860,34 @@ function create_restaurant_sensitivity($restaurant)
         'details_ar' => 'مثل زيت الترمس',
         'details_en' => 'like lupine oil',
     ]);
-
 }
 function check_restaurant_branches($id)
 {
     $restaurant = \App\Models\Restaurant::find($id);
     $chech_branches = \App\Models\Subscription::whereRestaurantId($restaurant->id)
-        ->where('type' , 'branch')
-        ->where('package_id' , '!=' , 1)
+        ->where('type', 'branch')
+        ->where('package_id', '!=', 1)
         ->count();
     return $chech_branches;
 }
-function check_restaurant_amount($id , $amount)
+function check_restaurant_amount($id, $amount)
 {
     $branch = \App\Models\Branch::find($id);
-    if ($branch->country->name_ar == 'مصر')
-    {
+    if ($branch->country->name_ar == 'مصر') {
         return $amount * 0.20;
-    }elseif ($branch->country->name_ar == 'السعودية')
-    {
+    } elseif ($branch->country->name_ar == 'السعودية') {
         return $amount * 1;
-    }elseif ($branch->country->name_ar == 'البحرين')
-    {
+    } elseif ($branch->country->name_ar == 'البحرين') {
         return $amount * 10;
-    }elseif ($branch->country->name_ar == 'الكويت')
-    {
+    } elseif ($branch->country->name_ar == 'الكويت') {
         return $amount * 13;
-    }elseif ($branch->country->name_ar == 'عمان')
-    {
+    } elseif ($branch->country->name_ar == 'عمان') {
         return $amount * 10;
-    }elseif ($branch->country->name_ar == 'الامارات')
-    {
+    } elseif ($branch->country->name_ar == 'الامارات') {
         return $amount * 1.3;
-    }elseif ($branch->country->name_ar == 'اليمن')
-    {
+    } elseif ($branch->country->name_ar == 'اليمن') {
         return $amount * 0.10;
-    }else
-    {
+    } else {
         return $amount * 1;
     }
 }
@@ -912,45 +900,49 @@ function checkRestaurantPackageId($restaurant = null, $type = 'restaurant', $pac
     return false;
 }
 
-function restaurantPackageId($restaurant){
+function restaurantPackageId($restaurant)
+{
 
-    if($check = $restaurant->subscription()->orderBy('created_at' , 'desc')->first() and isset($check->subscription->package_id)) return $check->subscription->package_id;
+    if ($check = $restaurant->subscription()->orderBy('created_at', 'desc')->first() and isset($check->subscription->package_id)) return $check->subscription->package_id;
 
     return false;
 }
-function employeeGetPackageId(RestaurantEmployee $employee = null){
+function employeeGetPackageId(RestaurantEmployee $employee = null)
+{
     $employee = $employee == null ? auth('employee')->user() : $employee;
-    if(!isset($employee->id)) return false;
+    if (!isset($employee->id)) return false;
     $branch = $employee->branch()->with('subscription')->first();
-    if(isset($branch->subscription->id)) return $branch->subscription->package_id;
+    if (isset($branch->subscription->id)) return $branch->subscription->package_id;
     return false;
 }
 
 
-function isUrlActive($url , $checkFull = false , $data = []){
+function isUrlActive($url, $checkFull = false, $data = [])
+{
     $check = true;
     $path = Request::path();
-    if(count($data) > 0){
-        foreach($data as $key => $value){
-            if(!Request::has($key) or Request::get($key) != $value) $check = false;
+    if (count($data) > 0) {
+        foreach ($data as $key => $value) {
+            if (!Request::has($key) or Request::get($key) != $value) $check = false;
         }
     }
-    if(!$checkFull and (!strpos( $path , $url, 0) and $path != $url)) return false;
-    elseif($checkFull and $path != $url) return false;
+    if (!$checkFull and (!strpos($path, $url, 0) and $path != $url)) return false;
+    elseif ($checkFull and $path != $url) return false;
     return $check;
 }
 
-function defaultResturantData(Restaurant $restaurant){
+function defaultResturantData(Restaurant $restaurant)
+{
     // update data
-    
+
     $restaurant->update([
-        'logo' =>'logo.png' ,
-        
+        'logo' => 'logo.png',
+
         'status' => 'tentative',
         'menu_arrange'  => 'false',
         'product_arrange' => 'false',
         'logo' => 'logo.png',
-        'menu' =>'vertical',
+        'menu' => 'vertical',
         'description_ar' => 'نبذة عن المطعم . محتوي  يتم تغييره من خلال لوحة تحكم المطعم',
         'description_en' => 'A Brief About Restaurant Can Be Changed From Restaurant Control Panel',
         'information_ar' => ' يحتاج البالغون الى 2000 سعر حراري في المتوسط يومياً
@@ -959,11 +951,11 @@ function defaultResturantData(Restaurant $restaurant){
     ]);
     // slider
     RestaurantSlider::create([
-        'restaurant_id' => $restaurant->id ,
+        'restaurant_id' => $restaurant->id,
         'photo' => 'slider2.png'
     ]);
     RestaurantSlider::create([
-        'restaurant_id' => $restaurant->id ,
+        'restaurant_id' => $restaurant->id,
         'photo' => 'slider1.png'
     ]);
     // sensitivities
@@ -971,25 +963,26 @@ function defaultResturantData(Restaurant $restaurant){
 
     return true;
 }
-function defaultPostersAndSens($restaurant){
+function defaultPostersAndSens($restaurant)
+{
     $sent = Sensitivity::all();
-    foreach($sent as $temp):
+    foreach ($sent as $temp) :
         $data = $temp->only([
-            'name_en' , 'name_ar' , 'details_en' , 'details_ar' , 'photo'
+            'name_en', 'name_ar', 'details_en', 'details_ar', 'photo'
         ]);
-        $image = copyImage($temp->image_path , 'sensitivities' , 'uploads/sensitivities');
+        $image = copyImage($temp->image_path, 'sensitivities', 'uploads/sensitivities');
         $data['photo'] = $image;
         $data['restaurant_id'] = $restaurant->id;
         RestaurantSensitivity::create($data);
     endforeach;
 
     $posters = Poster::all();
-    foreach($posters as $poster):
-        $image = copyImage($poster->image_path , 'poster' , 'uploads/posters');
+    foreach ($posters as $poster) :
+        $image = copyImage($poster->image_path, 'poster', 'uploads/posters');
         $restaurant->posters()->create([
-            'name_en' => $poster->name_en , 
-            'name_ar' => $poster->name_ar , 
-            'poster' => $image , 
+            'name_en' => $poster->name_en,
+            'name_ar' => $poster->name_ar,
+            'poster' => $image,
         ]);
     endforeach;
 }
@@ -1000,7 +993,11 @@ function defaultPostersAndSens($restaurant){
 
 function foodics_url()
 {
-    return 'https://api.foodics.com/v5/';
+    if (isFoodicsSandbox()) :
+        return 'https://api-sandbox.foodics.com/v5/';
+    else :
+        return 'https://api.foodics.com/v5/';
+    endif;
 }
 function foodics_token($user_id = null)
 {
@@ -1009,40 +1006,44 @@ function foodics_token($user_id = null)
 
 function get_auth_code()
 {
-    $ch = curl_init('https://console-sandbox.foodics.com/authorize?client_id=9420d9c2-b5bb-4feb-8c26-72526c3e572b&state=state15535');
 
-// Execute
+    if (isFoodicsSandbox()) :
+        $ch = curl_init('https://console-sandbox.foodics.com/authorize?client_id=' . foodicsSandboxClientId . '&state=state15535');
+    else :
+        $ch = curl_init('https://console.foodics.com/authorize?client_id=94a7eeac-5881-4b19-ae6a-024debd9ac05&state=state15535');
+    endif;
+
+
+    // Execute
     curl_exec($ch);
 
-// Check if any error occurred
+    // Check if any error occurred
     if (!curl_errno($ch)) {
         $info = curl_getinfo($ch);
-//        dd($info);
+        //        dd($info);
         echo 'Took ', $info['total_time'], ' seconds to send a request to ', $info['url'], "\n";
     }
-// Close handle
+    // Close handle
     curl_close($ch);
-
 }
 
-function OAuth2($code = null , $state = null , $user_id = null)
+function OAuth2($code = null, $state = null, $user_id = null)
 {
-    if ($code != null && $state != null && $user_id != null)
-    {
+    if ($code != null && $state != null && $user_id != null) {
         $user = \App\Models\Restaurant::find($user_id);
-        if ($state = $user->foodics_status)
-        {
+        if ($state = $user->foodics_status) {
             $jsonObj = array(
                 "grant_type" => "authorization_code",
                 "code" => $code,
-                "client_id" => "94a7eeac-5881-4b19-ae6a-024debd9ac05",
-                "client_secret" => "P6LeZgtB2JLwwzxvzDeu82AMPSZrqVvH0x7rvEX7",
+                "client_id" => isFoodicsSandbox() ? foodicsSandboxClientId : "94a7eeac-5881-4b19-ae6a-024debd9ac05",
+                "client_secret" => isFoodicsSandbox() ? foodicsSandboxSecret :  "P6LeZgtB2JLwwzxvzDeu82AMPSZrqVvH0x7rvEX7",
                 "redirect_uri" => "https://easymenu.site/redirect_back"
             );
             // Make Post Fields Array
             $curl = curl_init();
+            $url = isFoodicsSandbox()  ? "https://api-sandbox.foodics.com/oauth/token" :  "https://api.foodics.com/oauth/token";
             curl_setopt_array($curl, array(
-                CURLOPT_URL => "https://api.foodics.com/oauth/token",
+                CURLOPT_URL => $url,
                 CURLOPT_RETURNTRANSFER => true,
                 CURLOPT_ENCODING => "",
                 CURLOPT_MAXREDIRS => 10,
@@ -1060,8 +1061,7 @@ function OAuth2($code = null , $state = null , $user_id = null)
             curl_close($curl);
             if ($err) {
                 echo "cURL Error #:" . $err;
-            }
-            else {
+            } else {
                 // store the token to restaurant
                 $res = array_values(json_decode($response, true));
                 $user->update([
@@ -1070,31 +1070,29 @@ function OAuth2($code = null , $state = null , $user_id = null)
                 // create_menu($user->id);
                 flash('تمت عمليه الربط بنجاح ')->success();
                 return redirect()->route('RestaurantIntegration');
-//                header( "Location: https://easymenu.site/admin/foodics_integrations" );
+                //                header( "Location: https://easymenu.site/admin/foodics_integrations" );
             }
-
-        }else{
+        } else {
             flash('حدث خطأ ما')->error();
-            header( "Location: https://easymenu.site/restaurant/integrations" );
+            header("Location: https://easymenu.site/restaurant/integrations");
         }
-    }else{
+    } else {
         flash('حدث خطأ ما')->error();
-        header( "Location: https://easymenu.site/restaurant/integrations" );
+        header("Location: https://easymenu.site/restaurant/integrations");
     }
-
 }
 
 
 function calculate_order($restaurant_id, $order)
 {
-    $basURL = foodics_url()."orders_calculator";
+    $basURL = foodics_url() . "orders_calculator";
     $headers = array(
         'Content-type: application/json',
         'Accept: application/json',
         'Authorization: Bearer ' . foodics_token($restaurant_id),
     );
     $order = json_encode($order);
-    file_put_contents(storage_path('app/order.txt') , $order);
+    file_put_contents(storage_path('app/order.txt'), $order);
     $curl = curl_init();
     curl_setopt_array($curl, array(
         CURLOPT_URL => $basURL,
@@ -1110,9 +1108,9 @@ function calculate_order($restaurant_id, $order)
     if ($err or !isset($res['total_price'])) {
         return $err;
     } else {
-        file_put_contents(storage_path('app/test.txt') , $response);
+        file_put_contents(storage_path('app/test.txt'), $response);
         $res = json_decode($response, true);
-        
+
         return $res['total_price'];
     }
 }
@@ -1445,7 +1443,7 @@ function checkTableProductDiscount($order_id, $discount_id)
     }
 }
 
-function create_foodics_order($restaurant_id, $branch_id, $products, $user, $order_type, $payment_method, $latitude = null, $longitude = null, $period = null, $day_id = null, $previous_type = null)
+function create_foodics_order($restaurant_id, $branch_id, $products, $user, $order_type, $payment_method, $latitude = null, $longitude = null, $period = null, $day_id = null, $previous_type = null, SilverOrderFoodics $foodicsOrder = null)
 {
     $basURL = foodics_url() . "orders";
     $headers = array(
@@ -1456,14 +1454,16 @@ function create_foodics_order($restaurant_id, $branch_id, $products, $user, $ord
     /**
      *  1- get customer and address
      */
+    // dd(ltrim($user->phone_number, '0') , $restaurant_id);
     $customers = array_values(json_decode(get_customer_and_address(ltrim($user->phone_number, '0'), $restaurant_id), true));
     $customer_address_id = null;
     $address = 'Address - ' . mt_rand(1000, 9999);
     $restaurant = Restaurant::find($restaurant_id);
-//    dd($customers[0]);
-    if ($customers[0] == []) {
+    //    dd($customers[0]);
+    if ($customers[0] == [] or !isset($customers[0])  or !isset($customers[0][0])) {
         // create new customer
         $customer_id = create_customer($user->phone_number, $user->phone_number, $restaurant_id);
+
         $customers = array_values(json_decode(get_customer_and_address(ltrim($user->phone_number, '0'), $restaurant_id), true));
         if ($order_type == 'delivery' || $previous_type == 'delivery') {
             if ($customers[0][0]['addresses'] == []) {
@@ -1472,6 +1472,7 @@ function create_foodics_order($restaurant_id, $branch_id, $products, $user, $ord
             }
         }
     } else {
+
         $customer_id = $customers[0][0]['id'];
         if ($order_type == 'delivery' || $previous_type == 'delivery') {
             if ($customers[0][0]['addresses'] == []) {
@@ -1572,7 +1573,7 @@ function create_foodics_order($restaurant_id, $branch_id, $products, $user, $ord
 
     $payment_methods = array_values(json_decode(payment_methods($restaurant_id), true));
     $payments = [];
-
+    // dd('test');
     if ($taxable and $taxable == 1 and ($maximum_amount != null and $maximum_amount >= $discount_value and $discount_id != null) or ($maximum_amount == null and $discount_id != null)) {
         $order_calculate = array(
             'branch_id' => $branch_id,
@@ -1598,8 +1599,10 @@ function create_foodics_order($restaurant_id, $branch_id, $products, $user, $ord
             'charges' => $charge,
         );
     }
+    // dd($order_calculate);
     $totalPrice = calculate_order($restaurant_id, $order_calculate);
-    if ($payment_methods[0] != []) {
+
+    if (isset($payment_methods[0]) and $payment_methods[0] != []) {
         foreach ($payment_methods[0] as $value) {
             if ($value['deleted_at'] == null && $value['is_active'] == true) {
                 if ($value['name'] == $payment_method) {
@@ -1629,8 +1632,8 @@ function create_foodics_order($restaurant_id, $branch_id, $products, $user, $ord
             }
         }
     }
-
-//    dd($discount_id);
+    // dd($payments);
+    //    dd($discount_id);
     if ($order_type == 'delivery') {
         if (($maximum_amount != null and $maximum_amount >= $discount_value and $discount_id != null) or ($maximum_amount == null and $discount_id != null)) {
             $order = array(
@@ -1786,16 +1789,26 @@ function create_foodics_order($restaurant_id, $branch_id, $products, $user, $ord
     $response = curl_exec($curl);
     $err = curl_error($curl);
     curl_close($curl);
-    if ($err) {
+    $res = json_decode($response, true);
+
+    if ($err or !isset($res['data']['id'])) {
+        file_put_contents(storage_path('app/create_foodics_order.json'), $response, FILE_APPEND);
         return $err;
     } else {
-        $res = array_values(json_decode($response, true));
-//        $user->silver_orders()->delete();
+
+        file_put_contents(storage_path('app/create_foodics_order_success.json'), $response, FILE_APPEND);
+
+        if (isset($res['data']['id']) and isset($foodicsOrder->id)) :
+            $foodicsOrder->update([
+                'foodics_id' => $res['data']['id'],
+                'foodics_status' => $res['data']['status']
+            ]);
+        endif;
         return $response;
     }
 }
 
-function create_foodics_table_order($restaurant_id, $branch_id, $products, $payment_method, $table_id )
+function create_foodics_table_order($restaurant_id, $branch_id, $products, $payment_method, $table_id)
 {
     $basURL = foodics_url() . "orders";
     $headers = array(
@@ -1899,7 +1912,7 @@ function create_foodics_table_order($restaurant_id, $branch_id, $products, $paym
         );
     }
     $totalPrice = calculate_order($restaurant_id, $order_calculate);
-//    $discount_amount = ($totalPrice * 15) / 100;
+    //    $discount_amount = ($totalPrice * 15) / 100;
     if ((is_array($payment_methods[0]) or is_object($payment_methods[0])) and $payment_methods[0] != []) {
         foreach ($payment_methods[0] as $value) {
             if ($value['deleted_at'] == null && $value['is_active'] == true) {
@@ -1907,7 +1920,7 @@ function create_foodics_table_order($restaurant_id, $branch_id, $products, $paym
                     $payment_method_id = $value['id'];
                     if ($taxable and $taxable == 1) {
                         $payments = array(array(
-//                        'amount' => $totalPrice - $discount_amount, // with discount
+                            //                        'amount' => $totalPrice - $discount_amount, // with discount
                             'amount' => $totalPrice,
                             'tendered' => $totalPrice,
                             'payment_method_id' => $payment_method_id,
@@ -1954,7 +1967,7 @@ function create_foodics_table_order($restaurant_id, $branch_id, $products, $paym
             'type' => 1,
             'table_id' => $table->foodics_id,
             'meta' => array(
-                 'external_number' => $order->id,
+                'external_number' => $order->id,
             ),
             'products' => $product_object,
             'payments' => $payments,
@@ -1963,7 +1976,7 @@ function create_foodics_table_order($restaurant_id, $branch_id, $products, $paym
     // dd($order);
     $order = json_encode($order);
     $curl = curl_init();
-    
+
     curl_setopt_array($curl, array(
         CURLOPT_URL => $basURL,
         CURLOPT_CUSTOMREQUEST => "POST",
@@ -1975,15 +1988,15 @@ function create_foodics_table_order($restaurant_id, $branch_id, $products, $paym
     $err = curl_error($curl);
     curl_close($curl);
     if ($err) {
-        file_put_contents(storage_path('app/create_foodics_order.txt') , $response , FILE_APPEND);
+        file_put_contents(storage_path('app/create_foodics_order.txt'), $response, FILE_APPEND);
         return $err;
     } else {
         $data = json_decode($response, true);
         $res = array_values(json_decode($response, true));
         // dd($res);
-        if(isset($data['data']['id'])) {
+        if (isset($data['data']['id'])) {
             $tableOrder->update([
-                'foodics_order_id' => $data['data']['id'] , 
+                'foodics_order_id' => $data['data']['id'],
             ]);
         }
         // file_put_contents(storage_path('app/create_foodics_order.txt') , $response , FILE_APPEND);
@@ -1991,11 +2004,12 @@ function create_foodics_table_order($restaurant_id, $branch_id, $products, $paym
     }
 }
 
-function getFoodicsOrder($id , $token){
+function getFoodicsOrder($id, $token)
+{
     $response = Http::withHeaders([
-        'Authorization' => 'Bearer ' . $token , 
-        'Content-Type' => 'application/json' , 
-    ])->get(foodics_url().'orders/' . $id);
+        'Authorization' => 'Bearer ' . $token,
+        'Content-Type' => 'application/json',
+    ])->get(foodics_url() . 'orders/' . $id);
     return $response;
 }
 
@@ -2008,10 +2022,9 @@ function getFoodicsOrder($id , $token){
 /**
  * @pay @foodics Online order
  * @pay_online_order
-*/
+ */
 function pay_online_order()
 {
-
 }
 
 function create_customer($name, $phone, $restaurant_id)
@@ -2024,7 +2037,7 @@ function create_customer($name, $phone, $restaurant_id)
     );
     $customer = array(
         'name' => $name,
-        'dial_code' => mb_substr($phone,1, 1) === "5" ? '966' : '20',
+        'dial_code' => mb_substr($phone, 1, 1) === "5" ? '966' : '20',
         'phone' => substr($phone, 1),
     );
     $customer = json_encode($customer);
@@ -2039,11 +2052,15 @@ function create_customer($name, $phone, $restaurant_id)
     $response = curl_exec($curl);
     $err = curl_error($curl);
     curl_close($curl);
+
     if ($err) {
         return $err;
     } else {
+
+
         $res = json_decode($response, true);
-        return $res['data']['id'];
+        // dd($res);
+        return isset($res['data']['id']) ? $res['data']['id'] : null;
     }
 }
 
@@ -2082,7 +2099,6 @@ function create_addresses($customer_id, $delivery_zone_id, $address, $lat, $long
         $response = array_values(json_decode($response, true));
         return $response[0]['id'];
     }
-
 }
 
 function get_customers($user_id)
@@ -2106,8 +2122,32 @@ function get_customers($user_id)
     if ($err) {
         return $err;
     } else {
-        dd($response);
-//        return $response;
+        // dd($response);
+        return $response;
+    }
+}
+function whoAmI($user_id)
+{
+    $basURL = foodics_url() . "whoami";
+    $headers = array(
+        'Content-type: application/json',
+        'Accept: application/json',
+        'Authorization: Bearer ' . foodics_token($user_id),
+    );
+    $curl = curl_init();
+    curl_setopt_array($curl, array(
+        CURLOPT_URL => $basURL,
+        CURLOPT_CUSTOMREQUEST => "GET",
+        CURLOPT_HTTPHEADER => $headers,
+    ));
+    curl_setopt($curl, CURLOPT_RETURNTRANSFER, true);
+    $response = curl_exec($curl);
+    $err = curl_error($curl);
+    curl_close($curl);
+    if ($err) {
+        return $err;
+    } else {
+        return json_decode($response, true);
     }
 }
 
@@ -2129,9 +2169,14 @@ function get_customer_and_address($phone = 966580491109, $user_id = 276)
     $response = curl_exec($curl);
     $err = curl_error($curl);
     curl_close($curl);
+
     if ($err) {
+        file_put_contents(storage_path('app/foodics_custom_address.json'), $err, FILE_APPEND);
+
         return $err;
     } else {
+        file_put_contents(storage_path('app/foodics_custom_address.json'), $response, FILE_APPEND);
+
         return $response;
     }
 }
@@ -2157,7 +2202,7 @@ function delivery_zones($user_id)
     if ($err) {
         return $err;
     } else {
-//        dd($response);
+        //        dd($response);
         return $response;
     }
 }
@@ -2169,7 +2214,7 @@ function delivery_zones($user_id)
 // get branches from foodics
 function get_branches_with_taxes($user_id = null)
 {
-    $basURL = foodics_url()."branches?include=users,tags,tax_group,delivery_zones,discounts,timed_events,promotions";
+    $basURL = foodics_url() . "branches?include=users,tags,tax_group,delivery_zones,discounts,timed_events,promotions";
     $headers = array(
         'Content-type: application/json',
         'Accept: application/json',
@@ -2188,14 +2233,14 @@ function get_branches_with_taxes($user_id = null)
     if ($err) {
         return $err;
     } else {
-//        dd($response);
+        //        dd($response);
         return $response;
     }
 }
 // get the foodics settings
 function foodics_settings($user_id = null)
 {
-    $basURL = foodics_url()."settings";
+    $basURL = foodics_url() . "settings";
     $headers = array(
         'Content-type: application/json',
         'Accept: application/json',
@@ -2220,7 +2265,7 @@ function foodics_settings($user_id = null)
 // get foodics taxes
 function tax_groups($user_id = null)
 {
-    $basURL = foodics_url()."tax_groups?include=taxes";
+    $basURL = foodics_url() . "tax_groups?include=taxes";
     $headers = array(
         'Content-type: application/json',
         'Accept: application/json',
@@ -2239,7 +2284,7 @@ function tax_groups($user_id = null)
     if ($err) {
         return $err;
     } else {
-//        dd($response);
+        //        dd($response);
         return $response;
     }
 }
@@ -2248,6 +2293,7 @@ function tax_groups($user_id = null)
 function create_branches($restaurant_id, $data, $foodics_branch)
 {
     $restaurant = \App\Models\Restaurant::find($restaurant_id);
+
     foreach ($data[0] as $key => $value) {
         if ($value['deleted_at'] == null && $value['receives_online_orders'] == true) {
             $branch = \App\Models\RestaurantFoodicsBranch::where('restaurant_id', $restaurant_id)
@@ -2271,7 +2317,6 @@ function create_branches($restaurant_id, $data, $foodics_branch)
                     'longitude' => $value['longitude'],
                     'latitude' => $value['latitude'],
                 ]);
-
             }
             $tax_groups = array_values(json_decode(tax_groups($restaurant_id), true));
             if (count($tax_groups) > 0) {
@@ -2309,9 +2354,9 @@ function create_branches($restaurant_id, $data, $foodics_branch)
 }
 
 // get sections from foodics that have tables
-function get_sections($user_id =null)
+function get_sections($user_id = null)
 {
-    $basURL = foodics_url()."sections?include=tables,branch";
+    $basURL = foodics_url() . "sections?include=tables,branch";
     $headers = array(
         'Content-type: application/json',
         'Accept: application/json',
@@ -2334,9 +2379,33 @@ function get_sections($user_id =null)
     }
 }
 // get categories from foodics
-function get_categories($user_id=null , $page=1)
+function get_categories($user_id = null, $page = 1)
 {
-    $basURL = foodics_url().'categories?page='.$page;
+    $basURL = foodics_url() . 'categories?page=' . $page;
+    $headers = array(
+        'Content-type: application/json',
+        'Accept: application/json',
+        'Authorization: Bearer ' . foodics_token($user_id),
+    );
+    $curl = curl_init();
+    curl_setopt_array($curl, array(
+        CURLOPT_URL => $basURL,
+        CURLOPT_CUSTOMREQUEST => "GET",
+        CURLOPT_HTTPHEADER => $headers,
+    ));
+    curl_setopt($curl, CURLOPT_RETURNTRANSFER, true);
+    $response = curl_exec($curl);
+    $err = curl_error($curl);
+    curl_close($curl);
+    if ($err) {
+        return $err;
+    } else {
+        return $response;
+    }
+}
+function getFoodicsCategory($user_id = null, $categoryId = 0, $page = 1)
+{
+    $basURL = foodics_url() . 'categories/' . $categoryId . '?page=' . $page;
     $headers = array(
         'Content-type: application/json',
         'Accept: application/json',
@@ -2361,7 +2430,7 @@ function get_categories($user_id=null , $page=1)
 // get charges from foodics
 function get_charges($user_id = null)
 {
-    $basURL = foodics_url()."charges?include=tax_group";
+    $basURL = foodics_url() . "charges?include=tax_group";
     $headers = array(
         'Content-type: application/json',
         'Accept: application/json',
@@ -2380,14 +2449,14 @@ function get_charges($user_id = null)
     if ($err) {
         return $err;
     } else {
-//        dd($response);
+        //        dd($response);
         return $response;
     }
 }
 // create restaurant payment method for foodics payments
-function payment_methods($user_id =null)
+function payment_methods($user_id = null)
 {
-    $basURL = foodics_url()."payment_methods";
+    $basURL = foodics_url() . "payment_methods";
     $headers = array(
         'Content-type: application/json',
         'Accept: application/json',
@@ -2410,24 +2479,22 @@ function payment_methods($user_id =null)
     }
 }
 // create tables
-function create_tables($restaurant_id , $data ,$foodics_branch){
+function create_tables($restaurant_id, $data, $foodics_branch)
+{
     $restaurant = \App\Models\Restaurant::find($restaurant_id);
     foreach ($data[0] as $sKey => $sValue) {
         if (count($sValue['tables']) > 0) {
-            if($sValue['deleted_at'] == null)
-            {
+            if ($sValue['deleted_at'] == null) {
                 foreach ($sValue['tables'] as $tKey => $tValue) {
-                    if($tValue['deleted_at'] == null )
-                    {
+                    if ($tValue['deleted_at'] == null) {
                         $branch = \App\Models\RestaurantFoodicsBranch::where('foodics_id', $sValue['branch']['id'])
-                            ->where('branch_id' , $foodics_branch)
+                            ->where('branch_id', $foodics_branch)
                             ->first();
                         // check table
-                        if($branch)
-                        {
+                        if ($branch) {
                             $check_table = \App\Models\Table::where('foodics_id', $tValue['id'])
-                                ->where('branch_id' , $foodics_branch)
-                                ->where('foodics_branch_id' , $branch->id)
+                                ->where('branch_id', $foodics_branch)
+                                ->where('foodics_branch_id', $branch->id)
                                 ->first();
                             if ($check_table == null) {
                                 // create new table
@@ -2443,30 +2510,24 @@ function create_tables($restaurant_id , $data ,$foodics_branch){
                             }
                         }
                     }
-
                 }
             }
-
         }
     }
 }
-function create_payment_method($user_id , $name)
+function create_payment_method($user_id, $name)
 {
-    $basURL = foodics_url()."payment_methods";
+    $basURL = foodics_url() . "payment_methods";
     $headers = array(
         'Content-type: application/json',
         'Accept: application/json',
         'Authorization: Bearer ' . foodics_token($user_id),
     );
     $payment_methods = array_values(json_decode(payment_methods($user_id), true));
-    if(count($payment_methods) > 0)
-    {
-        if (is_array($payment_methods[0]) || is_object($payment_methods[0]))
-        {
-            foreach ($payment_methods[0] as $key => $value)
-            {
-                if ($value['name'] == $name && $value['deleted_at'] == null && $value['is_active'] == true)
-                {
+    if (count($payment_methods) > 0) {
+        if (is_array($payment_methods[0]) || is_object($payment_methods[0])) {
+            foreach ($payment_methods[0] as $key => $value) {
+                if ($value['name'] == $name && $value['deleted_at'] == null && $value['is_active'] == true) {
                     return null;
                 }
             }
@@ -2497,7 +2558,6 @@ function create_payment_method($user_id , $name)
     } else {
         return $response;
     }
-
 }
 // create foodics categories
 function create_categories($restaurant_id, $categories, $foodics_branch)
@@ -2526,7 +2586,7 @@ function create_categories($restaurant_id, $categories, $foodics_branch)
                             'end_at' => null,
                             'time' => 'false',
                         ]);
-                    }else{
+                    } else {
                         $check_cat->update([
                             'name_ar' => $value['name_localized'] == null ? $value['name'] : $value['name_localized'],
                             'name_en' => $value['name'] == null ? $value['name_localized'] : $value['name'],
@@ -2546,8 +2606,45 @@ function create_categories($restaurant_id, $categories, $foodics_branch)
     }
 }
 
+function updateCategories($restaurant_id, $value, $foodics_branch)
+{
+    // check if category  are found or not
+    $check_cat = \App\Models\MenuCategory::where('foodics_id', $value['id'])
+        ->where('branch_id', $foodics_branch)
+        ->first();
+    if ($value['deleted_at'] != null) {
+        if (isset($check_cat->id))  $check_cat->delete();
+        return 'delete';
+    } elseif ($check_cat == null) {
+        // create new category
+        $cat = \App\Models\MenuCategory::create([
+            'restaurant_id' => $restaurant_id,
+            'branch_id' => $foodics_branch,
+            'name_ar' => $value['name_localized'] == null ? $value['name'] : $value['name_localized'],
+            'name_en' => $value['name'] == null ? $value['name_localized'] : $value['name'],
+            'photo' => null,
+            'foodics_image' => $value['image'],
+            'foodics_id' => $value['id'],
+            'active' => 'true',
+            'arrange' => null,
+            'start_at' => null,
+            'end_at' => null,
+            'time' => 'false',
+        ]);
+        return 'create';
+    } else {
+        $check_cat->update([
+            'name_ar' => $value['name_localized'] == null ? $value['name'] : $value['name_localized'],
+            'name_en' => $value['name'] == null ? $value['name_localized'] : $value['name'],
+            'foodics_image' => $value['image'],
+            // 'active' => $value['active'] ? 'true' : 'false' , 
+        ]);
+        return 'edit';
+    }
+}
+
 // create foodics charges
-function create_charges($restaurant_id , $data)
+function create_charges($restaurant_id, $data)
 {
     $restaurant = \App\Models\Restaurant::find($restaurant_id);
     $restaurant->update([
@@ -2557,8 +2654,7 @@ function create_charges($restaurant_id , $data)
         $restaurant->update([
             'delivery_price' => 0
         ]);
-    }
-    else {
+    } else {
         foreach ($data[0] as $value) {
             if ($value['deleted_at'] == null && $value['is_auto_applied'] == true) {
                 $restaurant->update([
@@ -2571,11 +2667,11 @@ function create_charges($restaurant_id , $data)
 }
 // create menu from foodics
 // get foodics products and modifiers
-function get_products_with_modifiers($user_id , $page=1)
+function get_products_with_modifiers($user_id, $page = 1)
 {
-    $basURL = foodics_url().'products?page='.$page.'&&include=category,modifiers.options,tax_group,branches,modifiers';
+    $basURL = foodics_url() . 'products?page=' . $page . '&&include=category,modifiers.options,tax_group,branches,modifiers';
     // /products?include=modifiers.options
-//    dd(($basURL));
+    //    dd(($basURL));
     $headers = array(
         'Content-type: application/json',
         'Accept: application/json',
@@ -2600,7 +2696,7 @@ function get_products_with_modifiers($user_id , $page=1)
 // get foodics modifiers and options
 function get_modifiers_options($user_id)
 {
-    $basURL = foodics_url()."modifiers?include=options,options.tax_group,options.branches";
+    $basURL = foodics_url() . "modifiers?include=options,options.tax_group,options.branches";
     $headers = array(
         'Content-type: application/json',
         'Accept: application/json',
@@ -2622,7 +2718,138 @@ function get_modifiers_options($user_id)
         return $response;
     }
 }
+function getFoodicsModifier($user_id, $id)
+{
+    $basURL = foodics_url() . "modifiers/" . $id;
+    $headers = array(
+        'Content-type: application/json',
+        'Accept: application/json',
+        'Authorization: Bearer ' . foodics_token($user_id),
+    );
+    $curl = curl_init();
+    curl_setopt_array($curl, array(
+        CURLOPT_URL => $basURL,
+        CURLOPT_CUSTOMREQUEST => "GET",
+        CURLOPT_HTTPHEADER => $headers,
+    ));
+    curl_setopt($curl, CURLOPT_RETURNTRANSFER, true);
+    $response = curl_exec($curl);
+    $err = curl_error($curl);
+    curl_close($curl);
+    if ($err) {
+        return $err;
+    } else {
+        return $response;
+    }
+}
+function getFoodicsProduct(Restaurant $restaurant, $id)
+{
+    $headers = array(
+        'Content-type: application/json',
+        'Accept: application/json',
+        'Authorization: Bearer ' . foodics_token($restaurant->id),
+    );
+    $basURL = foodics_url() . 'products/'  . $id;
+    $curl = curl_init();
+    curl_setopt_array($curl, array(
+        CURLOPT_URL => $basURL,
+        CURLOPT_CUSTOMREQUEST => "GET",
+        CURLOPT_HTTPHEADER => $headers,
+    ));
+    curl_setopt($curl, CURLOPT_RETURNTRANSFER, true);
+    $response = curl_exec($curl);
+    $err = curl_error($curl);
+    curl_close($curl);
+    if ($err) {
+        return $err;
+    } else {
+        return $response;
+    }
+}
+function getFoodicsProducts(Restaurant $restaurant)
+{
+    $headers = array(
+        'Content-type: application/json',
+        'Accept: application/json',
+        'Authorization: Bearer ' . foodics_token($restaurant->id),
+    );
+    $basURL = foodics_url() . 'products';
+    $curl = curl_init();
+    curl_setopt_array($curl, array(
+        CURLOPT_URL => $basURL,
+        CURLOPT_CUSTOMREQUEST => "GET",
+        CURLOPT_HTTPHEADER => $headers,
+    ));
+    curl_setopt($curl, CURLOPT_RETURNTRANSFER, true);
+    $response = curl_exec($curl);
+    $err = curl_error($curl);
+    curl_close($curl);
+    if ($err) {
+        return $err;
+    } else {
+        return $response;
+    }
+}
+function updateFoodicsModifier($v, $restaurant_id, $foodics_branch)
+{
+    $check_modifier = \App\Models\Modifier::where('foodics_id', $v['id'])
+        // ->where('branch_id', $foodics_branch)
+        ->first();
+    if ($v['deleted_at'] != null) {
+        $check_modifier->delete();
+        return 'delete';
+    }
+    if ($check_modifier == null) {
+        $modifier = \App\Models\Modifier::create([
+            'name_ar' => $v['name_localized'] == null ? $v['name'] : $v['name_localized'],
+            'name_en' => $v['name'] == null ? $v['name_localized'] : $v['name'],
+            'restaurant_id' => $restaurant_id,
+            'is_ready' => 'true',
+            'foodics_id' => $v['id']
+        ]);
+    } else {
+        $check_modifier->update([
+            'name_ar' => $v['name_localized'] == null ? $v['name'] : $v['name_localized'],
+            'name_en' => $v['name'] == null ? $v['name_localized'] : $v['name'],
+        ]);
+        $modifier = $check_modifier;
+    }
 
+    if (count($v['options']) > 0) {
+        foreach ($v['options'] as $op_key => $op_value) {
+            // check if this option are found in our app or not
+            if (true) {
+                $check_option = \App\Models\Option::where('foodics_id', $op_value['id'])->first();
+                if ($op_value['deleted_at'] != null) {
+                    if (isset($check_option->id)) $check_option->delete();
+                } elseif ($check_option == null) {
+                    $option = \App\Models\Option::create([
+                        'name_ar' => $op_value['name_localized'] == null ? $op_value['name'] : $op_value['name_localized'],
+                        'name_en' => $op_value['name'] == null ? $op_value['name_localized'] : $op_value['name'],
+                        'modifier_id' => $modifier->id,
+                        'restaurant_id' => $restaurant_id,
+                        'is_active' => $op_value['is_active'],
+                        'price' => $op_value['price'],
+                        'calories' => $op_value['calories'],
+                        'foodics_id' => $op_value['id'],
+                    ]);
+                } else {
+                    $check_option->update([
+                        'name_ar' => $op_value['name_localized'] == null ? $op_value['name'] : $op_value['name_localized'],
+                        'name_en' => $op_value['name'] == null ? $op_value['name_localized'] : $op_value['name'],
+
+                        'is_active' => $op_value['is_active'],
+                        'price' => $op_value['price'],
+                        'calories' => $op_value['calories'],
+                    ]);
+                    $option = $check_option;
+                }
+            }
+        }
+    }
+
+    return 'edit';
+}
 function productAndModifierCreation($value, $restaurant_id, $foodics_branch)
 {
     if ($value['deleted_at'] == null && $value['is_active'] == true && $value['is_stock_product'] == false) {
@@ -2647,7 +2874,7 @@ function productAndModifierCreation($value, $restaurant_id, $foodics_branch)
                     'description_en' => $value['description'],
                     'price' => $value['price'],
                     'calories' => $value['calories'],
-                    'active' => 'true',
+                    'active' => $value['is_active'],
                     'time' => 'false',
                     'foodics_image' => $value['image'],
                     'foodics_id' => $value['id'],
@@ -2709,11 +2936,18 @@ function productAndModifierCreation($value, $restaurant_id, $foodics_branch)
                     }
                 }
             }
-        }else{
-            $check_product->update([
+        } else {
+            $category = \App\Models\MenuCategory::where('foodics_id', $value['category']['id'])
+                ->where('branch_id', $foodics_branch)
+                ->first();
+            return $check_product->update([
                 'name_ar' => $value['name_localized'] == null ? $value['name'] : $value['name_localized'],
                 'name_en' => $value['name'] == null ? $value['name_localized'] : $value['name'],
+                'menu_category_id' => isset($category->id) ? $category->id : $check_product->menu_category_id,
+                'description_ar' => $value['description_localized'],
+                'description_en' => $value['description'],
                 'price' => $value['price'],
+                'active' => $value['is_active'] ? 'true' : 'false',
                 'calories' => $value['calories'],
                 'foodics_image' => $value['image'],
             ]);
@@ -2737,10 +2971,9 @@ function productAndModifierCreation($value, $restaurant_id, $foodics_branch)
                         if ($v['pivot'] != null) {
                             // create new product modifier
                             $check_product_modifier = \App\Models\ProductModifier::whereProductId($check_product->id)
-                                ->where('modifier_id' , $modifier->id)
+                                ->where('modifier_id', $modifier->id)
                                 ->first();
-                            if ($check_product_modifier == null)
-                            {
+                            if ($check_product_modifier == null) {
                                 \App\Models\ProductModifier::create([
                                     'product_id'  => $check_product->id,
                                     'modifier_id' => $modifier->id
@@ -2767,11 +3000,10 @@ function productAndModifierCreation($value, $restaurant_id, $foodics_branch)
                                         $option = $check_option;
                                     }
                                     $check_product_option = \App\Models\ProductOption::whereProductId($check_product->id)
-                                        ->where('modifier_id' , $modifier->id)
-                                        ->where('option_id' , $option->id)
+                                        ->where('modifier_id', $modifier->id)
+                                        ->where('option_id', $option->id)
                                         ->first();
-                                    if ($check_product_option == null)
-                                    {
+                                    if ($check_product_option == null) {
                                         \App\Models\ProductOption::create([
                                             'option_id' => $option->id,
                                             'product_id' => $check_product->id,
@@ -2789,36 +3021,209 @@ function productAndModifierCreation($value, $restaurant_id, $foodics_branch)
         }
     }
 }
+function productAndModifierCreationAndDelete($value, $restaurant_id, $foodics_branch)
+{
+    if ($value['is_stock_product'] == false) {
+        //  check if product found or not
+        $check_product = \App\Models\Product::where('foodics_id', $value['id'])
+            ->where('branch_id', $foodics_branch)
+            ->first();
+        if ($value['deleted_at'] != null) {
+
+            if (isset($check_product->id)) $check_product->delete();
+            return 'delete';
+        } elseif ($check_product == null) {
+            // create new  product
+            $category = \App\Models\MenuCategory::where('foodics_id', $value['category']['id'])
+                ->where('branch_id', $foodics_branch)
+                ->first();
+
+            if ($category) {
+                // create new Product
+                $product = \App\Models\Product::create([
+                    'restaurant_id' => $restaurant_id,
+                    'branch_id' => $foodics_branch,
+                    'menu_category_id' => $category->id,
+                    'name_ar' => $value['name_localized'] == null ? $value['name'] : $value['name_localized'],
+                    'name_en' => $value['name'] == null ? $value['name_localized'] : $value['name'],
+                    'description_ar' => $value['description_localized'],
+                    'description_en' => $value['description'],
+                    'price' => $value['price'],
+                    'calories' => $value['calories'],
+                    'active' => $value['is_active'],
+                    'time' => 'false',
+                    'foodics_image' => $value['image'],
+                    'foodics_id' => $value['id'],
+                ]);
+                // create product modifiers
+                if ($value['modifiers'] != []) {
+                    foreach ($value['modifiers'] as $k => $v) {
+                        if ($v['is_ready'] == true) {
+                            // check if modifier exists before
+                            $check_modifier = \App\Models\Modifier::where('foodics_id', $v['id'])->first();
+                            if ($check_modifier == null) {
+                                $modifier = \App\Models\Modifier::create([
+                                    'name_ar' => $v['name_localized'] == null ? $v['name'] : $v['name_localized'],
+                                    'name_en' => $v['name'] == null ? $v['name_localized'] : $v['name'],
+                                    'restaurant_id' => $restaurant_id,
+                                    'is_ready' => 'true',
+                                    'foodics_id' => $v['id']
+                                ]);
+                            } else {
+                                $modifier = $check_modifier;
+                            }
+                            if ($v['pivot'] != null) {
+                                // create new product modifier
+                                \App\Models\ProductModifier::create([
+                                    'product_id' => $product->id,
+                                    'modifier_id' => $modifier->id
+                                ]);
+                            }
+                            if (count($v['options']) > 0) {
+                                foreach ($v['options'] as $op_key => $op_value) {
+                                    // check if this option are found in our app or not
+                                    if ($op_value['is_active'] == true) {
+                                        $check_option = \App\Models\Option::where('foodics_id', $op_value['id'])->first();
+                                        if ($check_option == null) {
+                                            $option = \App\Models\Option::create([
+                                                'name_ar' => $op_value['name_localized'] == null ? $op_value['name'] : $op_value['name_localized'],
+                                                'name_en' => $op_value['name'] == null ? $op_value['name_localized'] : $op_value['name'],
+                                                'modifier_id' => $modifier->id,
+                                                'restaurant_id' => $restaurant_id,
+                                                'is_active' => 'true',
+                                                'price' => $op_value['price'],
+                                                'calories' => $op_value['calories'],
+                                                'foodics_id' => $op_value['id'],
+                                            ]);
+                                        } else {
+                                            $option = $check_option;
+                                        }
+                                        \App\Models\ProductOption::create([
+                                            'option_id' => $option->id,
+                                            'product_id' => $product->id,
+                                            'modifier_id' => $modifier->id,
+                                            'max' => $v['pivot']['maximum_options'],
+                                            'min' => $v['pivot']['minimum_options'],
+                                        ]);
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+                return 'create';
+            }
+        } else { // edit
+            $category = \App\Models\MenuCategory::where('foodics_id', $value['category']['id'])
+                ->where('branch_id', $foodics_branch)
+                ->first();
+            $check_product->update([
+                'name_ar' => $value['name_localized'] == null ? $value['name'] : $value['name_localized'],
+                'name_en' => $value['name'] == null ? $value['name_localized'] : $value['name'],
+                'menu_category_id' => isset($category->id) ? $category->id : $check_product->menu_category_id,
+                'description_ar' => $value['description_localized'],
+                'description_en' => $value['description'],
+                'price' => $value['price'],
+                'active' => $value['is_active'] ? 'true' : 'false',
+                'calories' => $value['calories'],
+                'foodics_image' => $value['image'],
+            ]);
+            // create product modifiers
+            if ($value['modifiers'] != []) {
+                foreach ($value['modifiers'] as $k => $v) {
+                    if ($v['is_ready'] == true) {
+                        // check if modifier exists before
+                        $check_modifier = \App\Models\Modifier::where('foodics_id', $v['id'])->first();
+                        if ($check_modifier == null) {
+                            $modifier = \App\Models\Modifier::create([
+                                'name_ar' => $v['name_localized'] == null ? $v['name'] : $v['name_localized'],
+                                'name_en' => $v['name'] == null ? $v['name_localized'] : $v['name'],
+                                'restaurant_id' => $restaurant_id,
+                                'is_ready' => 'true',
+                                'foodics_id' => $v['id']
+                            ]);
+                        } else {
+                            $modifier = $check_modifier;
+                        }
+                        if ($v['pivot'] != null) {
+                            // create new product modifier
+                            $check_product_modifier = \App\Models\ProductModifier::whereProductId($check_product->id)
+                                ->where('modifier_id', $modifier->id)
+                                ->first();
+                            if ($check_product_modifier == null) {
+                                \App\Models\ProductModifier::create([
+                                    'product_id'  => $check_product->id,
+                                    'modifier_id' => $modifier->id
+                                ]);
+                            }
+                        }
+                        if (count($v['options']) > 0) {
+                            foreach ($v['options'] as $op_key => $op_value) {
+                                // check if this option are found in our app or not
+                                if ($op_value['is_active'] == true) {
+                                    $check_option = \App\Models\Option::where('foodics_id', $op_value['id'])->first();
+                                    if ($check_option == null) {
+                                        $option = \App\Models\Option::create([
+                                            'name_ar' => $op_value['name_localized'] == null ? $op_value['name'] : $op_value['name_localized'],
+                                            'name_en' => $op_value['name'] == null ? $op_value['name_localized'] : $op_value['name'],
+                                            'modifier_id' => $modifier->id,
+                                            'restaurant_id' => $restaurant_id,
+                                            'is_active' => 'true',
+                                            'price' => $op_value['price'],
+                                            'calories' => $op_value['calories'],
+                                            'foodics_id' => $op_value['id'],
+                                        ]);
+                                    } else {
+                                        $option = $check_option;
+                                    }
+                                    $check_product_option = \App\Models\ProductOption::whereProductId($check_product->id)
+                                        ->where('modifier_id', $modifier->id)
+                                        ->where('option_id', $option->id)
+                                        ->first();
+                                    if ($check_product_option == null) {
+                                        \App\Models\ProductOption::create([
+                                            'option_id' => $option->id,
+                                            'product_id' => $check_product->id,
+                                            'modifier_id' => $modifier->id,
+                                            'max' => $v['pivot']['maximum_options'],
+                                            'min' => $v['pivot']['minimum_options'],
+                                        ]);
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            return 'edit';
+        }
+    }
+}
 // create foodics products and modifiers and options
-function create_product_and_modifiers($restaurant_id ,$products_modifiers , $foodics_branch)
+function create_product_and_modifiers($restaurant_id, $products_modifiers, $foodics_branch)
 {
     if ($products_modifiers[0] != []) {
-        if (is_array($products_modifiers[0]) || is_object($products_modifiers[0]))
-        {
+        if (is_array($products_modifiers[0]) || is_object($products_modifiers[0])) {
             foreach ($products_modifiers[0] as $key => $value) {
                 if ($value['branches'] != null) {
                     foreach ($value['branches'] as $bkey => $bvalue) {
                         //$bvalue['pivot']['is_active'] == true && $bvalue['pivot']['is_in_stock'] == true  &&
                         if ($bvalue['receives_online_orders'] = true) {
-                            productAndModifierCreation($value , $restaurant_id , $foodics_branch);
+                            productAndModifierCreation($value, $restaurant_id, $foodics_branch);
                         }
                     }
-                }
-                else {
-                    productAndModifierCreation($value , $restaurant_id , $foodics_branch);
+                } else {
+                    productAndModifierCreation($value, $restaurant_id, $foodics_branch);
                 }
             }
         }
     }
-    if ( isset($products_modifiers[1])) {
-        if ($products_modifiers[1]['next'] != null)
-        {
-            $products_modifiers = array_values(json_decode(get_products_with_modifiers($restaurant_id , substr($products_modifiers[1]['next'], strpos($products_modifiers[1]['next'], "=") + 1)), true));
-            create_product_and_modifiers($restaurant_id , $products_modifiers , $foodics_branch);
+    if (isset($products_modifiers[1])) {
+        if ($products_modifiers[1]['next'] != null) {
+            $products_modifiers = array_values(json_decode(get_products_with_modifiers($restaurant_id, substr($products_modifiers[1]['next'], strpos($products_modifiers[1]['next'], "=") + 1)), true));
+            create_product_and_modifiers($restaurant_id, $products_modifiers, $foodics_branch);
         }
     }
-
-
 }
 
 function get_discounts($user_id)
@@ -2842,7 +3247,7 @@ function get_discounts($user_id)
     if ($err) {
         return $err;
     } else {
-//        dd($response);
+        //        dd($response);
         return $response;
     }
 }
@@ -2852,22 +3257,33 @@ function create_menu($restaurant_id = null)
 {
     $user = \App\Models\Restaurant::find($restaurant_id);
     if ($user->foodics_status == 'true' && $user->foodics_access_token != null && strlen($user->foodics_access_token) > 1200) {
-        $foodics_branch = \App\Models\Branch::whereRestaurantId($restaurant_id)
+        $whoAmI = whoAmI($restaurant_id);
+        if (isset($whoAmI['data']) and isset($whoAmI['data']['business'])) {
+            $user->update([
+                'foodics_referance' => $whoAmI['data']['business']['reference']
+            ]);
+        }
+        if (!$foodics_branch = \App\Models\Branch::whereRestaurantId($restaurant_id)
             ->where('foodics_status', 'true')
-            ->first();
+            ->first()) :
+            $branch = $user->branches()->where('main', 'true')->orderBy('id', 'desc')->firstOrFail();
+            $branch->update([
+                'foodics_status' => 'true'
+            ]);
+        endif;
         // delete all restaurants branches and tables and categories and products and modifiers and options
         \App\Models\Table::whereRestaurantId($restaurant_id)
             ->where('branch_id', $foodics_branch->id)
             ->delete();
-//        \App\Models\Modifier::whereRestaurantId($restaurant_id)->delete();
-//        \App\Models\Option::whereRestaurantId($restaurant_id)->delete();
-//        \App\Models\Product::whereRestaurantId($restaurant_id)
-//            ->where('branch_id', $foodics_branch->id)
-//            ->delete();
-        // \App\Models\Branch::whereRestaurantId($restaurant_id)->where('main' , 'false')->delete();
-//        \App\Models\MenuCategory::whereRestaurantId($restaurant_id)
-//            ->where('branch_id', $foodics_branch->id)
-//            ->delete();
+        \App\Models\Modifier::whereRestaurantId($restaurant_id)->delete();
+        \App\Models\Option::whereRestaurantId($restaurant_id)->delete();
+        \App\Models\Product::whereRestaurantId($restaurant_id)
+            ->where('branch_id', $foodics_branch->id)
+            ->delete();
+        \App\Models\Branch::whereRestaurantId($restaurant_id)->where('main', 'false')->delete();
+        \App\Models\MenuCategory::whereRestaurantId($restaurant_id)
+            ->where('branch_id', $foodics_branch->id)
+            ->delete();
         \App\Models\RestaurantFoodicsBranch::whereRestaurantId($restaurant_id)
             ->where('branch_id', $foodics_branch->id)
             ->delete();
@@ -2922,36 +3338,29 @@ function create_menu($restaurant_id = null)
 }
 
 
-function create_discounts($restaurant_id , $data , $branch_id)
+function create_discounts($restaurant_id, $data, $branch_id)
 {
     if ($data[0] != []) {
         if (is_array($data[0]) || is_object($data[0])) {
             foreach ($data[0] as $key => $value) {
                 // create discounts
-                if ($value['deleted_at'] == null)
-                {
+                if ($value['deleted_at'] == null) {
                     $branches = [];
-                    if ($value['branches'] != [])
-                    {
-                        foreach ($value['branches'] as $branch)
-                        {
-                            array_push($branches , $branch['id']);
+                    if ($value['branches'] != []) {
+                        foreach ($value['branches'] as $branch) {
+                            array_push($branches, $branch['id']);
                         }
                     }
                     $categories = [];
-                    if ($value['categories'] != [])
-                    {
-                        foreach ($value['categories'] as $category)
-                        {
-                            array_push($categories , $category['id']);
+                    if ($value['categories'] != []) {
+                        foreach ($value['categories'] as $category) {
+                            array_push($categories, $category['id']);
                         }
                     }
                     $products = [];
-                    if ($value['products'] != [])
-                    {
-                        foreach ($value['products'] as $product)
-                        {
-                            array_push($products , $product['id']);
+                    if ($value['products'] != []) {
+                        foreach ($value['products'] as $product) {
+                            array_push($products, $product['id']);
                         }
                     }
                     $discount = \App\Models\FoodicsDiscount::create([
@@ -2979,65 +3388,68 @@ function create_discounts($restaurant_id , $data , $branch_id)
         if ($data[1]['next'] != null) {
             $get_discounts = array_values(json_decode(get_discounts($restaurant_id, substr($data[1]['next'], strpos($data[1]['next'], "=") + 1)), true));
             if (count($get_discounts) > 0) {
-                create_discounts($restaurant_id, $get_discounts  , $branch_id);
+                create_discounts($restaurant_id, $get_discounts, $branch_id);
             }
         }
     }
 }
 
 
- function updateCurrency(){
+function updateCurrency()
+{
     $currecyCode = Country::whereNotNull('currency_code')->get()->pluck('currency_code')->toArray();
 
-    $dataCurrency = implode('%2C' , $currecyCode);
+    $dataCurrency = implode('%2C', $currecyCode);
     $curl = curl_init();
     curl_setopt_array($curl, array(
-    CURLOPT_URL => "https://api.apilayer.com/exchangerates_data/latest?symbols=".$dataCurrency."&base=SAR",
-    CURLOPT_HTTPHEADER => array(
-        "Content-Type: text/plain",
-        "apikey: JwbjW97j0ViX6LYdjzFbvhNsYEudSOMw"
-    ),
-    CURLOPT_RETURNTRANSFER => true,
-    CURLOPT_ENCODING => "",
-    CURLOPT_MAXREDIRS => 10,
-    CURLOPT_TIMEOUT => 0,
-    CURLOPT_FOLLOWLOCATION => true,
-    CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
-    CURLOPT_CUSTOMREQUEST => "GET"
+        CURLOPT_URL => "https://api.apilayer.com/exchangerates_data/latest?symbols=" . $dataCurrency . "&base=SAR",
+        CURLOPT_HTTPHEADER => array(
+            "Content-Type: text/plain",
+            "apikey: JwbjW97j0ViX6LYdjzFbvhNsYEudSOMw"
+        ),
+        CURLOPT_RETURNTRANSFER => true,
+        CURLOPT_ENCODING => "",
+        CURLOPT_MAXREDIRS => 10,
+        CURLOPT_TIMEOUT => 0,
+        CURLOPT_FOLLOWLOCATION => true,
+        CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
+        CURLOPT_CUSTOMREQUEST => "GET"
     ));
 
     $response = curl_exec($curl);
 
     curl_close($curl);
-    $data =  json_decode($response , true);
-    if(isset($data['rates']) and is_array($data['rates']) and count($data['rates'])):
-        foreach($data['rates'] as $key => $value):
-            if($country = Country::where('currency_code' , $key)->first()):
+    $data =  json_decode($response, true);
+    if (isset($data['rates']) and is_array($data['rates']) and count($data['rates'])) :
+        foreach ($data['rates'] as $key => $value) :
+            if ($country = Country::where('currency_code', $key)->first()) :
                 $country->update([
                     'riyal_value' => $value
                 ]);
             endif;
         endforeach;
     endif;
- }
+}
 
- 
- function checkWordsCount($string , $count , $isTag = false){
-    $words  = $isTag == true ? explode(' ' , strip_tags($string)) : explode(' ' , $string);
-    if(count($words) > $count) return true;
+
+function checkWordsCount($string, $count, $isTag = false)
+{
+    $words  = $isTag == true ? explode(' ', strip_tags($string)) : explode(' ', $string);
+    if (count($words) > $count) return true;
     return false;
 }
-function getShortDescription($string , $start , $last =  0, $isTag = false){
-    $words  = $isTag == true ? explode(' ' , strip_tags($string)) : explode(' ' , $string);
+function getShortDescription($string, $start, $last =  0, $isTag = false)
+{
+    $words  = $isTag == true ? explode(' ', strip_tags($string)) : explode(' ', $string);
     $results = '';
-    foreach($words as $index => $temp):
-        if($index >= $start and ($last == 0 or $index <= $last)) $results .= $temp . ' ';
+    foreach ($words as $index => $temp) :
+        if ($index >= $start and ($last == 0 or $index <= $last)) $results .= $temp . ' ';
     endforeach;
 
     return $results;
 }
 
-function tap_payment($token , $amount , $user_name , $email , $country_code , $phone , $callBackUrl , $order_id)
+function tap_payment($token, $amount, $user_name, $email, $country_code, $phone, $callBackUrl, $order_id)
 {
     $basURL = "https://api.tap.company/v2/charges";
     $headers = array(
@@ -3061,7 +3473,7 @@ function tap_payment($token , $amount , $user_name , $email , $country_code , $p
             "id" => "src_card"
         ),
         "redirect" => array(
-            "url" => route($callBackUrl , [$order_id , $token]),
+            "url" => route($callBackUrl, [$order_id, $token]),
         )
     );
     $order = json_encode($data);
@@ -3084,25 +3496,26 @@ function tap_payment($token , $amount , $user_name , $email , $country_code , $p
     }
 }
 
-function express_payment($merchant_key,$password,$amount,$success_url , $orderId , $user_name = null, $email = null)
+function express_payment($merchant_key, $password, $amount, $success_url, $orderId, $user_name = null, $email = null)
 {
     $basURL = "https://pay.expresspay.sa/api/v1/session";
     $headers = array(
         'Content-type: application/json',
         'Accept: application/json',
     );
-    $order_id = 'order-'.mt_rand(1000, 9999);
+    $order_id = 'order-' . mt_rand(1000, 9999);
     $hash = array(
         "number" => $order_id,
-        "amount" =>$amount,
+        "amount" => $amount,
         "currency" => "SAR",
         "description" => "pay order value",
-        'password' => $password);
+        'password' => $password
+    );
     $hash = implode($hash);
     $hash = strtoupper($hash);
     $hash = md5($hash);
     $hash = sha1($hash);
-//    dd($hash);
+    //    dd($hash);
     $data = array(
         "merchant_key" => $merchant_key,
         "operation" => "purchase",
@@ -3111,12 +3524,12 @@ function express_payment($merchant_key,$password,$amount,$success_url , $orderId
         ),
         "order" => array(
             "number" => $order_id,
-            "amount" =>$amount,
+            "amount" => $amount,
             "currency" => "SAR",
             "description" => "pay order value",
         ),
         "cancel_url" => route('express_error'),
-        "success_url" => route($success_url , $orderId),
+        "success_url" => route($success_url, $orderId),
         "customer" => array(
             "name" => $user_name == null ? "John Doe" : $user_name,
             "email" => $email == null ? "test@email.com" : $email,
@@ -3154,26 +3567,38 @@ function express_payment($merchant_key,$password,$amount,$success_url , $orderId
 }
 
 
-function checkUrlAdsType(){
-            
-    if(auth('restaurant')->check()):
-        if(isUrlActive('restaurant/home' , true)):
-            return 'home' ;
-        elseif(isUrlActive('restaurant/profile' , true)):
-            return 'profile' ;
-        elseif(isUrlActive('services_store' , false) or isUrlActive('integration' , false)):
-            return 'service' ;
-        elseif(isUrlActive('reservation' , false)):
-            return 'reservation' ;
-            
-        elseif(isUrlActive('product' , false)):
-            return 'product' ;
-        elseif(isUrlActive('menu_categor' , false) or isUrlActive('sub_categor' , false)):
-            return 'menu_category' ;
-        else:
+function checkUrlAdsType()
+{
+
+    if (auth('restaurant')->check()) :
+        if (isUrlActive('restaurant/home', true)) :
+            return 'home';
+        elseif (isUrlActive('restaurant/profile', true)) :
+            return 'profile';
+        elseif (isUrlActive('services_store', false) or isUrlActive('integration', false)) :
+            return 'service';
+        elseif (isUrlActive('reservation', false)) :
+            return 'reservation';
+
+        elseif (isUrlActive('product', false)) :
+            return 'product';
+        elseif (isUrlActive('menu_categor', false) or isUrlActive('sub_categor', false)) :
+            return 'menu_category';
+        else :
             return 'all';
         endif;
     endif;
-    
+
     return '';
+}
+
+
+function deleteImageFile($path)
+{
+    if (!empty($path) and Storage::disk('public_storage')->exists($path)) :
+        Storage::disk('public_storage')->delete($path);
+        return true;
+    endif;
+
+    return false;
 }

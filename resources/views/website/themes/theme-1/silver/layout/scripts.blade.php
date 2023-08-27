@@ -7,7 +7,7 @@
 <script type="text/javascript" src="{{asset('scripts/global.js')}}"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jscroll/2.4.1/jquery.jscroll.min.js"></script>
     <script type="text/javascript">
-        $('ul.pagination').hide();
+        // $('ul.pagination').hide();
 		var checkMobile = function(){
 			if(/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)) return true ;
 			return false;
@@ -71,15 +71,7 @@
 		var maxWidth = 0;
         $(function() {
 			
-            $('.scrolling-pagination').jscroll({
-                autoTrigger: true,
-                padding: 0,
-                nextSelector: '.pagination li.active + li a',
-                contentSelector: 'div.scrolling-pagination',
-                callback: function() {
-                    $('ul.pagination').remove();
-                }
-            });
+          
 			// when click on categories
 			$('.my-categories .itemCat > a').on('click' , function(){
 				var thisTag = $(this);

@@ -102,7 +102,9 @@ p {
   pointer-events: none !important;
   backface-visibility: visible !important;
 }
-
+.clearfix{
+  clear: both !important;
+}
 .content-box {
   background-color: #FFFFFF;
   border-radius: 15px;
@@ -527,7 +529,7 @@ p {
   left: 0px;
   margin: auto;
   right: 0px;
-  max-width:440px;
+  /* max-width:440px; */
   z-index: 98;
   min-height: 40px;
   text-align: left;
@@ -6724,7 +6726,7 @@ height: 25px;
   /* height: 400px; */
   position: relative;
   margin-top:40%;
-  overflow-y: auto;;
+  overflow:hidden !important;
 }
 .menu.ad-menu .content .image-preview{
   width: 100%;
@@ -6754,3 +6756,105 @@ height: 25px;
   margin: 0 5px;
 }
 
+
+#menu-profile  .item.bg-theme{
+  background-color: var(--rest-background-color) !important;
+}
+
+.cart-content .order-d {
+  position: relative;
+
+}
+.cart-content .order-d > div.row:first-child{
+  margin-left: 25px;
+}
+.cart-content .order-d .delete-order{
+  position: absolute;
+  display: flex;
+  justify-content: center;
+  vertical-align: center;
+  background: transparent !important;
+  top: 0;
+  left: 0;
+  width: 43px;
+  height: 100%;
+  border-radius: 5px;
+}
+.cart-content .order-d .delete-order span{
+  display: block;
+  margin: auto;
+}
+.cart-content .order-d .delete-order span i{
+  color : red;
+  font-size: 1.2rem;
+}
+
+/* website cart count */
+.page-content {
+  position: relative;
+}
+.page-content > .cart-count {
+  position: fixed;
+  bottom:0px; 
+  left: 0; 
+  width: 100%;
+  height: 50px;
+  z-index: 9;
+}
+.page-content > .cart-count .cart-btn{
+  display: block;
+  background-color:#f7b538;
+  max-width: 600px;
+  height: 100%;
+  text-align: center;
+  margin: auto;
+}
+.page-content > .cart-count .cart-btn,
+.page-content > .cart-count .cart-btn span{
+  
+  font-size: 16px;
+    font-weight: 600 !important;
+    padding-top: 10px;
+    color: #000;
+}
+
+.page-content > .cart-count.hide{
+  display: none;
+}
+@media (max-width:1000px) {
+  .page-content > .cart-count .cart-btn{
+    max-width: 1000px;
+  }
+}
+.product-title{
+  position: relative;
+}
+.product-btns{
+  position: absolute;
+  left: 18px;
+  bottom: -3px;;
+}
+body[dir=ltr] .product-btns{
+  left: unset;
+  right: 18px;
+}
+.copy-url , 
+.product-btns .share-product{
+  font-size: large;
+  cursor: pointer;
+}
+.product-btns .share-product{
+  margin:0 10px;
+}
+.success-copy-url{
+  display: none;
+  position: absolute;
+    left: 13px;
+    bottom: -34px;
+    font-size: 12px;
+    background-color: #6f6f6f;
+    padding: 0px 8px;
+    border-radius: 4px;
+    color: #FFF;
+}
+/* end website cart count */

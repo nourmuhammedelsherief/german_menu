@@ -24,6 +24,7 @@ use App\Models\RestaurantUser;
 use App\Models\ServiceSubscription;
 use App\Models\Setting;
 use App\Models\SilverOrder;
+use App\Models\SilverOrderFoodics;
 use App\Models\SilverOrderOption;
 use App\Models\Table;
 use App\Models\TableOrder;
@@ -36,7 +37,7 @@ use Illuminate\Support\Facades\Auth;
 
 class OrderController extends Controller
 {
-    public function add_to_cart(Request $request)
+    public function add_to_cart(Request $request , $rtype = 'phone')
     {
         $request->headers->set('Accept', 'application/json');
         $user = Auth::guard('web')->user();
@@ -45,30 +46,30 @@ class OrderController extends Controller
         $this->checkTheme($restaurant);
 
         $branch = $meal->branch;
-        if (!auth('web')->check()):
+        if (!auth('web')->check()) :
             session()->put('last_order', $request->all());
             return response([
                 'status' => 2,
                 'login_link' => route('showUserLogin', $restaurant->id),
             ]);
-        else:
+        else :
             session()->forget('last_order');
         endif;
-        SilverOrder::with('product')
-            ->whereHas('product', function ($q) use ($branch) {
-                $q->where('branch_id', $branch->id);
-            })
-            ->where('status', 'sent')
-            ->where('user_id', $user->id)
-            ->delete();
+        // SilverOrder::with('product')
+        //     ->whereHas('product', function ($q) use ($branch) {
+        //         $q->where('branch_id', $branch->id);
+        //     })
+        //     ->where('status', 'sent')
+        //     ->where('user_id', $user->id)
+        //     ->delete();
         $totalCount = 'total' . $meal->id;
         if (!auth('web')->check()) {
             return redirect(route('showUserLogin' . $restaurant->id));
         }
-        
+
         $checkOrderService = ServiceSubscription::whereRestaurantId($restaurant->id)
-            ->whereIn('service_id', [ 9, 10])
-            ->whereIn('status', ['active' , 'tentative'])
+            ->whereIn('service_id', [9, 10])
+            ->whereIn('status', ['active', 'tentative'])
             ->first();
         if ($branch->foodics_status == 'true' or $checkOrderService == null) {
 
@@ -79,9 +80,9 @@ class OrderController extends Controller
                         ->where('min', '>=', 1)
                         ->first();
                     if ($check_required_options) {
-                        
+
                         return response([
-                            'status' => false , 
+                            'status' => false,
                             'message' => 'الإضافات مطلوبة'
                         ]);
                     }
@@ -92,10 +93,10 @@ class OrderController extends Controller
                         $modifier = $option->modifier;
                         $option_count++;
                         if ($modifier->choose == 'one' and $option_count > 1) {
-                            
+
                             return response([
-                                'status' => false , 
-                                'message' =>'لا يمكنك طلب أكثر من أضافة'
+                                'status' => false,
+                                'message' => 'لا يمكنك طلب أكثر من أضافة'
                             ]);
                         }
                     }
@@ -106,6 +107,8 @@ class OrderController extends Controller
                     'product_id' => $meal->id,
                     'notes' => $request->notes == null ? null : $request->notes,
                     'product_count' => $request->$totalCount,
+                    'product_name_ar' => $meal->name_ar,
+                    'product_name_en' => $meal->name_en,
                 ]);
                 // create options
                 $options_price = 0;
@@ -133,10 +136,10 @@ class OrderController extends Controller
                 }
                 if (ProductModifier::whereProductId($meal->id)->count() > 1 && ProductModifier::whereProductId($meal->id)->count() > $mod_count) {
                     $order->delete();
-                                                
+
                     return response([
-                        'status' => false , 
-                        'message' =>'الإضافات مطلوبة'
+                        'status' => false,
+                        'message' => 'الإضافات مطلوبة'
                     ]);
                 }
                 $order_price = ($meal->price * $request->$totalName) + $options_price;
@@ -149,25 +152,24 @@ class OrderController extends Controller
                     'order_price' => $order_price,
                     'tax' => $tax,
                     'total_price' => $totalPrice,
-                    'product_price' => $meal->price , 
+                    'product_price' => $meal->price,
                 ]);
-
             } else {
-                if (!empty($request->size_price_id)):
+                if (!empty($request->size_price_id)) :
                     if (empty($request->options)) {
                         // check if the options is required
                         $check_required_options = ProductOption::whereProductId($meal->id)
                             ->where('min', '>=', 1)
                             ->first();
                         if ($check_required_options) {
-                       
+
                             return response([
-                                'status' => false , 
-                                'message' =>'الإضافات مطلوبة'
+                                'status' => false,
+                                'message' => 'الإضافات مطلوبة'
                             ]);
                         }
                     }
-                    foreach ($request->size_price_id as $sizeId):
+                    foreach ($request->size_price_id as $sizeId) :
                         // create order
                         $size = ProductSize::whereProductId($meal->id)
                             ->where('id', $sizeId)
@@ -178,6 +180,10 @@ class OrderController extends Controller
                             'notes' => $request->notes == null ? null : $request->notes,
                             'product_size_id' => $size->id,
                             'product_count' => $request->$totalCount,
+                            'product_name_ar' => $meal->name_ar,
+                            'product_name_en' => $meal->name_en,
+                            'size_name_ar' => $size->name_ar , 
+                            'size_name_en' => $size->name_en , 
                         ]);
                         // create options
                         $options_price = 0;
@@ -205,10 +211,10 @@ class OrderController extends Controller
                         }
                         if (ProductModifier::whereProductId($meal->id)->count() > 1 && ProductModifier::whereProductId($meal->id)->count() > $mod_count) {
                             $order->delete();
-                            
+
                             return response([
-                                'status' => false , 
-                                'message' =>'الإضافات مطلوبة'
+                                'status' => false,
+                                'message' => 'الإضافات مطلوبة'
                             ]);
                         }
                         $order_price = ($size->price * $request->$totalName) + $options_price;
@@ -221,24 +227,22 @@ class OrderController extends Controller
                             'order_price' => $order_price,
                             'tax' => $tax,
                             'total_price' => $totalPrice,
-                            'product_price' => $size->price , 
+                            'product_price' => $size->price,
                         ]);
                     endforeach;
                 endif;
-
             }
-        } 
-        elseif ($checkOrderService and $branch->foodics_status == 'false') {
+        } elseif ($checkOrderService and $branch->foodics_status == 'false') {
             if (empty($request->options)) {
                 // check if the options is required
                 $check_required_options = ProductOption::whereProductId($meal->id)
                     ->where('min', '>=', 1)
                     ->first();
                 if ($check_required_options) {
-                    
+
                     return response([
-                        'status' => false , 
-                        'message' =>'الإضافات مطلوبة'
+                        'status' => false,
+                        'message' => 'الإضافات مطلوبة'
                     ]);
                 }
             } else {
@@ -248,10 +252,10 @@ class OrderController extends Controller
                     $option = Option::find($options_id);
                     $modifier = $option->modifier;
                     $option_count++;
-                    if ($modifier->choose == 'one' and $option_count > 1 and (isset($oldOption[$option->modifier_id]) and count($oldOption[$option->modifier_id]) > 0 )) {
+                    if ($modifier->choose == 'one' and $option_count > 1 and (isset($oldOption[$option->modifier_id]) and count($oldOption[$option->modifier_id]) > 0)) {
                         return response([
-                            'status' => false , 
-                            'message' =>'لا يمكنك طلب أكثر من أضافة'
+                            'status' => false,
+                            'message' => 'لا يمكنك طلب أكثر من أضافة'
                         ]);
                     }
                     $oldOption[$option->modifier_id][] = $option->id;
@@ -276,14 +280,14 @@ class OrderController extends Controller
             }
             if ((empty($request->size_id) or count($request->size_id) == 0)) {
                 // create order
-                $loyaltySubscription =  ServiceSubscription::whereRestaurantId($restaurant->id)->whereHas('service' , function($query){
-                    $query->where('id' , 11);
-                   })
-                    ->whereIn('status' , ['active' , 'tentative'])
+                $loyaltySubscription =  ServiceSubscription::whereRestaurantId($restaurant->id)->whereHas('service', function ($query) {
+                    $query->where('id', 11);
+                })
+                    ->whereIn('status', ['active', 'tentative'])
                     ->first();
-                if(  $restaurant->enable_loyalty_point == 'true' and isset($loyaltySubscription->id)){
+                if ($restaurant->enable_loyalty_point == 'true' and isset($loyaltySubscription->id)) {
                     $points = $meal->loyalty_points;
-                }else{
+                } else {
                     $points = null;
                 }
                 $item = OrderItem::create([
@@ -291,7 +295,7 @@ class OrderController extends Controller
                     'product_id' => $meal->id,
                     'product_count' => $request->$totalCount,
                     'price' => $meal->price,
-                    'loyalty_points' => $points , 
+                    'loyalty_points' => $points,
                 ]);
                 // create options
                 $options_price = 0;
@@ -319,32 +323,32 @@ class OrderController extends Controller
                         'order_price' => $order_price,
                         'tax' => $tax,
                         'total_price' => $totalPrice,
-                        'product_price' => $meal->price , 
+                        'product_price' => $meal->price,
                     ]);
                 } else {
                     $order->update([
                         'order_price' => ($order_price + $checkOrder->order_price),
                         'tax' => ($tax + $checkOrder->tax),
                         'total_price' => ($totalPrice + $checkOrder->total_price),
-                        'product_price' => $meal->price , 
+                        'product_price' => $meal->price,
                     ]);
                 }
             } else {
 
-                foreach ($request->size_price_id as $sizeId):
+                foreach ($request->size_price_id as $sizeId) :
                     // create order
                     $size = ProductSize::whereProductId($meal->id)
                         ->where('id', $sizeId)
                         ->firstOrFail();
                     // create order
-                    $loyaltySubscription =  ServiceSubscription::whereRestaurantId($restaurant->id)->whereHas('service' , function($query){
-                        $query->where('id' , 11);
-                       })
-                        ->whereIn('status' , ['active' , 'tentative'])
+                    $loyaltySubscription =  ServiceSubscription::whereRestaurantId($restaurant->id)->whereHas('service', function ($query) {
+                        $query->where('id', 11);
+                    })
+                        ->whereIn('status', ['active', 'tentative'])
                         ->first();
-                    if(  $restaurant->enable_loyalty_point == 'true' and isset($loyaltySubscription->id)){
+                    if ($restaurant->enable_loyalty_point == 'true' and isset($loyaltySubscription->id)) {
                         $points = $meal->loyalty_points;
-                    }else{
+                    } else {
                         $points = null;
                     }
                     $item = OrderItem::create([
@@ -381,14 +385,14 @@ class OrderController extends Controller
                             'order_price' => $order_price,
                             'tax' => $tax,
                             'total_price' => $totalPrice,
-                            'product_price' => $size->price , 
+                            'product_price' => $size->price,
                         ]);
                     } else {
                         $order->update([
                             'order_price' => ($order_price + $checkOrder->order_price),
                             'tax' => ($tax + $checkOrder->tax),
                             'total_price' => ($totalPrice + $checkOrder->total_price),
-                            'product_price' => $meal->price , 
+                            'product_price' => $meal->price,
                         ]);
                     }
                 endforeach; // end size
@@ -398,7 +402,7 @@ class OrderController extends Controller
         $user->update([
             'city_id' => $meal->branch->city->id,
         ]);
-        
+
         // check restaurant user
         $checkRestaurantUser = RestaurantUser::whereRestaurantId($restaurant->id)
             ->where('user_id', $user->id)
@@ -411,14 +415,14 @@ class OrderController extends Controller
             ]);
         }
         $branch = $meal->branch;
-        if ($branch->foodics_status == 'true' || $checkOrderService == null):
+        if ($branch->foodics_status == 'true' || $checkOrderService == null) :
             $cartCount = SilverOrder::with('product')
                 ->whereHas('product', function ($q) use ($branch) {
                     $q->where('branch_id', $branch->id);
                 })
-                ->whereUserId(\Illuminate\Support\Facades\Auth::guard('web')->user()->id)
+                ->whereUserId(\Illuminate\Support\Facades\Auth::guard('web')->user()->id)->where('status', 'in_cart')
                 ->count();
-        elseif ($checkOrderService and $branch->foodics_status == 'false'):
+        elseif ($checkOrderService and $branch->foodics_status == 'false') :
 
             $cartCount = OrderItem::with('product', 'order')
                 ->whereHas('product', function ($q) use ($branch) {
@@ -431,23 +435,24 @@ class OrderController extends Controller
         endif;
 
 
-        if ($request->wantsJson()):
-            if (!isset($cartCount) and empty($cartCount)):
+        if ($request->wantsJson()) :
+            if (!isset($cartCount) and empty($cartCount)) :
                 $cartCount = 0;
             endif;
-            if(session()->has('redirect_to')):
+            if (session()->has('redirect_to')) :
                 $url = session('redirect_to');
                 session()->forget('redirect_to');
-            else:
-                $url = route('sliverHome' , $restaurant->name_barcode);
+            else :
+                $url = route('sliverHome', $restaurant->name_barcode);
             endif;
             $message = session('come_from_login') ? trans('messages.login_success') : trans('messages.saved_cart_success');
 
             return response([
                 'status' => true,
-                'message' => $message , 
-                'redirect_to' => $url,  
-                'msg' => trans('messages.login_success') ,
+                'message' => $message,
+                'redirect_to' => $url,
+                'type' => $rtype , 
+                'msg' => trans('messages.login_success'),
                 'data' => [
                     'cart_count' => $cartCount,
                 ],
@@ -456,10 +461,10 @@ class OrderController extends Controller
         endif;
 
         session()->flash('addToCart', true);
-        if (isset($branch->id)):
-            if ($branch->main == 'true'):
+        if (isset($branch->id)) :
+            if ($branch->main == 'true') :
                 return redirect(route('sliverHome', [$branch->restaurant->name_barcode, $meal->menu_category_id]));
-            else:
+            else :
                 return redirect()->route('sliverHomeBranch', [$restaurant->name_barcode, $branch->name_barcode, $meal->menu_category_id]);
             endif;
         endif;
@@ -486,7 +491,7 @@ class OrderController extends Controller
             ->where('status', 'in_cart')
             ->whereUserId($user->id)
             ->get();
-            // return $orders;
+        // return $orders;
         $restaurant = $branch->restaurant;
         $this->checkTheme($restaurant);
         return view('website.' . session('theme_path') . 'silver.accessories.cart', compact('user', 'orders', 'branch', 'restaurant'));
@@ -563,36 +568,38 @@ class OrderController extends Controller
     public function FoodicsOrder(Request $request, $id)
     {
         $branch = Branch::findOrFail($id);
+
         $this->validate($request, [
             'branch_id' => 'required',
             'order_type' => 'required',
             'payment_method' => 'required',
             'online_type' => 'sometimes',
-            'discount_name' => 'sometimes',
+            'discount_name' => 'nullable|string',
             'previous_order_type' => 'required_if:order_type,previous',
             'period_id' => 'required_if:order_type,previous',
             'day_id' => 'required_if:order_type,previous',
         ]);
-        if (($request->order_type == 'delivery' && $request->latitude == null && $request->longitude == null) || ($request->previous_order_type == 'delivery' && $request->latitude == null && $request->longitude == null)) {
-            flash('يجب تحديد موقعك ')->error();
-            return redirect()->back();
-        }
+
+        // if (($request->order_type == 'delivery' && $request->latitude == null && $request->longitude == null) || ($request->previous_order_type == 'delivery' && $request->latitude == null && $request->longitude == null)) {
+        //     flash('يجب تحديد موقعك ')->error();
+        //     return redirect()->back();
+        // }
         $user = $request->user();
         $branch_id = RestaurantFoodicsBranch::findOrFail($request->branch_id)->foodics_id;
         $branch_foodics = RestaurantFoodicsBranch::findOrFail($request->branch_id);
-        if ($branch->takeaway_distance != null) {
-            $distance = distanceBetweenTowPlaces($request->latitude, $request->longitude, $branch_foodics->latitude, $branch_foodics->longitude);
-            if ($branch->takeaway_distance <= $distance) {
-                flash('عفوا أنت خارج نطاق الخدمات')->error();
-                return redirect()->back();
-            }
-        } elseif ($branch->delivery_distance != null) {
-            $distance = distanceBetweenTowPlaces($request->latitude, $request->longitude, $branch_foodics->latitude, $branch_foodics->longitude);
-            if ($branch->delivery_distance <= $distance) {
-                flash('عفوا أنت خارج نطاق الخدمات')->error();
-                return redirect()->back();
-            }
-        }
+        // if ($branch->takeaway_distance != null) {
+        //     $distance = distanceBetweenTowPlaces($request->latitude, $request->longitude, $branch_foodics->latitude, $branch_foodics->longitude);
+        //     if ($branch->takeaway_distance <= $distance) {
+        //         flash('عفوا أنت خارج نطاق الخدمات')->error();
+        //         return redirect()->back();
+        //     }
+        // } elseif ($branch->delivery_distance != null) {
+        //     $distance = distanceBetweenTowPlaces($request->latitude, $request->longitude, $branch_foodics->latitude, $branch_foodics->longitude);
+        //     if ($branch->delivery_distance <= $distance) {
+        //         flash('عفوا أنت خارج نطاق الخدمات')->error();
+        //         return redirect()->back();
+        //     }
+        // }
         $orders = SilverOrder::with('product')
             ->whereHas('product', function ($q) use ($branch) {
                 $q->where('branch_id', $branch->id);
@@ -600,10 +607,11 @@ class OrderController extends Controller
             ->where('status', 'in_cart')
             ->where('user_id', $user->id)
             ->get();
-        $count = $branch->restaurant->foodics_orders + 1;
-        $branch->restaurant->update([
-            'foodics_orders' => $count,
-        ]);
+        if ($orders->count() == 0) :
+            return redirect()->back();
+        endif;
+
+
         $latitude = $request->latitude;
         $longitude = $request->longitude;
         if ($request->payment_method == 'EasyMenu-online') {
@@ -616,10 +624,13 @@ class OrderController extends Controller
                         checkProductDiscount($order->id, $discount->id);
                     }
                 }
+                $foodicsBranch = RestaurantFoodicsBranch::findOrFail($request->branch_id);
                 $order->update([
                     'payment_type' => $request->payment_method == 'EasyMenu-online' ? 'online' : 'cash',
                     'order_type' => $request->order_type,
-                    'foodics_branch_id' => RestaurantFoodicsBranch::findOrFail($request->branch_id)->id,
+                    'foodics_branch_id' =>$foodicsBranch->id,
+                    'foodics_branch_name_ar' => $foodicsBranch->name_ar , 
+                    'foodics_branch_name_en' => $foodicsBranch->name_en , 
                     'previous_order_type' => $request->previous_order_type,
                     'period_id' => $request->period_id,
                     'day_id' => $request->day_id,
@@ -667,7 +678,7 @@ class OrderController extends Controller
                     'longitude' => $longitude,
                 ]);
                 $amount = number_format((float)$amount, 2, '.', '');
-                return redirect()->to(express_payment($branch->merchant_key,$branch->express_password, $amount,'foodics_express_payment_status', $order->id,$user->name, $user->email));
+                return redirect()->to(express_payment($branch->merchant_key, $branch->express_password, $amount, 'foodics_express_payment_status', $order->id, $user->name, $user->email));
             } elseif ($branch->payment_company == 'myFatoourah') {
                 if ($request->online_type == 'visa') {
                     $charge = 2;
@@ -729,11 +740,31 @@ class OrderController extends Controller
                 }
             }
         }
+        $foodicsOrder = SilverOrderFoodics::create([
+            'user_id' => $user->id,
+            'restaurant_id' => $branch->restaurant->id,
+        ]);
+
+        $period = null;
+        $day_id = null;
+        $previous_type = null;
+        if ($request->period_id and $request->day_id and $request->previous_order_type) {
+            $period = RestaurantOrderPeriod::find($request->period_id)->start_at;
+            $day_id = $request->day_id;
+            $previous_type = $request->previous_order_type;
+        }
+
+        create_foodics_order($branch->restaurant->id, $branch_id, $orders, $user, $request->order_type, $request->payment_method, $latitude, $longitude, $period, $day_id, $previous_type, $foodicsOrder);
+        $foodicsBranch = RestaurantFoodicsBranch::findOrFail($request->branch_id);
         foreach ($orders as $order) {
+            
             $order->update([
                 'payment_type' => $request->payment_method == 'EasyMenu-online' ? 'online' : 'cash',
+                'order_id' => $foodicsOrder->id,
                 'order_type' => $request->order_type,
-                'foodics_branch_id' => RestaurantFoodicsBranch::findOrFail($request->branch_id)->id,
+                'foodics_branch_id' =>$foodicsBranch->id,
+                'foodics_branch_name_ar' => $foodicsBranch->name_ar , 
+                'foodics_branch_name_en' => $foodicsBranch->name_en , 
                 'status' => 'sent',
                 'previous_order_type' => $request->previous_order_type,
                 'period_id' => $request->period_id,
@@ -748,16 +779,11 @@ class OrderController extends Controller
                 }
             }
         }
-        $period = null;
-        $day_id = null;
-        $previous_type = null;
-        if ($request->period_id and $request->day_id and $request->previous_order_type) {
-            $period = RestaurantOrderPeriod::find($request->period_id)->start_at;
-            $day_id = $request->day_id;
-            $previous_type = $request->previous_order_type;
-        }
-        create_foodics_order($branch->restaurant->id, $branch_id, $orders, $user, $request->order_type, $request->payment_method, $latitude, $longitude, $period, $day_id, $previous_type);
-        return redirect()->route('cart_details', $branch->id);
+        $count = $branch->restaurant->foodics_orders + 1;
+        $branch->restaurant->update([
+            'foodics_orders' => $count,
+        ]);
+        return redirect()->route('silverfoodicsOrderDetails', $foodicsOrder->id);
     }
 
     public function cart_details($id)
@@ -775,11 +801,59 @@ class OrderController extends Controller
             ->get();
         return view('website.' . session('theme_path') . 'silver.foodics_order', compact('restaurant', 'branch', 'orders'));
     }
+    public function foodicsOrderDetails($id)
+    {
+        $order = SilverOrderFoodics::with('details.product.branch')->whereHas('details')->findOrFail($id);
+        // return $order;
+        $branch = $order->details[0]->product->branch;
+        $foodicsBranch  = $order->details[0]->foodics_branch;
+        $restaurant = $branch->restaurant;
+        $this->checkTheme($restaurant);
+        $user = auth()->guard('web')->user();
+        $orders = [$order];
+        return view('website.' . session('theme_path') . 'silver.accessories.foodics_order', compact('restaurant', 'branch', 'orders', 'order', 'foodicsBranch'));
+    }
+    public function foodicsLastOrderDetails(Branch $branch)
+    {
+        $order = SilverOrderFoodics::with('details.product.branch')->whereHas('details', function ($query) use ($branch) {
+            $query->whereHas('product', function ($q) use ($branch) {
+                $q->where('branch_id', $branch->id);
+            });
+        })->orderBy('id', 'desc')->first();
+        // return $order;
+        $branch = $order->details[0]->product->branch;
+        $foodicsBranch  = $order->details[0]->foodics_branch;
+        $restaurant = $branch->restaurant;
+        $this->checkTheme($restaurant);
+        $user = auth()->guard('web')->user();
+        $orders = [$order];
+        return view('website.' . session('theme_path') . 'silver.accessories.foodics_order', compact('restaurant', 'branch', 'orders', 'order', 'foodicsBranch'));
+    }
+    public function foodicsMyOrderDetails(Branch $branch)
+    {
+        if (!auth('web')->check()) {
+            abort(401);
+        }
+        $user = auth('web')->user();
+        $restaurant = $branch->restaurant;
+        $orders = SilverOrderFoodics::where('restaurant_id', $restaurant->id)->where('user_id', $user->id)->with(['details' => function ($query) {
+            $query->with('product', 'foodics_branch');
+        }])->whereHas('details')->orderBy('created_at', 'desc')->get();
+        // return $order;
+
+        $this->checkTheme($restaurant);
+        $user = auth()->guard('web')->user();
+        // return $orders;
+        return view('website.' . session('theme_path') . 'silver.accessories.my_orders', compact('restaurant', 'orders', 'branch'));
+    }
 
     public function emptySilverCart()
     {
         $user = Auth::guard('web')->user();
-        $user->silver_orders()->delete();
+        $user->silver_orders()->whereNotNull('order_id')->update([
+            'status' => 'complete',
+        ]);
+        $user->silver_orders()->whereNull('order_id')->delete();
         return redirect()->back();
     }
 
@@ -798,12 +872,12 @@ class OrderController extends Controller
             if ($order->seller_code_id == null) {
                 $code_discount = ($order->order_price * $seller_code->discount_percentage) / 100;
                 $order->update([
-//                    'order_price' => $order->order_price - $code_discount,
+                    //                    'order_price' => $order->order_price - $code_discount,
                     'total_price' => $order->total_price - $code_discount,
                     'seller_code_id' => $seller_code->id,
                     'discount_value' => $code_discount,
                     'order_price' => $order->order_price - $code_discount,
-                    
+
                 ]);
                 flash(trans('messages.seller_code_worked'))->success();
                 return redirect()->back();
@@ -955,10 +1029,10 @@ class OrderController extends Controller
         $order = Order::findOrFail($id);
         $order_setting = RestaurantOrderSetting::whereRestaurantId($order->restaurant_id)
             ->where('branch_id', $order->branch_id)
-            ->whereIn('order_type', ['easymenu' , 'whatsapp'])
+            ->whereIn('order_type', ['easymenu', 'whatsapp'])
             ->first();
         $distance = distanceBetweenTowPlaces($lat, $long, $order->branch->latitude, $order->branch->longitude);
-        switch ($type){
+        switch ($type) {
             case "delivery":
                 $allowed_distance = $order_setting->distance;
                 break;
@@ -981,28 +1055,29 @@ class OrderController extends Controller
         }
     }
 
-    public function foodics_show_position($id, $lat, $long, $type)
+    public function foodics_show_position($id, $foodicsBranchId, $lat, $long, $type)
     {
+        $foodicsBranch = RestaurantFoodicsBranch::findOrFail($foodicsBranchId);
         $branch = Branch::findOrFail($id);
         $allowed = $type == 'takeaway' ? $branch->takeaway_distance : $branch->delivery_distance;
-        $distance = distanceBetweenTowPlaces($lat, $long, $branch->latitude, $branch->longitude);
-        if ($allowed >= $distance) {
+        $distance = distanceBetweenTowPlaces($lat, $long, $foodicsBranch->latitude, $foodicsBranch->longitude);
+        if (!empty($foodicsBranch->latitude) and !empty($foodicsBranch->longitude) and $allowed >= $distance) {
             $message = 'انت داخل نطاق الطلبات';
             return response()->json(array('success' => true, 'data' => $message, 'status' => true));
         } else {
             $message = 'عفوأ أنت خارج نطاق الخدمات';
-            return response()->json(array('success' => true, 'data' => $message, 'status' => false));
+            return response()->json(array('success' => true, 'data' => $message, 'status' => false, 'distance' => $distance, 'allowed' => $allowed));
         }
     }
-    public function get_order_payment_types($id , $type)
+    public function get_order_payment_types($id, $type)
     {
         $order = Order::findOrFail($id);
         $restaurant = $order->restaurant;
         $order_setting = RestaurantOrderSetting::whereRestaurantId($order->restaurant_id)
             ->where('branch_id', $order->branch_id)
-            ->whereIn('order_type', ['easymenu' , 'whatsapp'])
+            ->whereIn('order_type', ['easymenu', 'whatsapp'])
             ->first();
-        switch ($type){
+        switch ($type) {
             case "takeaway":
                 $payment_method = $order_setting->takeaway_payment;
                 break;
@@ -1017,20 +1092,19 @@ class OrderController extends Controller
         }
         $isLoyaltyPoint = 'false';
         $loyaltyBalance = 0;
-        $loyaltySubscription =  \App\Models\ServiceSubscription::whereRestaurantId($restaurant->id)->whereHas('service' , function($query){
-            $query->where('id' , 11);
-           })
-            ->whereIn('status' , ['active' , 'tentative'])
+        $loyaltySubscription =  \App\Models\ServiceSubscription::whereRestaurantId($restaurant->id)->whereHas('service', function ($query) {
+            $query->where('id', 11);
+        })
+            ->whereIn('status', ['active', 'tentative'])
             ->first();
-        if(  $restaurant->enable_loyalty_point == 'true' and $restaurant->enable_loyalty_point_paymet_method == 'true' and isset($loyaltySubscription->id) ){
+        if ($restaurant->enable_loyalty_point == 'true' and $restaurant->enable_loyalty_point_paymet_method == 'true' and isset($loyaltySubscription->id)) {
             $isLoyaltyPoint = 'true';
-            if($lp = LoyaltyPoint::where('type' , 'balance')->where('restaurant_id' , $restaurant->id)->where('user_id' , $order->user_id)->first()){
+            if ($lp = LoyaltyPoint::where('type', 'balance')->where('restaurant_id', $restaurant->id)->where('user_id', $order->user_id)->first()) {
                 $loyaltyBalance = $lp->amount;
             }
         }
 
-        
-        return response()->json(array('success' => true, 'data' => $payment_method , 'receipt' => $order_setting->receipt_payment , 'online' => $order_setting->online_payment , 'bank' => $order_setting->bank_transfer , 'loyalty_point' => $isLoyaltyPoint , 'loyaltyBalance' => $loyaltyBalance));
+
+        return response()->json(array('success' => true, 'data' => $payment_method, 'receipt' => $order_setting->receipt_payment, 'online' => $order_setting->online_payment, 'bank' => $order_setting->bank_transfer, 'loyalty_point' => $isLoyaltyPoint, 'loyaltyBalance' => $loyaltyBalance));
     }
 }
-

@@ -9,7 +9,7 @@
             $query->where('id' , 11);
            })
             ->whereIn('status' , ['active' , 'tentative'])
-            ->where('branch_id' , $branch->id)
+            ->where('branch_id' , (isset($branch->id)  ? $branch->id : 0) )
             ->first();
         if(  $restaurant->enable_loyalty_point == 'true' and isset($loyaltySubscription->id) ){
             $checkLoyaltyPoint = true;
@@ -29,7 +29,7 @@
         @if($checkLoyaltyPoint)
         <div class="col-{{$dd}}">
             <div class="item bg-theme">
-                <a href="{{route('loyalty_points' , [$restaurant->id , $branch->id])}}" class="icon icon-l color-white border-yellow1-dark icon-border color-yellow1-dark"><i
+                <a href="{{route('loyalty_points' , [$restaurant->id , (isset($branch->id)  ? $branch->id : 0) ])}}" class="icon icon-l color-white border-yellow1-dark icon-border color-yellow1-dark"><i
                     class="fa fa-shopping-cart font-20"></i></a>
                 <h5 class="font-12 mt-2"> {{ trans('dashboard.loyalty_points') }} </h5>
 

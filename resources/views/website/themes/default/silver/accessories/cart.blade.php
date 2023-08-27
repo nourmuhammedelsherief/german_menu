@@ -2,38 +2,7 @@
 {{--@include('website.'.session('theme_path').'silver.layout.head')--}}
 
 <?php  $order_price = 0; ?>
-<style>
-    body {
-        position: relative;
-    }
 
-    .header-card {
-        z-index: 1;
-        top: -40px;
-    }
-
-    body {
-        overflow-x: hidden;
-    }
-
-    @if($restaurant->color)
-    .card {
-        background-color: {{$restaurant->color == null ? '' : $restaurant->color->background }};
-    }
-
-    .bg-white {
-        background-color: {{$restaurant->color == null ? '#6a5353' : $restaurant->color->background }}     !important;
-    }
-
-    .card-overlay {
-        background-color: {{$restaurant->color == null ? '' : $restaurant->color->product_background }};
-    }
-
-    .theme-light .color-theme {
-        color: {{$restaurant->color == null ? '' : $restaurant->color->main_heads }}    !important;
-    }
-    @endif
-</style>
 <div class="card header-card shape-rounded" style="min-height:100px;" data-card-height="100">
     <div class="card-overlay bg-highlight opacity-95"></div>
     <div class="card-overlay dark-mode-tint"></div>
@@ -189,6 +158,7 @@
             </div>
 
             <br>
+            
             @if($branch->foodics_status == 'true' && $restaurant->foodics_access_token != null)
                 <br>
                 {{-- <div class="text-center">
@@ -196,7 +166,7 @@
                        class="btn btn-l bg-highlight rounded-sm shadow-xl text-uppercase font-900">@lang('messages.emptyCart')</a>
                 </div> --}}
                 @if($branch->delivery == 'true' or $branch->takeaway == 'true' or $branch->previous == 'true')
-                    <form method="post" action="{{route('FoodicsOrder' , $branch->id)}}">
+                    <form method="post" action="{{route('silverFoodicsOrder' , $branch->id)}}">
                         @csrf
                         <input type="hidden" id="lat" name="latitude" value="" readonly="yes" required>
                         <input type="hidden" id="lng" name="longitude" value="" readonly="yes" required>
@@ -351,7 +321,7 @@
 
                         <div class="text-center mt-3 mb-3" id="position_id" >
                             <a onclick="getLocation()" id="locat"
-                               style="display: none; width: 100%; color:#fff; background-color:{{$restaurant->color == null ? '#f7b538' : $restaurant->color->icons}}!important "
+                               style="display: {{($branch->receipt_payment == 'true' and $branch->online_payment == 'false') or ($branch->receipt_payment == 'false' and $branch->online_payment == 'true') ? 'block' : 'none'}}; width: 100%; color:#fff; background-color:{{$restaurant->color == null ? '#f7b538' : $restaurant->color->icons}}!important "
                                class="btn btn-l  rounded-sm shadow-xl text-uppercase font-900">
                                 <i class="fas fa-map-marker-alt"></i> @lang('messages.MyPosition')
                             </a>
@@ -365,7 +335,7 @@
                                 <h5 class="text-center" style="color: red !important;"> المطعم مشغول </h5>
                             @else
                                 @if(check_branch_periods($branch->id))
-                                    <button id="dependOrderFoodics" disabled
+                                    <button id="dependOrderFoodics" {{($branch->receipt_payment == 'true' and $branch->online_payment == 'false') or ($branch->receipt_payment == 'false' and $branch->online_payment == 'true') ? '' : 'disabled'}}
                                             style="display: none;width: 100%; color:#fff; background-color:{{$restaurant->color == null ? '#f7b538' : $restaurant->color->icons}}!important; text-align: center!important; "
                                             class="btn btn-l bg-success text-center rounded-sm shadow-xl text-uppercase font-900"
                                             type="submit">
@@ -496,17 +466,20 @@
     }
 
     function showPosition(position) {
+        var foodicsBranchId = $('select[name=branch_id]').val(); 
         document.getElementById('lat').value = position.coords.latitude; //latitude
         document.getElementById('lng').value = position.coords.longitude; //longitude
         document.getElementById("locat").style.backgroundColor = "green";
         document.getElementById("locat").style.border = "green";
         document.getElementById("locat").innerHTML = "{{app()->getLocale() == 'ar' ? 'تم تحديد موقعك':'Your Location is determinted  '}}";
         var inputType = $('#orderTypeId').find(":selected").val();
+        console.log(foodicsBranchId);
         $.ajax({
             type: 'GET', //THIS NEEDS TO BE GET
-            url: '/user/{{$branch->id}}/foodics_show_position/' + position.coords.latitude + '/' + position.coords.longitude + '/' + inputType,
+            url: '/user/{{$branch->id}}/'+foodicsBranchId+'/foodics_show_position/' + position.coords.latitude + '/' + position.coords.longitude + '/' + inputType,
             dataType: 'json',
             success: function (data) {
+                console.log(data);
                 if (data.status == false) {
                     document.getElementById("showPositionResult").style.color = 'red';
                     document.getElementById("showPositionResult").innerHTML = data.data;
@@ -553,5 +526,36 @@
         });
     });
 </script>
+<style>
+    body {
+        position: relative;
+    }
 
+    .header-card {
+        z-index: 1;
+        top: -40px;
+    }
+
+    body {
+        overflow-x: hidden;
+    }
+
+    @if($restaurant->color)
+    .card {
+        background-color: {{$restaurant->color == null ? '' : $restaurant->color->background }};
+    }
+
+    .bg-white {
+        background-color: {{$restaurant->color == null ? '#6a5353' : $restaurant->color->background }}     !important;
+    }
+
+    .card-overlay {
+        background-color: {{$restaurant->color == null ? '' : $restaurant->color->product_background }};
+    }
+
+    .theme-light .color-theme {
+        color: {{$restaurant->color == null ? '' : $restaurant->color->main_heads }}    !important;
+    }
+    @endif
+</style>
 @include('website.'.session('theme_path').'silver.layout.scripts')

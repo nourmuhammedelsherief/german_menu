@@ -490,7 +490,7 @@
                     @else
                         @php
                             $url = 'https://api.whatsapp.com/send?phone='.\App\Models\Setting::find(1)->active_whatsapp_number.'&text=';
-                            $content = 'لقد قمت بتسجيل حساب جديد لديكم وأريد تفعيل الفترة التجريبية';
+                            $content = 'لقد قمت بتسجيل حساب جديد لديكم وأريد اكمال الاجراءات المطلوبه لتفعيل الحساب';
                         @endphp
                         <a href="{{$url . $content}}" class="btn btn-success" target="_blank">
                             <i class="fab fa-whatsapp"></i>

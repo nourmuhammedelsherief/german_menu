@@ -30,11 +30,12 @@
 
     @php
         $employee = auth('employee')->user();
+        $settings = $employee->branch->orderSettings()->where('order_type'  , 'easymenu')->orderBy('id' , 'desc')->first();
     @endphp
     <!-- Sidebar Menu -->
         <nav class="mt-2">
             <ul class="nav nav-pills nav-sidebar flex-column" data-widget="treeview" role="menu" data-accordion="false">
-                @if(checkOrderService($employee->restaurant_id , 10))
+                @if(checkOrderService($employee->restaurant_id , 10) and (isset($settings->id) and $settings->delivery == 'true'))
                     <li class="nav-item has-treeview menu-open">
                         <a href="#"
                            class="nav-link {{ strpos(URL::current(), '/casher/delivery/orders') !== false ? 'active' : '' }}">
@@ -113,7 +114,7 @@
                         </ul>
                     </li>
                 @endif
-                @if(checkOrderService($employee->restaurant_id , 10))
+                @if(checkOrderService($employee->restaurant_id , 10) and (isset($settings->id) and $settings->takeaway == 'true'))
                     <li class="nav-item has-treeview menu-open">
                         <a href="#"
                            class="nav-link {{ strpos(URL::current(), '/casher/takeaway/orders') !== false ? 'active' : '' }}">
@@ -192,7 +193,7 @@
                         </ul>
                     </li>
                 @endif
-                @if(checkOrderService($employee->restaurant_id , 10))
+                @if(checkOrderService($employee->restaurant_id , 10)  and (isset($settings->id) and $settings->previous == 'true'))
                     <li class="nav-item has-treeview menu-open">
                         <a href="#"
                            class="nav-link {{ strpos(URL::current(), '/casher/previous/orders') !== false ? 'active' : '' }}">
@@ -271,7 +272,7 @@
                         </ul>
                     </li>
                 @endif
-                @if(checkOrderService($employee->restaurant_id , 10))
+                @if(checkOrderService($employee->restaurant_id , 10)  and (isset($settings->id) and $settings->table == 'true'))
                     <li class="nav-item has-treeview menu-open">
                         <a href="#"
                            class="nav-link {{ strpos(URL::current(), '/casher/tables/orders') !== false ? 'active' : '' }}">

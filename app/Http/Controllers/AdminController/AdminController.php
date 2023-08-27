@@ -23,6 +23,7 @@ use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Intervention\Image\Facades\Image;
 use Illuminate\Support\Facades\Hash;
+use App\Models\FormRegister;
 
 class AdminController extends Controller
 {
@@ -139,7 +140,12 @@ class AdminController extends Controller
         $admin->update($data);
         if(!empty($request->password)):
             // return $admin;
-            Auth::guard('admin')->logoutOtherDevices2($admin , $request->password);
+            try {
+                Auth::guard('admin')->logoutOtherDevices2($admin , $request->password);
+            } catch (\Throwable $th) {
+                //throw $th;
+            }
+            
         endif;
         return redirect(url('/admin/admins'))->with('msg', 'تم التعديل بنجاح');
     }
@@ -656,6 +662,18 @@ class AdminController extends Controller
 
         flash(trans('messages.bankTransferDone'))->success();
         return redirect()->to(url('/admin/branches/active'));
+    }
+    
+    public function register_form_requests()
+    {
+        $registers = FormRegister::orderBy('id' , 'desc')->paginate(200);
+        return view('admin.register_form_requests' , compact('registers'));
+    }
+    public function register_form_delete($id){
+        $form = FormRegister::findOrFail($id);
+        $form->delete();
+        flash(trans('messages.deleted'))->success();
+        return redirect()->back();
     }
 
 

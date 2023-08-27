@@ -303,13 +303,13 @@
                 @if($branch->main == 'true')
                     <a href="{{route('sliverHomeTable' , [$restaurant->name_barcode , $table->foodics_id != null ? $table->foodics_id : $table->name_barcode])}}"
                        class="btn btn-l bg-highlight rounded-sm shadow-xl text-uppercase font-900">
-                        @lang('messages.finish_order')
+                        @lang('messages.to_to_restaurant')
                     </a>
 
                 @else
                     <a href="{{route('sliverHomeTableBranch' , [$restaurant->name_barcode , $table->foodics_id != null ? $table->foodics_id : $table->name_barcode , $branch->name_barcode])}}"
                        class="btn btn-l bg-highlight rounded-sm shadow-xl text-uppercase font-900">
-                        @lang('messages.finish_order')
+                        @lang('messages.to_to_restaurant')
                     </a>
                 @endif
             </div>

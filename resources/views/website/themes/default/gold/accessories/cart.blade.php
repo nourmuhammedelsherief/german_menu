@@ -39,6 +39,9 @@
 
 
         @include('flash::message')
+        @if($errors->any())
+            <p class="alert alert-danger text-center">{{$errors->first()}}</p>
+        @endif
         @if($items->count() > 0)
             <div class="row mb-0 pt-3 mt-5 mr-1 ml-1 py-3" style="border: 1px dashed #f7b538;">
                 <div class="col-12 mb-1  mt-2  text-right ">
@@ -195,7 +198,7 @@
                     ->first();
             @endphp
 
-            @if($seller_code and ($setting_whatsapp_order or $setting_easymenu_order))
+            @if($seller_code and ($setting_whatsapp_order or $setting_easymenu_order) )
                 <form action="{{route('applyOrderSellerCode' , $order->id)}}" method="post">
                     @csrf
                     <div class="row mb-0 pr-4 pl-4">

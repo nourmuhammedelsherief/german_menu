@@ -15,10 +15,10 @@
             {{--            <a href="#" class="nav-link">Lang</a>--}}
             @if(\Illuminate\Support\Facades\Auth::guard('restaurant')->user()->ar == 'true' && \Illuminate\Support\Facades\Auth::guard('restaurant')->user()->en == 'true')
                 @if(app()->getLocale() == 'en')
-                    <a href="{{ url('restaurant/locale/ar')  }}" class="nav-link">
+                    <a href="{{ url('restaurant/locale/gr')  }}" class="nav-link">
                     <span class="username username-hide-on-mobile">
                         <i class="fa fa-language"></i>
-                        عربى
+                        German
                     </span>
                     </a>
 

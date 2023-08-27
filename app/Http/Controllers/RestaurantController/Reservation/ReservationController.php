@@ -25,10 +25,14 @@ class ReservationController extends Controller
                 'reservation_to_restaurant' => 'required|in:true,false' ,
                 'reservation_is_call_phone' => 'required|in:true,false' ,
                 'reservation_is_whatsapp' => 'required|in:true,false' ,
+                'enable_reservation_email_notification' => 'required|in:true,false' ,
+                'reservation_email_notification' => 'required_if:enable_reservation_email_notifcation,true|nullable|email' ,
                 'reservation_tax' => 'required|in:true,false' ,
                 'reservation_tax_value' => 'required_if:reservation_tax,true|nullable|numeric|min:0.01|max:100' ,
                 'reservation_call_phone' => 'required_if:reservation_is_call_phone,true|nullable|numeric' ,
                 'reservation_whatsapp_number' => 'required_if:reservation_is_whatsapp,true|nullable|numeric' ,
+                'reservation_title_ar' => 'nullable|min:1' , 
+                'reservation_title_en' => 'nullable|min:1' , 
             ]);
             $data['reservation_call_number'] = $request->reservation_call_phone;
             $restaurant->update($data);

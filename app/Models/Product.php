@@ -33,7 +33,8 @@ class Product extends Model
         'foodics_image',
         'foodics_id',
         'old_id',
-        'video_id' , 'video_type'  , 'loyalty_points'
+        'video_id' , 'video_type'  , 'loyalty_points' , 
+        
     ];
     public function getVideoLinkAttribute(){
         return empty($this->video_id) ? null : 'https://www.youtube.com/embed/' . $this->video_id;
@@ -45,6 +46,9 @@ class Product extends Model
     public function getNameAttribute(){
         return app()->getLocale() == 'ar' ? $this->name_ar : $this->name_en;
     }
+    public function getDescriptionAttribute(){
+        return app()->getLocale() == 'ar' ? $this->description_ar : $this->description_en;
+    }
     public function restaurant()
     {
         return $this->belongsTo(Restaurant::class , 'restaurant_id');
@@ -52,6 +56,10 @@ class Product extends Model
     public function branch()
     {
         return $this->belongsTo(Branch::class , 'branch_id');
+    }
+    public function sensitivities()
+    {
+        return $this->hasMany(ProductSensitivity::class , 'product_id');
     }
     public function menu_category()
     {

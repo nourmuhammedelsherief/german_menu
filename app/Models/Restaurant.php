@@ -36,7 +36,7 @@ class Restaurant extends Authenticatable
         'en',    // true , false
         'archive',    // true , false
         'cart',    // true , false
-        'name_barcode' , // the name used for barcode,
+        'name_barcode', // the name used for barcode,
         'menu_arrange',
         'product_arrange',
         'total_tax_price',
@@ -55,27 +55,28 @@ class Restaurant extends Authenticatable
         'state',       // ENUM('open','closed','busy' , 'un_available')
         'enable_feedback',
         'foodics_status', // Emun (true,false)
+        'foodics_referance',
         'foodics_state',
         'foodics_access_token', // text
         'delivery_price',     // delivery price used for foodics deliveries
         'enable_bank', // Emun (true,false)
-        'enable_reservation_online_pay' , 'enable_reservation_bank',
+        'enable_reservation_online_pay', 'enable_reservation_bank',
         'enable_online_payment', // Emun (true,false)
-        'reservation_description_ar'  ,
-        'reservation_description_en' ,
+        'reservation_description_ar',
+        'reservation_description_en',
         'reservation_service',     // true , false
         'answer_id',
         'orders',
         'foodics_orders',
         'whatsapp_orders',
-        'enable_fixed_category'  ,  //true , false
+        'enable_fixed_category',  //true , false
         'enable_contact_us',  //true , false
-        'enable_reservation_cash' , //true , false
-        'default_lang' ,
-        'is_call_phone' , //true , false
-        'is_whatsapp' , //true , false
-        'call_phone' ,
-        'whatsapp_number' ,
+        'enable_reservation_cash', //true , false
+        'default_lang',
+        'is_call_phone', //true , false
+        'is_whatsapp', //true , false
+        'call_phone',
+        'whatsapp_number',
         'payment_company',
         'online_token',
         'theme_id',
@@ -85,149 +86,215 @@ class Restaurant extends Authenticatable
         'stop_menu',
         'admin_activation',
         'type',   // restaurant , employee
-        'online_payment_fees' ,
+        'online_payment_fees',
         'last_session',
-        'reservation_to_restaurant' , // true , false
-        'last_activity' ,
-        'reservation_call_number' , 'reservation_is_call_phone' , 'reservation_whatsapp_number' , 'reservation_tax_value' , 'reservation_is_whatsapp' , 'reservation_tax',
-        'enable_loyalty_point' , // true, false
-        'enable_loyalty_point_paymet_method' , //true , false
+        'reservation_to_restaurant', // true , false
+        'last_activity',
+        'reservation_call_number', 'reservation_is_call_phone', 'reservation_whatsapp_number', 'reservation_tax_value', 'reservation_is_whatsapp', 'reservation_tax',
+        'enable_loyalty_point', // true, false
+        'enable_loyalty_point_paymet_method', //true , false
+        'header', 'footer',
+        'sms_method', // enum [taqnyat] 
+        'sms_sender',  'sms_token',
+        'slider_down_contact_us_title',
+        'archive_reason', 'archived_by_id',
+        'enable_party_payment_bank',  // enum [true , false]
+        'enable_party_payment_online',  // enum [true , false]
+        'enable_party', // enum [true , false]
+        'reservation_title_ar', 'reservation_title_en', 'party_description_ar', 'party_description_en' , 'enable_party_payment_cash' , // enum [true , false]
+        'party_to_restaurant' , 'party_is_call_phone' , 'party_is_whatsapp' , 'party_tax' , 'party_tax_value' , 'party_call_phone' , 'party_whatsapp_number'  , 
+        'product_menu_view' , 
+        'enable_reservation_email_notification' , // enum [true , false]
+        'reservation_email_notification' , 
+        'enable_party_email_notification' , // enum [true , false]
+        'party_email_notification' , 
+        'enable_waiter' , // enum [true , false] 
     ];
     protected $hidden = [
         'password', 'remember_token',
     ];
-    public function getImagePathAttribute(){
+    public function getImagePathAttribute()
+    {
         return 'uploads/restaurants/logo/' . $this->logo;
     }
-    public function getNameAttribute(){
+    public function getNameAttribute()
+    {
         return app()->getLocale() == 'en' ? $this->name_en : $this->name_ar;
     }
-    public function getDescriptionAttribute(){
+    public function getDescriptionAttribute()
+    {
         return app()->getLocale() == 'en' ? $this->description_en : $this->description_ar;
     }
-
+    public function getReservationTitleAttribute()
+    {
+        return app()->getLocale() == 'en' ? $this->reservation_title_en : $this->reservation_title_ar;
+    }
+    public function getPartyDescriptionAttribute()
+    {
+        return app()->getLocale() == 'en' ? $this->party_description_en : $this->party_description_ar;
+    }
+    public function archiveBy()
+    {
+        return $this->belongsTo(Admin::class, 'archived_by_id');
+    }
     public function country()
     {
-        return $this->belongsTo(Country::class , 'country_id');
+        return $this->belongsTo(Country::class, 'country_id');
     }
     public function city()
     {
-        return $this->belongsTo(City::class , 'city_id');
+        return $this->belongsTo(City::class, 'city_id');
     }
     public function package()
     {
-        return $this->belongsTo(Package::class , 'package_id');
+        return $this->belongsTo(Package::class, 'package_id');
     }
     public function archiveCategory()
     {
-        return $this->belongsTo(ArchiveCategory::class , 'archive_category_id');
+        return $this->belongsTo(ArchiveCategory::class, 'archive_category_id');
     }
     public function subscription()
     {
-        return $this->hasOne(Subscription::class , 'restaurant_id');
+        return $this->hasOne(Subscription::class, 'restaurant_id');
     }
-    public function marketerOperations(){
-        return $this->hasMany(MarketerOperation::class , 'restaurant_id');
+    public function marketerOperations()
+    {
+        return $this->hasMany(MarketerOperation::class, 'restaurant_id');
     }
 
     public function color()
     {
-        return $this->hasOne(RestaurantColors::class , 'restaurant_id');
+        return $this->hasOne(RestaurantColors::class, 'restaurant_id');
+    }
+    public function bio_color()
+    {
+        return $this->hasOne(RestaurantBioColor::class, 'restaurant_id');
     }
     public function menu_categories()
     {
-        return $this->hasMany(MenuCategory::class , 'restaurant_id');
+        return $this->hasMany(MenuCategory::class, 'restaurant_id');
     }
-    public function restaurantCategories(){
-        return $this->belongsToMany(Category::class , 'restaurant_categories'  , 'restaurant_id' , 'category_id');
+    public function restaurantCategories()
+    {
+        return $this->belongsToMany(Category::class, 'restaurant_categories', 'restaurant_id', 'category_id');
     }
     public function branches()
     {
-        return $this->hasMany(Branch::class , 'restaurant_id');
+        return $this->hasMany(Branch::class, 'restaurant_id');
     }
     public function tables()
     {
-        return $this->hasMany(Table::class , 'restaurant_id');
+        return $this->hasMany(Table::class, 'restaurant_id');
     }
     public function products()
     {
-        return $this->hasMany(Product::class , 'restaurant_id');
+        return $this->hasMany(Product::class, 'restaurant_id');
     }
     public function deliveries()
     {
-        return $this->hasMany(RestaurantDelivery::class , 'restaurant_id');
+        return $this->hasMany(RestaurantDelivery::class, 'restaurant_id');
     }
     public function socials()
     {
-        return $this->hasMany(RestaurantSocial::class , 'restaurant_id');
+        return $this->hasMany(RestaurantSocial::class, 'restaurant_id');
     }
     public function sensitivities()
     {
-        return $this->hasMany(RestaurantSensitivity::class , 'restaurant_id');
+        return $this->hasMany(RestaurantSensitivity::class, 'restaurant_id');
     }
     public function offers()
     {
-        return $this->hasMany(RestaurantOffer::class , 'restaurant_id');
+        return $this->hasMany(RestaurantOffer::class, 'restaurant_id');
     }
     public function sliders()
     {
-        return $this->hasMany(RestaurantSlider::class , 'restaurant_id');
+        return $this->hasMany(RestaurantSlider::class, 'restaurant_id');
     }
     public function res_branches()
     {
-        return $this->hasMany(RestaurantBranch::class , 'restaurant_id');
+        return $this->hasMany(RestaurantBranch::class, 'restaurant_id');
     }
     public function notes()
     {
-        return $this->hasMany(AdminNote::class , 'restaurant_id');
+        return $this->hasMany(AdminNote::class, 'restaurant_id');
     }
 
-    public function rateBranches(){
-        return $this->hasMany(RestaurantFeedbackBranch::class , 'restaurant_id');
+    public function rateBranches()
+    {
+        return $this->hasMany(RestaurantFeedbackBranch::class, 'restaurant_id');
     }
 
 
-    public function serviceSubscriptions(){
+    public function serviceSubscriptions()
+    {
         return $this->hasMany(ServiceSubscription::class);
     }
-    public function banks(){
-        return $this->hasMany(Bank::class , 'restaurant_id');
+    public function banks()
+    {
+        return $this->hasMany(Bank::class, 'restaurant_id');
     }
 
-    public function reservationBranches(){
-        return $this->hasMany(ReservationBranch::class , 'restaurant_id');
+    public function reservationBranches()
+    {
+        return $this->hasMany(ReservationBranch::class, 'restaurant_id');
     }
 
-    public function reservationTables(){
-        return $this->hasMany(ReservationTable::class , 'restaurant_id');
+    public function reservationTables()
+    {
+        return $this->hasMany(ReservationTable::class, 'restaurant_id');
     }
 
-    public function histories(){
-        return $this->hasMany(History::class , 'restaurant_id');
+    public function histories()
+    {
+        return $this->hasMany(History::class, 'restaurant_id');
     }
 
-    public function posters(){
-        return $this->hasMany(RestaurantPoster::class , 'restaurant_id');
+    public function posters()
+    {
+        return $this->hasMany(RestaurantPoster::class, 'restaurant_id');
     }
     public function answer()
     {
-        return $this->belongsTo(RegisterAnswers::class , 'answer_id');
+        return $this->belongsTo(RegisterAnswers::class, 'answer_id');
     }
-    public function contactUsItems(){
-        return $this->hasMany(RestaurantContactUs::class , 'restaurant_id');
+    public function contactUsItems()
+    {
+        return $this->hasMany(RestaurantContactUs::class, 'restaurant_id');
     }
     public function reports()
     {
-        return $this->hasMany(Report::class , 'restaurant_id');
+        return $this->hasMany(Report::class, 'restaurant_id');
     }
-    public function theme(){
-        return $this->belongsTo(Theme::class , 'theme_id');
+    public function theme()
+    {
+        return $this->belongsTo(Theme::class, 'theme_id');
     }
     public function controls()
     {
-        return $this->hasMany(RestaurantControl::class , 'restaurant_id');
+        return $this->hasMany(RestaurantControl::class, 'restaurant_id');
     }
-    public function loyaltyPointPrices(){
-        return $this->hasMany(LoyaltyPointPrice::class , 'restaurant_id');
+    public function loyaltyPointPrices()
+    {
+        return $this->hasMany(LoyaltyPointPrice::class, 'restaurant_id');
+    }
+    public function icons()
+    {
+        return $this->hasMany(RestaurantIcon::class, 'restaurant_id');
+    }
+    public function parties()
+    {
+        return $this->hasMany(Party::class, 'restaurant_id');
+    }
+    public function partyBranches()
+    {
+        return $this->hasMany(PartyBranch::class, 'restaurant_id');
+    }
+    public function partyOrder()
+    {
+        return $this->hasMany(PartyOrder::class, 'restaurant_id');
+    }
+    public function waiterItems()
+    {
+        return $this->hasMany(WaiterItem::class, 'restaurant_id');
     }
 }

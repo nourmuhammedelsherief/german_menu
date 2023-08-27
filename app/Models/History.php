@@ -25,6 +25,8 @@ class History extends Model
         'service_id',
         'discount_value',
         'tax_value',
+        'accepted_admin_id' , 
+        'accepted_admin_name'
     ];
 
     protected $casts  = [
@@ -34,6 +36,10 @@ class History extends Model
     public function restaurant()
     {
         return $this->belongsTo(Restaurant::class , 'restaurant_id');
+    }
+    public function acceptedAdmin()
+    {
+        return $this->belongsTo(Admin::class , 'accepted_admin_id');
     }
     public function package()
     {

@@ -46,6 +46,9 @@ class MenuCategory extends Model
     {
         return $this->belongsTo(Branch::class , 'branch_id');
     }
+    public function products(){
+        return $this->hasMany(Product::class , 'menu_category_id');
+    }
     public function sub_categories()
     {
         return $this->hasMany(RestaurantSubCategory::class , 'menu_category_id');

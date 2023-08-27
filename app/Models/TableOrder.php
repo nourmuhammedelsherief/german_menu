@@ -30,8 +30,15 @@ class TableOrder extends Model
         'ip',
         'invoice_id',
         'payment_status'  , //true , false
+        'branch_name_ar' , 'branch_name_en' , 'table_name_ar' , 'table_name_en'
     ];
-
+    public function getBranchNameAttribute(){
+        return $this->attributes['branch_name_'  . app()->getLocale()];
+    }
+    public function getTableNameAttribute(){
+        return $this->attributes['table_name_'  . app()->getLocale()];
+    }
+    
     public function restaurant()
     {
         return $this->belongsTo(Restaurant::class , 'restaurant_id');

@@ -83,7 +83,7 @@
                                 <th> @lang('messages.barcode') </th>
                                 <th> @lang('messages.my_subscription') </th>
                                 <th> @lang('messages.cart_show') </th>
-                                <th> {{app()->getLocale() == 'ar' ? 'ايقاف المنيو': 'stop menu'}} </th>
+                                {{-- <th> {{app()->getLocale() == 'ar' ? 'ايقاف المنيو': 'stop menu'}} </th> --}}
                                 <th> {{app()->getLocale() == 'ar' ? 'الفاتورة': 'Invoice'}} </th>
                                 <th> {{app()->getLocale() == 'ar' ? 'فترات العمل': 'Periods'}} </th>
                                 <th> @lang('messages.operations') </th>
@@ -117,6 +117,7 @@
                                                 class="fa fa-eye"></i>@lang('messages.show')</a>
                                     </td>
                                     <td>
+                                   
                                         @if($branch->subscription->status == 'finished')
                                             <a href="{{route('get_branch_payment' , $branch->id)}}"
                                                class="btn btn-danger"> @lang('messages.finished') </a>
@@ -184,7 +185,7 @@
                                                class="btn btn-danger"> @lang('messages.no') </a>
                                         @endif
                                     </td>
-                                    <td>
+                                    {{-- <td>
                                         @if($branch->stop_menu == 'true')
                                             <a href="{{route('stopBranchMenu' , [$branch->id , 'false'])}}"
                                                class="btn btn-success"> @lang('messages.yes') </a>
@@ -192,7 +193,7 @@
                                             <a href="{{route('stopBranchMenu' , [$branch->id , 'true'])}}"
                                                class="btn btn-danger"> @lang('messages.no') </a>
                                         @endif
-                                    </td>
+                                    </td> --}}
                                     <td>
                                         <a href="{{route('print_invoice' , $branch->id)}}" target="_blank"  class="printPage btn btn-info">
                                             @lang('messages.show')
@@ -204,7 +205,8 @@
                                         </a>
                                     </td>
                                     <td>
-
+                                        <a href="{{route('branchPrintMenu' , $branch->id)}}"
+                                            class="btn btn-success"> @lang('dashboard.print_menu') </a>
                                         <a class="btn btn-info" href="{{route('branches.edit' , $branch->id)}}">
                                             <i class="fa fa-user-edit"></i>
                                             {{app()->getLocale() == 'ar' ? 'بيانات الفرع' : 'branch data'}}

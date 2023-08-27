@@ -155,7 +155,7 @@ class ServiceController extends Controller
                 if ($branch != null) {
                     $branch->update([
                         'foodics_status' => 'true',
-                        'foodics_request' => 'false',
+                        'foodics_request' => 'true',
                     ]);
                 }
             }
@@ -182,6 +182,8 @@ class ServiceController extends Controller
                 'transfer_photo' => $subscription->photo,
                 'discount_value' => $subscription->discount,
                 'tax_value' => $subscription->tax_value,
+                'accepted_admin_id' => auth('admin')->id() , 
+                'accepted_admin_name' => auth('admin')->user()->name
             ]);
             Report::create([
                 'restaurant_id' => $subscription->restaurant_id,
@@ -387,8 +389,10 @@ class ServiceController extends Controller
         if ($sub->service->id == 4) {
             Branch::find($request->branch_id)->update([
                 'foodics_request' => 'true',
+                'foodics_status' => 'true' , 
             ]);
         }
+        
         $price = $sub->service->getRealPrice(true);
         $discount = 0;
         if ($request->seller_code != null) {

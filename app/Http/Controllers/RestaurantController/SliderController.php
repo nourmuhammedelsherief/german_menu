@@ -18,7 +18,7 @@ class SliderController extends Controller
      *
      * @return \Illuminate\Http\Response
      */
-    public function index()
+    public function index(Request $request)
     {
         $restaurant = auth('restaurant')->user();
         if ($restaurant->type == 'employee'):
@@ -27,11 +27,13 @@ class SliderController extends Controller
             endif;
             $restaurant = Restaurant::find($restaurant->restaurant_id);
         endif;
+        $type = in_array($request->type , ['home' , 'contact_us' , 'contact_us_client']) ? $request->type : 'home';
         $sliders  = RestaurantSlider::whereRestaurant_id($restaurant->id)
             ->orderBy('id' , 'desc')
+            ->where('slider_type' , $type)
             ->paginate(100);
         $this->deleteTemporaryFiles();
-        return view('restaurant.sliders.index' , compact('sliders'));
+        return view('restaurant.sliders.index' , compact('sliders' , 'restaurant'));
     }
     protected function deleteTemporaryFiles(){
         $currentDate = Carbon::now()->subDay();
@@ -45,7 +47,15 @@ class SliderController extends Controller
         return $items;
     }
 
-
+    public function storeSliderTitle(Request $request ){
+        $data = $request->validate([
+            'slider_down_contact_us_title' =>'required|min:1|max:190' 
+        ]);
+        $restaurant = auth('restaurant')->user();
+        $restaurant->update($data);
+        flash(trans('messages.updated'))->success();
+        return redirect()->back();
+    }
     /**
      * Show the form for creating a new resource.
      *
@@ -76,6 +86,9 @@ class SliderController extends Controller
             'youtube' => 'nullable|required_if:type,youtube|min:1' , 
             'photo' => 'nullable|required_if:type,image|mimes:jpg,jpeg,png,gif,tif,psd,pmp,webp|max:20000' , 
             'video_path' => 'required_if:type,local_video|nullable|min:10' , 
+            'description_en'  => 'nullable|min:1' ,
+            'description_ar'  => 'nullable|min:1' ,
+            'slider_type' => 'required|in:contact_us,home,contact_us_client'
         ]);
         
         $image = ($request->hasFile('photo') and $request->type == 'image') ? UploadImage($request->file('photo')  , 'photo' , '/uploads/sliders') : null;
@@ -93,14 +106,17 @@ class SliderController extends Controller
             $temp->delete();
         endif;
         // create new slider
-        RestaurantSlider::create([
+        $item = RestaurantSlider::create([
             'restaurant_id'  => $restaurant->id,
             'photo'  => $image  , 
             'type' => $request->type , 
             'youtube' => $request->youtube , 
+            'description_ar' => $request->description_ar , 
+            'description_en' => $request->description_en , 
+            'slider_type' => $request->slider_type , 
         ]);
         flash(trans('messages.created'))->success();
-        return redirect()->route('sliders.index');
+        return redirect(route('sliders.index') . '?type=' . $item->slider_type);
     }
 
     
@@ -183,10 +199,13 @@ class SliderController extends Controller
     public function update(Request $request, $id)
     {
         $slider = RestaurantSlider::findOrFail($id);
+        
         $data = $request->validate( [
             'type' => 'required|in:image,youtube,local_video,gif' , 
             'youtube' => 'nullable|required_if:type,youtube|min:1' , 
-            'photo' => 'nullable|required_if:type,image|mimes:jpg,jpeg,png,gif,tif,psd,pmp,webp|max:20000'
+            'photo' => 'nullable|mimes:jpg,jpeg,png,gif,tif,psd,pmp,webp|max:20000' , 
+            'description_en'  => 'nullable|min:1' ,
+            'description_ar'  => 'nullable|min:1' ,
         ]);
         $image = $request->file('photo') == null ? $slider->photo : UploadImageEdit($request->file('photo')  , 'photo' , '/uploads/sliders' , $slider->photo);
         if($request->type == 'local_video' and empty($slider->photo)):
@@ -202,9 +221,11 @@ class SliderController extends Controller
             'photo'  => $image , 
             'type' => $request->type , 
             'youtube' => $request->youtube , 
+            'description_ar' => $request->description_ar , 
+            'description_en' => $request->description_en , 
         ]);
         flash(trans('messages.updated'))->success();
-        return redirect()->route('sliders.index');
+        return redirect(route('sliders.index') . '?type=' . $slider->slider_type);
     }
 
     /**
@@ -219,7 +240,7 @@ class SliderController extends Controller
 
         if(RestaurantSlider::where('restaurant_id' , $slider->restaurant_id)->count() <= 1):
             flash(trans('messages.error_slider_count'))->error();
-            return redirect()->route('sliders.index');
+            return redirect(route('sliders.index') . '?type=' . $slider->slider_type);
         endif;
         if ($slider->photo != null and !in_array($slider->photo , ['slider2.png' , 'slider1.png']))
         {
@@ -227,6 +248,6 @@ class SliderController extends Controller
         }
         $slider->delete();
         flash(trans('messages.deleted'))->success();
-        return redirect()->route('sliders.index');
+        return redirect(route('sliders.index') . '?type=' . $slider->slider_type);
     }
 }

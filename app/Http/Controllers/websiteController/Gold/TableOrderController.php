@@ -55,6 +55,7 @@ class TableOrderController extends Controller
                     }
                 }
             }
+            $branch = $meal->branch;
             $checkOrder = TableOrder::where('restaurant_id', $restaurant->id)
                 ->where('status', 'in_reservation')
                 ->where('branch_id', $meal->branch->id)
@@ -66,8 +67,12 @@ class TableOrderController extends Controller
             } else {
                 $order = TableOrder::create([
                     'restaurant_id' => $restaurant->id,
-                    'branch_id' => $meal->branch->id,
+                    'branch_id' => $branch->id,
                     'table_id' => $table->id,
+                    'branch_name_ar' => $branch->name_ar , 
+                    'branch_name_en' => $branch->name_en , 
+                    'table_name_ar' => $table->name_ar , 
+                    'table_name_en' => $table->name_en , 
                     'status' => 'in_reservation',
                     'notes' => $request->notes == null ? null : $request->notes,
                     'ip' => Session::getId(),
@@ -78,6 +83,8 @@ class TableOrderController extends Controller
             $item = TableOrderItem::create([
                 'table_order_id' => $order->id,
                 'product_id' => $meal->id,
+                'product_name_ar' => $meal->name_ar , 
+                'product_name_en' => $meal->name_en , 
                 'product_count' => $request->$totalCount,
 //                    'size_id'        => $request->size_price_id,
                 'price' => $meal->price,
@@ -87,13 +94,17 @@ class TableOrderController extends Controller
             if ($request->options_ids != null && $request->options != null) {
                 foreach ($request->options as $options_id) {
                     $opName = 'qty' . $options_id . $meal->id;
+                    $optionItem = Option::find($options_id);
                     // create order options
                     TableOrderItemOption::create([
                         'table_order_item_id' => $item->id,
                         'option_id' => $options_id,
+                        'option_name_ar' => $optionItem->name_ar , 
+                        'option_name_en' => $optionItem->name_en , 
+                        'price' => $optionItem->price , 
                         'option_count' => $request->$opName,
                     ]);
-                    $options_price += Option::find($options_id)->price * $request->$totalCount;
+                    $options_price += $optionItem->price * $request->$totalCount;
                 }
             }
             $totalName = 'total' . $meal->id;
@@ -127,6 +138,7 @@ class TableOrderController extends Controller
                     return back();
                 }
             }
+            $branch = $meal->branch;
             // create order
             $checkOrder = TableOrder::where('restaurant_id', $restaurant->id)
                 ->where('status', 'in_reservation')
@@ -138,8 +150,12 @@ class TableOrderController extends Controller
             } else {
                 $order = TableOrder::create([
                     'restaurant_id' => $restaurant->id,
-                    'branch_id' => $meal->branch->id,
+                    'branch_id' => $branch->id,
                     'table_id' => $table->id,
+                    'branch_name_ar' => $branch->name_ar , 
+                    'branch_name_en' => $branch->name_en , 
+                    'table_name_ar' => $table->name_ar , 
+                    'table_name_en' => $table->name_en , 
                     'status' => 'in_reservation',
                     'notes' => $request->notes == null ? null : $request->notes,
                     'ip' => Session::getId(),
@@ -152,8 +168,12 @@ class TableOrderController extends Controller
             $item = TableOrderItem::create([
                 'table_order_id' => $order->id,
                 'product_id' => $meal->id,
+                'product_name_ar' => $meal->name_ar , 
+                'product_name_en' => $meal->name_en , 
                 'product_count' => $request->$totalCount,
                 'size_id' => $size->id,
+                'size_name_ar' => $size->name_ar , 
+                'size_name_en' => $size->name_en , 
                 'price' => $size->price,
             ]);
             // create options
@@ -161,13 +181,17 @@ class TableOrderController extends Controller
             if ($request->options_ids != null && $request->options != null) {
                 foreach ($request->options as $options_id) {
                     $opName = 'qty' . $options_id . $meal->id;
+                    $optionItem = Option::find($options_id);
                     // create order options
                     TableOrderItemOption::create([
                         'table_order_item_id' => $item->id,
                         'option_id' => $options_id,
+                        'option_name_ar' => $optionItem->name_ar , 
+                        'option_name_en' => $optionItem->name_en , 
+                        'price' => $optionItem->price , 
                         'option_count' => $request->$opName,
                     ]);
-                    $options_price += Option::find($options_id)->price * $request->$totalCount;
+                    $options_price += $optionItem->price * $request->$totalCount;
                 }
             }
             $totalName = 'total' . $meal->id;
@@ -493,7 +517,7 @@ class TableOrderController extends Controller
           
                 if (($request->payment_method and $request->payment_method == 'receipt_payment') or $request->payment_method == null) {
                     
-                    if ($order->branch->foodics_status == 'true' and false) {
+                    if ($order->branch->foodics_status == 'true') {
                         $branch_id = $order->table->foodics_branch->foodics_id;
                         if ($request->discount_name != null) {
                             if ($order->order_items->count() > 0) {

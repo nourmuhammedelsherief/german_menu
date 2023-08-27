@@ -14,6 +14,7 @@ return [
     'country' => 'Country',
     'all' => 'All',
     'edit' => 'Edit',
+    'create' => 'Create' ,
     'delete' => 'Delete',
     'name_ar' => 'Name In Arabic',
     'name_en' => 'Name In English',
@@ -69,6 +70,7 @@ return [
     'empty_balance' => 'There are not enough points to transfer points to balance' ,
      'loyalty_point_convert_balance_success' => 'The number of points :points has been successfully converted to :price riyals' ,
      'loyalty_point' => 'Loyalty Points' ,
+     'details' => 'Details' ,
     '_online_payment' => [
         'apple_pay' => 'Apple Pay' ,
         'mada' => 'Mada' ,
@@ -122,6 +124,8 @@ return [
     'appName' => 'EasyMenu',
     'package_price' => 'Package Price',
     'package_price_discount' => 'Price After Discount',
+    'choose_party' => 'Choose Package',
+    'restaurant_view' => 'Show Restaurant' ,
     'SR' => 'Saudi Riyal',
     'notFound' => 'Not Found',
     'branches' => 'Branches',
@@ -414,7 +418,7 @@ return [
     'permanent'  => 'Permanent Seller Code',
     'next_subscription_price' => 'Next Subscription Price',
     'my_fatoora' => 'My Fatoora' ,
-    'seller_code_url' => 'Seller code online' , 
+    'seller_code_url' => 'Seller code online' ,
     'transfer_bank' => 'Bank transfer' ,
     'online_payment' => ' Online payment' ,
     'confirm_register' => 'Registration confirmation' ,
@@ -424,7 +428,7 @@ return [
     'more' => 'More' ,
     'category_description' => 'Menu Category Description' ,
     'fixed_categories' => 'Fixed Categories' ,
-    'reservation_chair_expired' => 'Expire chairs' , 
+    'reservation_chair_expired' => 'Expire chairs' ,
 
     'error_restaurant_package_not_found' => 'The restaurant package is invalid' ,
     'restaurant_name_ar' => 'Restaurant Name Arabic' ,
@@ -451,8 +455,8 @@ return [
     'answer_en' => 'Answer Engilsh' ,
     'my_information' => 'Contact Information' ,
     'call' => 'Call' ,
-    "whatsapp" => 'Whatsapp' , 
-    'view_barcode' => 'View Link' , 
+    "whatsapp" => 'Whatsapp' ,
+    'view_barcode' => 'View Link' ,
     'website_theme' => 'Restaurant Themes' ,
     'archive_categories' => 'Archived categories' ,
     'archive_reasons' => 'Choose the reason for archiving' ,
@@ -465,16 +469,16 @@ return [
     'reservation_package_expired' => 'Packages expired' ,
     'reservation_chairs' => 'Chairs reservation' ,
     'reservation_packages' => 'Package reservation' ,
-    'reservation_tables' => 'Reservation Tables' , 
+    'reservation_tables' => 'Reservation Tables' ,
     'chairs_count' => 'Chairs count' ,
     'confirm' => 'Confirm' ,
     'loginx' => 'Login' ,
     '_payment_type' => [
         'bank' => 'Bank' ,
         'online' => 'Online Payment' ,
-        'cash' => 'Cash' 
+        'cash' => 'Cash'
     ],
-    
+
 
 
 
@@ -557,7 +561,7 @@ return [
     'no_poster' => 'without poster' ,
     'subscription_price' =>'Subscription price' ,
     'discount_price' => 'Discount' ,
-    'total_price' => 'Total Price' , 
+    'total_price' => 'Total Price' ,
     'url' => 'URL' ,
     'image' => 'Image' ,
     'offers' => 'Offers' ,
@@ -567,17 +571,17 @@ return [
     'default_lang' => 'Default Language' ,
     'ar' => 'Arabic' ,
     'en' => 'English' ,
-    'forget_password' => 'Forgot your password?' , 
-    'made_love' => 'Made Love' , 
-    'at_easy_menu' => 'At Easy Menu' , 
+    'forget_password' => 'Forgot your password?' ,
+    'made_love' => 'Made Love' ,
+    'at_easy_menu' => 'At Easy Menu' ,
     'qr_code_try' => 'Try the menu, click on the picture or scan qr' ,
     'qr_code_try2' => 'We serve with love ❤️ more than 500 restaurants and cafes.' ,
-    'welcome_login_message' => 'Welcome to Easy Menu 🌹' , 
+    'welcome_login_message' => 'Welcome to Easy Menu 🌹' ,
     'choose_category' => 'Choose Category .. ' ,
     'enterCode' => 'Verification code' ,
     'register' => 'Register' ,
     'pay_now' => 'Pay' ,
-    
+
     'error_branch_not_exist' => 'You must select a branch',
     'fail_to_send_login' => 'Failed to send. Please try again',
     'error_barcode_name_exist' => 'The name in English must not be repeated',
@@ -622,7 +626,7 @@ return [
     'calories_des' => '(:num Calories)' ,
     '_reservation_type' => [
         'package' => 'Package' ,
-        'table' => 'Table' , 
+        'table' => 'Table' ,
         'chair' => 'Chair'
     ],
     '_table_order_status' => [
@@ -644,8 +648,10 @@ return [
     'branch_tentative_details' => 'Branch will be create at tentative period and its time is : ',
     'a_day' => 'day',
     'branch_price_after_tentative' => 'Subscription Price After Tentative Period is : ',
-    
+
     'success_subscribe_service' => 'Success Subscribe Service At Tentative Period',
     'activate_subscription' => 'Activate Subscription',
     'service_tentative_details' => 'Service Will Be Added At Tentative Period and its time is : ',
+    'recapcha_fail' => 'recaptcha fail, try again',
+    'waiter_title' => 'Call Waiter' ,
 ];

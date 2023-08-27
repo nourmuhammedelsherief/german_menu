@@ -31,6 +31,7 @@ use \App\Http\Controllers\AdminController\AdminRestaurantNoteController;
 
 use App\Http\Controllers\AdminController\AdsController as AdminControllerAdsController;
 use App\Http\Controllers\AdminController\ArchiveCategoryController;
+use App\Http\Controllers\AdminController\AttendanceController;
 use App\Http\Controllers\AdminController\CategoryServiceController;
 use App\Http\Controllers\AdminController\ClientRequestController;
 use App\Http\Controllers\AdminController\ClientRequestNoteController;
@@ -86,10 +87,17 @@ use \App\Http\Controllers\EmployeeController\HomeController as EmployeeHome;
 use \App\Http\Controllers\EmployeeController\UserController as UserEmployee;
 use \App\Http\Controllers\EmployeeController\Order\OrderController as EmployeeOrder;
 use App\Http\Controllers\RestaurantController\AdsController;
+use App\Http\Controllers\RestaurantController\BackupController;
 use App\Http\Controllers\RestaurantController\BankController as RestaurantControllerBankController;
 use App\Http\Controllers\RestaurantController\FeedbackBranchController;
 use App\Http\Controllers\RestaurantController\FeedbackController;
+use App\Http\Controllers\RestaurantController\HeaderFooterController;
+use App\Http\Controllers\RestaurantController\IconController;
 use App\Http\Controllers\RestaurantController\LayoltyPointController;
+use App\Http\Controllers\RestaurantController\OrderController as RestaurantControllerOrderController;
+use App\Http\Controllers\RestaurantController\Party\PartyBranchController;
+use App\Http\Controllers\RestaurantController\Party\PartyController;
+use App\Http\Controllers\RestaurantController\Party\PartyOrderController;
 use App\Http\Controllers\RestaurantController\Reservation\ReservationBranchController;
 use App\Http\Controllers\RestaurantController\Reservation\ReservationController as ReservationReservationController;
 use App\Http\Controllers\RestaurantController\Reservation\ReservationPlaceController;
@@ -97,17 +105,26 @@ use App\Http\Controllers\RestaurantController\Reservation\ReservationTableContro
 use App\Http\Controllers\RestaurantController\RestaurantContactUsController;
 use App\Http\Controllers\RestaurantController\RestaurantContactUsLinkController;
 use App\Http\Controllers\RestaurantController\ServiceStoreController;
+use App\Http\Controllers\RestaurantController\SmsController;
+use App\Http\Controllers\RestaurantController\Waiter\EmployeeController as WaiterEmployeeController;
+use App\Http\Controllers\RestaurantController\Waiter\ItemController;
+use App\Http\Controllers\RestaurantController\Waiter\WaiterOrderController;
+use App\Http\Controllers\RestaurantController\Waiter\WaiterRequestController;
+use App\Http\Controllers\RestaurantController\Waiter\WaiterTableController;
 use App\Http\Controllers\RestaurantController\WhatsappBranchController;
 use App\Http\Controllers\ServicePriceController;
 use App\Http\Controllers\TestController;
-
+use App\Http\Controllers\WaiterController\LoginController as WaiterControllerLoginController;
+use App\Http\Controllers\WaiterController\WaiterOrderController as WaiterControllerWaiterOrderController;
 // website silver routes
 use \App\Http\Controllers\websiteController\Silver\HomeController as SilverHome;
 use \App\Http\Controllers\websiteController\Silver\UserController;
 use \App\Http\Controllers\websiteController\Silver\OrderController;
 use \App\Http\Controllers\websiteController\Gold\OrderController as GoldOrder;
 use \App\Http\Controllers\websiteController\Gold\TableOrderController;
+use App\Http\Controllers\websiteController\Silver\PartyController as SilverPartyController;
 use App\Http\Controllers\websiteController\Silver\ReservationController;
+use App\Http\Controllers\websiteController\Silver\WaiterOrderController as SilverWaiterOrderController;
 use App\Models\Reservation\ReservationPlace;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Request as FacadesRequest;
@@ -126,10 +143,18 @@ use \App\Http\Middleware\AdminRole;
 
 Route::get('redirect_back', [IntegrationController::class, 'redirect_code']);
 
+// register form
+
+Route::get('form-register', [\App\Http\Controllers\HomeController::class, 'form_register']);
+
+Route::post('form_register_post', [\App\Http\Controllers\HomeController::class, 'form_register_post'])->name('form_register_post');
+
+
 Route::get('test', [TestController::class, 'index']);
-//Route::get('/', function () {
-//    return redirect()->to('https://web.easymenu.site');
-//});
+Route::get('/', function () {
+    // return redirect()->to('https://web.easymenu.site');
+    return view('welcome');
+});
 Route::get('/login', function () {
     return redirect()->to('https://easymenu.site/restaurant/login');
 });
@@ -141,29 +166,30 @@ Route::get('/first_phase_register', function () {
 Route::get('/pull_menu/{id}', [IntegrationController::class, 'pull_menu'])->name('pull_menu');
 Route::get('/remove_foodics_integration/{id}', [IntegrationController::class, 'remove_foodics_integration'])->name('remove_foodics_integration');
 
+Route::get('/paymob', function () {
+    paymob();
+});
 
 
-Route::get('/redirect_tap_back_gold_order/{order_id}/{token?}' , [GoldOrder::class , 'gold_order_tap'])->name('tapRedirectBackGoldOrder');
-Route::get('/redirect_tap_back_table_order/{order_id}/{token?}' , [TableOrderController::class , 'table_order_tap'])->name('tapRedirectBackTableOrder');
-Route::get('/redirect_express_success_gold/{order_id}/{token?}' , [GoldOrder::class , 'express_success'])->name('express_success');
-Route::get('/table_express_success/{order_id}/{token?}' , [TableOrderController::class , 'express_success'])->name('table_express_success');
-Route::get('/checkTableStatus/{order_id}/{setting_id?}/{id1?}/{id2?}', [TableOrderController::class , 'check_status'])->name('checkTableStatus');
-Route::get('/redirect_express_error_gold' , [GoldOrder::class , 'express_error'])->name('express_error');
+Route::get('/redirect_tap_back_gold_order/{order_id}/{token?}', [GoldOrder::class, 'gold_order_tap'])->name('tapRedirectBackGoldOrder');
+Route::get('/redirect_tap_back_table_order/{order_id}/{token?}', [TableOrderController::class, 'table_order_tap'])->name('tapRedirectBackTableOrder');
+Route::get('/redirect_express_success_gold/{order_id}/{token?}', [GoldOrder::class, 'express_success'])->name('express_success');
+Route::get('/table_express_success/{order_id}/{token?}', [TableOrderController::class, 'express_success'])->name('table_express_success');
+Route::get('/checkTableStatus/{order_id}/{setting_id?}/{id1?}/{id2?}', [TableOrderController::class, 'check_status'])->name('checkTableStatus');
+Route::get('/redirect_express_error_gold', [GoldOrder::class, 'express_error'])->name('express_error');
 
-Route::get('/get_branch_service/{id}', [ RestaurantSettingController::class,'get_branch_service'])->name('get_branch_service');
-
-
-Route::get('locale/{locale}', function ( $locale) {
+Route::get('/get_branch_service/{id}', [RestaurantSettingController::class, 'get_branch_service'])->name('get_branch_service');
 
 
-        session(['locale' => $locale]);
-        App::setLocale($locale);
-        // return session()->all();
+Route::get('locale/{locale}', function ($locale) {
+    session(['locale' => $locale]);
+    App::setLocale($locale);
+    // return session()->all();
     $path = \Illuminate\Support\Facades\URL::previous();
     return redirect()->back();
 })->name('language');
-Route::get('restaurant/locale/{locale}', function (Request $request , $locale) {
-    session()->put('lang_restaurant' , $locale);
+Route::get('restaurant/locale/{locale}', function (Request $request, $locale) {
+    session()->put('lang_restaurant', $locale);
     App::setLocale($locale);
     $path = \Illuminate\Support\Facades\URL::previous();
     return redirect()->back();
@@ -176,17 +202,35 @@ Route::get('/error', function (Request $request) {
     return $request->all();
     print trans('messages.errorOccur');
 });
-Route::match( ['get'], 'restaurants/{restaurant}/reservation/package-details/{id}/{date}', [ReservationController::class, 'loadPackageDetails'])->name('reservation.packageDetails');
-Route::match( ['get' , 'post'], 'restaurants/{restaurant}/reservations', [ReservationController::class, 'reservationPage1'])->name('reservation.page1');
-Route::match(['get' , 'post'] ,'restaurants/{branch}/reservations/{order}/page2', [ReservationController::class, 'reservationPage2'])->name('reservation.page2');
+Route::match(['get'], 'restaurants/{restaurant}/reservation/package-details/{id}/{date}', [ReservationController::class, 'loadPackageDetails'])->name('reservation.packageDetails');
+Route::match(['get', 'post'], 'restaurants/{restaurant}/reservations', [ReservationController::class, 'reservationPage1'])->name('reservation.page1');
+Route::match(['get', 'post'], 'restaurants/{branch}/reservations/{order}/page2', [ReservationController::class, 'reservationPage2'])->name('reservation.page2');
 Route::get('restaurants/{branch}/reservations/{order}/payment', [ReservationController::class, 'reservationPage3'])->name('reservation.page3');
-Route::match(['get','post'] , 'restaurants/{branch}/reservations/{order}/page4', [ReservationController::class, 'reservationPage4'])->name('reservation.page4');
-Route::match(['get' , 'post'] , 'restaurants/{branch}/reservations/{order}/summery', [ReservationController::class, 'summery'])->name('reservation.summery');
+Route::match(['get', 'post'], 'restaurants/{branch}/reservations/{order}/page4', [ReservationController::class, 'reservationPage4'])->name('reservation.page4');
+Route::match(['get', 'post'], 'restaurants/{branch}/reservations/{order}/summery', [ReservationController::class, 'summery'])->name('reservation.summery');
 Route::get('restaurants/reservation-data/{branch}', [ReservationController::class, 'getReservationData'])->name('reservation.data');
 
-Route::get('/restaurants/{name}/contact_us/{item?}', [SilverHome::class, 'contactUsPage'])->name('contactUs');
+// waiter
+Route::match(['post'], 'restaurants/{restaurant}/waiter/store', [SilverWaiterOrderController::class, 'store'])->name('web.waiter.store');
+Route::match(['get'], 'restaurants/{restaurant}/{table}/waiter/complete', [SilverWaiterOrderController::class, 'completedOrder'])->name('web.waiter.thank');
+// party
+Route::match(['get'], 'restaurants/{restaurant}/parties/dates', [SilverPartyController::class, 'getDates'])->name('party.dates');
+Route::match(['get'], 'restaurants/{restaurant}/parties/periods', [SilverPartyController::class, 'getPeriods'])->name('party.periods');
+Route::match(['get'], 'restaurants/{restaurant}/parties/fields', [SilverPartyController::class, 'getFields'])->name('party.fields');
 
-Route::get('restaurants/{name}/product/{product}/{table_id?}' ,[ SilverHome::class , 'productDetails'])->name('product.show');
+Route::match(['get'], 'restaurants/{restaurant}/parties', [SilverPartyController::class, 'page1'])->name('party.page1');
+Route::match(['get'], 'restaurants/{restaurant}/parties/step2', [SilverPartyController::class, 'page2'])->name('party.page2');
+Route::match(['get'], 'restaurants/{restaurant}/parties/payment/{order}', [SilverPartyController::class, 'page3Payment'])->name('party.payment');
+Route::match(['post'], 'restaurants/{restaurant}/parties/payment/{order}', [SilverPartyController::class, 'storePaymentOrder'])->name('party.payment.store');
+Route::match(['post'], 'restaurants/{restaurant}/parties/step2', [SilverPartyController::class, 'storeOrder'])->name('party.store');
+Route::match(['get'], 'restaurants/{restaurant}/parties/summery/{order}', [SilverPartyController::class, 'summery'])->name('party.summery');
+Route::match(['get'], 'restaurants/{restaurant}/parties/{branch}/{date}', [SilverPartyController::class, 'getPartiesDate'])->name('party.date');
+
+Route::get('/restaurants/{name}/contact_us/{item?}', [SilverHome::class, 'contactUsPage'])->name('contactUs');
+Route::get('terms', [SilverHome::class, 'page1'])->name('page1');
+Route::get('customer-condition', [SilverHome::class, 'page2'])->name('page2');
+
+Route::get('restaurants/{name}/product/{product}/{table_id?}', [SilverHome::class, 'productDetails'])->name('product.show');
 Route::get('/restaurants/{name}/{cat?}/{branch_name?}/{sub?}', [SilverHome::class, 'index'])->name('sliverHome');
 Route::get('/table/restaurants/{name}/{name_barcode}/{cat?}/{branch_name?}/{sub?}', [SilverHome::class, 'index_table'])->name('sliverHomeTable');
 Route::get('/restaurnt/{name}/{branch_name?}/{cat?}/{sub?}', [SilverHome::class, 'branch_index'])->name('sliverHomeBranch');
@@ -194,9 +238,9 @@ Route::get('/table/restaurnt/{name}/{name_barcode}/{branch_name?}/{cat?}/{sub?}'
 Route::get('/menu_product/{id?}/{table_id?}', [SilverHome::class, 'loadMenuProduct'])->name('loadMenuProduct');
 Route::post('/storeProductWeb', [SilverHome::class, 'storeProductWeb'])->name('storeProductWeb');
 Route::get('/mustLogin', [SilverHome::class, 'mustLogin'])->name('mustLogin');
-Route::get('/check-reservation-status/{res_id}/{id1?}/{id2?}', [ReservationController::class,'check_status'])->name('checkReservationStatus');
-Route::get('/check-reservation-tap-status/{order_id}', [ReservationController::class,'check_tap_status'])->name('checkReservationTapStatus');
-Route::get('/check-reservation-express-status/{order_id}', [ReservationController::class,'check_express_status'])->name('checkReservationExpressStatus');
+Route::get('/check-reservation-status/{res_id}/{id1?}/{id2?}', [ReservationController::class, 'check_status'])->name('checkReservationStatus');
+Route::get('/check-reservation-tap-status/{order_id}', [ReservationController::class, 'check_tap_status'])->name('checkReservationTapStatus');
+Route::get('/check-reservation-express-status/{order_id}', [ReservationController::class, 'check_express_status'])->name('checkReservationExpressStatus');
 
 
 
@@ -218,7 +262,6 @@ Route::controller(TableOrderController::class)->group(function () {
     Route::get('/table/GetCart/{branch_id}/{table_id?}', 'tableGetCart')->name('tableGetCart');
     Route::post('/table_order/{id}/seller_code', 'apply_table_order_seller_code')->name('applyTableOrderSellerCode');
     Route::get('/removeTableOrderItem/{item_id?}', 'removeTableOrderItem')->name('removeTableOrderItem');
-
 });
 /** table routes*/
 
@@ -235,16 +278,16 @@ Route::controller(UserController::class)->group(function () {
     Route::post('/user/forget_password/{res}', 'forget_password')->name('user_forget_password');
     Route::post('/user/forget_verify/{user}/{res}', 'forget_verify')->name('user_forget_verify');
     Route::post('/user/reset_password/{user}/{res}', 'reset_password')->name('user_reset_password');
-    Route::match(['get' , 'post'] , '/user/logout', 'logout')->name('user_logout');
+    Route::match(['get', 'post'], '/user/logout', 'logout')->name('user_logout');
     Route::get('/user/profile', 'userProfile')->name('userProfile');
 });
 
 
-Route::post('/silver/add_to_cart', [OrderController::class , 'add_to_cart'])->name('silverAddToCart');
+Route::post('/silver/add_to_cart', [OrderController::class, 'add_to_cart'])->name('silverAddToCart');
 
-Route::get('/silver/get_cart/{id}',[OrderController::class , 'get_cart'])->name('silverGetCart');
-Route::get('/gold/get_cart/{id}',[OrderController::class ,  'get_gold_cart'])->name('goldGetCart');
-Route::get('/family/get_cart/{id}',[OrderController::class ,  'get_family_cart'])->name('familyGetCart');
+Route::get('/silver/get_cart/{id}', [OrderController::class, 'get_cart'])->name('silverGetCart');
+Route::get('/gold/get_cart/{id}', [OrderController::class,  'get_gold_cart'])->name('goldGetCart');
+Route::get('/family/get_cart/{id}', [OrderController::class,  'get_family_cart'])->name('familyGetCart');
 
 Route::group(['middleware' => ['web', 'auth:web']], function () {
     Route::controller(OrderController::class)->group(function () {
@@ -252,18 +295,19 @@ Route::group(['middleware' => ['web', 'auth:web']], function () {
         Route::get('/silver/remove_order/{id}', 'removeSilverCartOrder')->name('removeSilverCartOrder');
         Route::get('/silver/empty_cart', 'emptySilverCart')->name('emptySilverCart');
         Route::post('/order/{id}/seller_code', 'apply_order_seller_code')->name('applyOrderSellerCode');
-        Route::post('/FoodicsOrder/{id}', 'FoodicsOrder')->name('FoodicsOrder');
+        Route::post('/FoodicsOrder/{id}', 'FoodicsOrder')->name('silverFoodicsOrder');
         Route::get('/check-order-foodics-status/{order_id}/{id1?}/{id2?}', 'check_order_foodics_status')->name('checkOrderFoodicsStatus');
         Route::get('/foodics_tap_payment_status/{order_id}', 'foodics_tap_payment_status')->name('foodics_tap_payment_status');
         Route::get('/foodics_express_payment_status/{order_id}', 'foodics_express_payment_status')->name('foodics_express_payment_status');
 
         Route::get('/cart/details/{branch_id}', 'cart_details')->name('cart_details');
+        Route::get('/order_details/{id}', 'foodicsOrderDetails')->name('silverfoodicsOrderDetails');
+        Route::get('/{branch}/my-orders', 'foodicsMyOrderDetails')->name('foodicsMyOrderDetails');
+        Route::get('/{branch}/last-order', 'foodicsLastOrderDetails')->name('foodicsLastOrderDetails');
         Route::get('/user/{order_id}/show_position/{lat}/{lon}/{type}', 'show_position')->name('show_position');
 
-        Route::get('/user/{branch_id}/foodics_show_position/{lat}/{lon}/{type}', 'foodics_show_position')->name('foodics_show_position');
+        Route::get('/user/{branch_id}/{foodicsBranchId}/foodics_show_position/{lat}/{lon}/{type}', 'foodics_show_position')->name('foodics_show_position');
         Route::get('/get/{order_id}/payment_types/{type}', 'get_order_payment_types')->name('getOrderPaymentType');
-
-
     });
     Route::controller(GoldOrder::class)->group(function () {
         Route::post('/gold/complete_order', 'complete_order')->name('GoldCompleteOrder');
@@ -274,10 +318,8 @@ Route::group(['middleware' => ['web', 'auth:web']], function () {
     });
 
 
-    Route::get('/{id}/{branch}/loyalty_points', [UserController::class ,  'loyalty_points'])->name('loyalty_points');
-    Route::get('/{id}/loyalty_points/convert', [UserController::class ,  'convertLoyaltyPoint'])->name('convertLoyaltyPoint');
-
-
+    Route::get('/{id}/{branch}/loyalty_points', [UserController::class,  'loyalty_points'])->name('loyalty_points');
+    Route::get('/{id}/loyalty_points/convert', [UserController::class,  'convertLoyaltyPoint'])->name('convertLoyaltyPoint');
 });
 /**
  * End user routes
@@ -301,6 +343,7 @@ Route::prefix('admin')->group(function () {
 
     Route::group(['middleware' => ['web', 'auth:admin']], function () {
         Route::controller(RestaurantController::class)->group(function () {
+            Route::get('/restaurants/{restaurant}/login', 'loginToRestaurant')->name('admin.restaurant.login');
             Route::get('/restaurants/{status}', 'index')->name('restaurants');
             Route::get('/restaurant_gold/{status}', 'index_gold')->name('restaurants_gold');
             Route::get('/restaurant_family/{status}', 'index_family')->name('restaurants_family');
@@ -325,7 +368,7 @@ Route::prefix('admin')->group(function () {
             Route::get('/restaurants/service/{id}/control', 'control_service_subscription')->name('ControlServiceSubscription');
             Route::post('/restaurants/service/{id}/control', 'controlServiceChanges')->name('controlServiceChanges');
             Route::post('/restaurants/controlPackage/{id}/control', 'controlPackage')->name('controlPackage');
-            Route::get('/restaurants/archive/{id}/{state}', 'ArchiveRestaurant')->name('ArchiveRestaurant')->middleware('admin');
+            Route::get('/restaurants/archive/{id}/{state}', 'ArchiveRestaurant')->name('ArchiveRestaurant')->middleware('auth:admin');
             Route::get('/branches/archive/{id}/{state}', 'ArchiveBranch')->name('ArchiveBranch')->middleware('admin');
             Route::get('/restaurants/ActiveRestaurant/{id}', 'ActiveRestaurant')->name('ActiveRestaurant');
             Route::get('/branches/subscription/{id}/control', 'control_branch_subscription')->name('ControlBranchSubscription');
@@ -349,16 +392,22 @@ Route::prefix('admin')->group(function () {
             Route::post('notes/update/{id}', 'update')->name('adminNote.update');
             Route::get('notes/delete/{id}', 'destroy');
         });
-        Route::resource('client_request' , ClientRequestController::class , ['as' => 'admin'])->except(['destroy']);
-        Route::get('client_request/{clientRequest}/archived' , [ClientRequestController::class , 'changeArchived'])->name('admin.client_request.archived');
-        Route::get('client_request/delete/{id}' , [ClientRequestController::class , 'destroy'])->name('admin.client_request.destroy');
-        Route::resource('client_request.note' , ClientRequestNoteController::class , ['as' => 'admin'])->except(['destroy']);
-        Route::get('client_request/{clientRequest}/note/delete/{id}' , [ClientRequestNoteController::class , 'destroy'])->name('admin.client_request.destroy');
+        Route::resource('client_request', ClientRequestController::class, ['as' => 'admin'])->except(['destroy']);
+        Route::get('client_request/{clientRequest}/archived', [ClientRequestController::class, 'changeArchived'])->name('admin.client_request.archived');
+        Route::get('client_request/delete/{id}', [ClientRequestController::class, 'destroy'])->name('admin.client_request.destroy');
+        Route::resource('client_request.note', ClientRequestNoteController::class, ['as' => 'admin'])->except(['destroy']);
+        Route::get('client_request/{clientRequest}/note/delete/{id}', [ClientRequestNoteController::class, 'destroy'])->name('admin.client_request.destroy');
 
         // mynotes
 
         Route::resource('/my-notes', AdminNoteController::class, []);
         Route::get('/my-notes/delete/{id}', [AdminNoteController::class, 'destroy']);
+
+        // attendance
+        Route::get('/attendance/start', [AttendanceController::class, 'startWork'])->name('admin.attendance.start');
+        Route::resource('/attendance', AttendanceController::class, ['as' => 'admin'])->only(['index' , 'create' , 'store']);
+        Route::get('/attendance/{type?}', [AttendanceController::class, 'index'])->name('admin.attendance.index');
+        Route::get('/attendance/delete/{id}', [AttendanceController::class, 'destroy']);
 
         // my-profile
         Route::get('/profile/my-tasks', [AdminDetailController::class, 'index'])->name('admin_details.my');
@@ -366,7 +415,7 @@ Route::prefix('admin')->group(function () {
         // my-tasks
         Route::get('/my-tasks', [TaskController::class, 'index'])->name('tasks.my');
         Route::get('/my-tasks/{id}', [TaskController::class, 'show'])->name('tasks.my.show');
-        Route::match(['get' , 'post'] , '/my-tasks/{id}/change-status', [TaskController::class, 'changeStatus'])->name('tasks.my.changeStatus');
+        Route::match(['get', 'post'], '/my-tasks/{id}/change-status', [TaskController::class, 'changeStatus'])->name('tasks.my.changeStatus');
         Route::controller(AdminController::class)->group(function () {
             Route::get('/a_subscription/{id}/{admin?}', 'renew_subscription')->name('renewSubscriptionAdmin');
             Route::get('/a_subscription/{id}/renew/{admin?}', 'store_subscription')->name('renewSubscriptionPostAdmin');
@@ -377,7 +426,44 @@ Route::prefix('admin')->group(function () {
             Route::get('/branches/subscription/{id}/{country}/{subscription}/{admin?}', 'renewSubscriptionBankGet')->name('renewSubscriptionBranchBank');
             Route::post('/branches/subscription/{id}/{admin?}', 'renewBranchByBank')->name('renewBranchSubscriptionByBank');
         });
+        // reports routes
+        Route::get('/reports', [ReportController::class, 'index'])->name('reports.index');
+        Route::get('/cities_reports', [ReportController::class, 'city_reports'])->name('CityReports');
+        Route::get('/countries_cities/{id}', [ReportController::class, 'countries_cities'])->name('countries_cities');
+        Route::get('/city_restaurants/{id}/{status}', [ReportController::class, 'CityRestaurants'])->name('CityRestaurants');
+        Route::get('/reports/restaurants/{year}/{month}/{type}', [ReportController::class, 'restaurants'])->name('reports.restaurants');
+        Route::get('/reports/services/{year}/{month}/{type}', [ReportController::class, 'services'])->name('reports.services');
+        Route::get('/reports/branches/{year}/{month}/{type}', [ReportController::class, 'branches'])->name('reports.branches');
+        Route::get('/category_reports', [ReportController::class, 'category_reports'])->name('category_reports');
+        Route::get('/category_restaurants/{id}', [ReportController::class, 'category_restaurants'])->name('category_restaurants');
 
+        Route::resource('/clients', ClientController::class, []);
+        Route::get('/clients/delete/{id}', [ClientController::class, 'destroy']);
+        Route::get('/clients/clientActivation/{id}/{active}', [ClientController::class, 'clientActivation'])->name('clientActivation');
+        // register answers routes
+        Route::resource('/answers', RegisterQuestionController::class, []);
+        Route::get('/answers/delete/{id}', [RegisterQuestionController::class, 'destroy']);
+        // service_store
+        Route::resource('service_category', CategoryServiceController::class, ['as' => 'admin'])->except('destroy');
+        Route::get('service_category/delete/{id}', [CategoryServiceController::class, 'destroy'])->name('admin.service_category.destroy');
+        Route::resource('our_services', ServiceController::class, ['prefix' => 'admin', 'names' => [
+            'index' => 'admin.service.index',
+            'edit' => 'admin.service.edit',
+            'update' => 'admin.service.update',
+        ]])->except(['destroy', 'show', 'create', 'store']);
+        Route::resource('our_services/{service}/country', ServicePriceController::class, [
+            'names' => [
+                'index' => 'admin.service.country.index',
+                'create' => 'admin.service.country.create',
+                'store' => 'admin.service.country.store',
+                'update' => 'admin.service.country.update',
+                'edit' => 'admin.service.country.edit',
+            ],
+        ])->only(['index', 'create', 'edit', 'store', 'update']);
+        Route::get('/service_restaurants/{service}/{status?}', [ServiceController::class, 'service_restaurants'])->name('admin.service.service_restaurants');
+        Route::get('subscription/our_services/{subscription}/{status}', [ServiceController::class, 'subscriptionConfirm'])->name('admin.service.subscription.confirm_status');
+        Route::get('/register_form_requests', [AdminController::class , 'register_form_requests'])->name('register_form_requests');
+        Route::get('/register_form_requests/delete/{id}',[AdminController::class , 'register_form_delete']);
         Route::middleware([AdminRole::class])->group(function () {
             // Admins Route
             Route::resource('admins', '\App\Http\Controllers\AdminController\AdminController', []);
@@ -387,28 +473,13 @@ Route::prefix('admin')->group(function () {
                 Route::get('/profileChangePass', 'change_pass');
                 Route::post('/profileChangePass', 'change_pass_update');
                 Route::get('/admin_delete/{id}', 'admin_delete');
+
             });
-            // service_store
-            Route::resource('service_category' , CategoryServiceController::class  , ['as' => 'admin'])->except('destroy');
-            Route::get('service_category/delete/{id}' , [CategoryServiceController::class , 'destroy'])->name('admin.service_category.destroy');
-            Route::resource('our_services', ServiceController::class, ['prefix' => 'admin', 'names' => [
-                'index' => 'admin.service.index',
-                'edit' => 'admin.service.edit',
-                'update' => 'admin.service.update',
-            ]])->except(['destroy', 'show', 'create', 'store']);
-            Route::resource('our_services/{service}/country', ServicePriceController::class, [
-                'names' => [
-                    'index' => 'admin.service.country.index',
-                    'create' => 'admin.service.country.create',
-                    'store' => 'admin.service.country.store',
-                    'update' => 'admin.service.country.update',
-                    'edit' => 'admin.service.country.edit',
-                ],
-            ])->only(['index', 'create', 'edit', 'store', 'update']);
+
             Route::get('our_services/{service}/country/delete/{id}', [ServicePriceController::class, 'destroy'])->name('admin.service.country.delete');
             Route::get('subscription/our_services/confirm', [ServiceController::class, 'getSubscriptions'])->name('admin.service.subscription_confirm')->withoutMiddleware('admin');
-            Route::get('subscription/our_services/{subscription}/{status}', [ServiceController::class, 'subscriptionConfirm'])->name('admin.service.subscription.confirm_status');
-            Route::get('/service_restaurants/{service}/{status?}', [ServiceController::class, 'service_restaurants'])->name('admin.service.service_restaurants');
+
+
             Route::get('services_store/{service}/pay', [ServiceController::class, 'getNewSubscription'])->name('admin.services_store.subscription');
             Route::post('services_store/{service}/pay', [ServiceController::class, 'storeNewSubscription'])->name('admin.services_store.subscription');
             Route::post('services_store/{service}/pay/bank', [ServiceController::class, 'storeNewSubscriptionBank'])->name('admin.services_store.subscription_bank');
@@ -491,10 +562,9 @@ Route::prefix('admin')->group(function () {
             Route::post('/country_packages/{id}/update', [CountryPackageController::class, 'update'])->name('country_packages.update');
             Route::get('/country_packages/delete/{id}', [CountryPackageController::class, 'destroy'])->name('country_packages.delete');
 
-            // clients
-            Route::resource('/clients', ClientController::class, []);
+
             Route::get('/clients/delete/{id}', [ClientController::class, 'destroy']);
-            Route::get('/clients/clientActivation/{id}/{active}', [ClientController::class, 'clientActivation'])->name('clientActivation');
+
 
             // settings
             Route::get('/settings', [SettingController::class, 'setting'])->name('settings.index');
@@ -505,22 +575,9 @@ Route::prefix('admin')->group(function () {
             Route::get('/histories/delete/{id}', [SettingController::class, 'delete_histories'])->name('admin.delete_histories');
 
             Route::get('/restaurant/histories/{id}', [SettingController::class, 'restaurant_history'])->name('admin.restaurant_history');
-            // register answers routes
-            Route::resource('/answers', RegisterQuestionController::class, []);
-            Route::get('/answers/delete/{id}', [RegisterQuestionController::class, 'destroy']);
+
             Route::post('/question/update', [RegisterQuestionController::class, 'update_question'])->name('updateQuestion');
             Route::get('/answer/restaurants/{id}', [RegisterQuestionController::class, 'answer_restaurants'])->name('answer_restaurants');
-
-            // reports routes
-            Route::get('/reports', [ReportController::class, 'index'])->name('reports.index');
-            Route::get('/cities_reports', [ReportController::class, 'city_reports'])->name('CityReports');
-            Route::get('/countries_cities/{id}', [ReportController::class, 'countries_cities'])->name('countries_cities');
-            Route::get('/city_restaurants/{id}/{status}', [ReportController::class, 'CityRestaurants'])->name('CityRestaurants');
-            Route::get('/reports/restaurants/{year}/{month}/{type}', [ReportController::class, 'restaurants'])->name('reports.restaurants');
-            Route::get('/reports/services/{year}/{month}/{type}', [ReportController::class, 'services'])->name('reports.services');
-            Route::get('/reports/branches/{year}/{month}/{type}', [ReportController::class, 'branches'])->name('reports.branches');
-            Route::get('/category_reports', [ReportController::class, 'category_reports'])->name('category_reports');
-            Route::get('/category_restaurants/{id}', [ReportController::class, 'category_restaurants'])->name('category_restaurants');
         });
     });
 });
@@ -534,11 +591,11 @@ Route::prefix('admin')->group(function () {
  */
 
 
-Route::match( ['get' , 'post'], 'restaurants-registration/{code}', [ResHome::class, 'sellerRegisters'])->name('restaurant.seller.register');
-Route::match( [ 'post'], 'restaurants-registration/{code}/verification-code/{id}', [ResHome::class, 'sellerVerificationPhone'])->name('restaurant.seller.register.verification');
-Route::match( ['get' ,'post'], 'restaurants-registration/{code}/payment/{id}', [ResHome::class, 'sellerRestaurantPayment'])->name('restaurant.seller.register.payment');
+Route::match(['get', 'post'], 'restaurants-registration/{code}', [ResHome::class, 'sellerRegisters'])->name('restaurant.seller.register');
+Route::match(['post'], 'restaurants-registration/{code}/verification-code/{id}', [ResHome::class, 'sellerVerificationPhone'])->name('restaurant.seller.register.verification');
+Route::match(['get', 'post'], 'restaurants-registration/{code}/payment/{id}', [ResHome::class, 'sellerRestaurantPayment'])->name('restaurant.seller.register.payment');
 
-Route::get('/restaurants-registration/{id1?}/{id2?}',[ResHome::class , 'sellerCodeRestaurantMyFatoora'])->name('restaurant.seller.register.myfatoora');
+Route::get('/restaurants-registration/{id1?}/{id2?}', [ResHome::class, 'sellerCodeRestaurantMyFatoora'])->name('restaurant.seller.register.myfatoora');
 
 Route::prefix('restaurant')->group(function () {
 
@@ -546,7 +603,7 @@ Route::prefix('restaurant')->group(function () {
     Route::get('register/step1', [ResHome::class, 'show_register'])->name('restaurant.step1Register');
     Route::get('register-gold/step1', [ResHome::class, 'show_register'])->name('restaurant.step1Registergold');
     Route::post('store/step1', [ResHome::class, 'submit_step1'])->name('restaurant.submit_step1');
-    Route::get('resend_code/{id}', [ResHome::class, 'resend_code'])->name('restaurant.resend_code');
+    Route::match(['get', 'post'], 'resend_code/{id}', [ResHome::class, 'resend_code'])->name('restaurant.resend_code');
     Route::get('phone_verification/{id}', [ResHome::class, 'phone_verification'])->name('restaurant.phone_verification');
     Route::post('phone_verification/{id}', [ResHome::class, 'code_verification'])->name('restaurant.code_verification');
     Route::get('register/step2/{id}', [ResHome::class, 'storeStep2'])->name('restaurant.step2Register');
@@ -581,44 +638,65 @@ Route::prefix('restaurant')->group(function () {
         Route::get('loyalty_point_price/delete/{id}', [LayoltyPointController::class, 'delete'])->name('restaurant.loyalty_point.delete');
         Route::match(['get', 'post'], 'loyalty_point/settings', [LayoltyPointController::class, 'settings'])->name('restaurant.loyalty_point.setting');
 
-         // whatsapp_branches
-         Route::resource('/whatsapp_branches', WhatsappBranchController::class, []);
-         Route::get('/whatsapp_branches/delete/{id}', [WhatsappBranchController::class, 'destroy']);
+        // whatsapp_branches
+        Route::resource('/whatsapp_branches', WhatsappBranchController::class, []);
+        Route::get('/whatsapp_branches/delete/{id}', [WhatsappBranchController::class, 'destroy']);
 
-        Route::match(['get' , 'post'] , '/banks-settings', [RestaurantControllerBankController::class, 'settings'])->name('restaurant.banks.setting');
+        Route::match(['get', 'post'], '/banks-settings', [RestaurantControllerBankController::class, 'settings'])->name('restaurant.banks.setting');
         Route::resource('/banks', RestaurantControllerBankController::class, ['as' => 'restaurant']);
         Route::get('/banks/delete/{id}', [RestaurantControllerBankController::class, 'destroy']);
+
+        // party-branches
+
+        Route::resource('/party-branch', PartyBranchController::class, ['as' => 'restaurant']);
+        Route::get('/party-branch/delete/{id}', [PartyBranchController::class, 'destroy']);
+        // party
+        Route::match(['get' , 'post'] ,'/party/payment-settings', [PartyController::class, 'servicesIndex'])->name('restaurant.party.setting.payment');
+        Route::match(['get' , 'post'] ,'/party/payment-cash', [PartyController::class, 'cashSettings'])->name('restaurant.party.setting.cash');
+        Route::match(['get' , 'post'] ,'/party/settings', [PartyController::class, 'getSettings'])->name('restaurant.party.settings');
+        Route::resource('/party', PartyController::class, ['as' => 'restaurant']);
+        Route::get('/party/delete/{id}', [PartyController::class, 'destroy']);
+
+        Route::get('party-order/confirm/{id}/{code}', [PartyController::class, 'confirmOrder']);
+        Route::get('party-order/{order}/bank-confirm', [PartyOrderController::class, 'acceptBankOrder'])->name('restaurant.party.bank-confirm');
+        Route::post('party-order/cancel/{id}', [PartyController::class, 'cancelOrder'])->name('restaurant.party.cancel');
+        Route::resource('/party-order', PartyOrderController::class, ['as' => 'restaurant'])->only(['index']);
+
+
+
+        Route::resource('/related_code', HeaderFooterController::class, ['as' => 'restaurant']);
+        Route::get('/related_code/delete/{id}', [HeaderFooterController::class, 'destroy']);
 
         Route::resource('ads', AdsController::class, ['as' => 'restaurant'])->only(['create', 'store', 'edit', 'update']);
         Route::get('ads/delete/{id}', [AdsController::class, 'delete'])->name('restaurant.ads.delete');
         Route::get('ads', [AdsController::class, 'mainIndex'])->name('restaurant.ads.index');
 
         // link_contact_us
-        Route::resource('link_contact_us', RestaurantContactUsLinkController::class, ['as' => 'restaurant'])->only(['create', 'store', 'edit', 'update' , 'index' ]);
+        Route::resource('link_contact_us', RestaurantContactUsLinkController::class, ['as' => 'restaurant'])->only(['create', 'store', 'edit', 'update', 'index']);
         Route::get('link_contact_us/delete/{id}', [RestaurantContactUsLinkController::class, 'delete'])->name('restaurant.link_contact_us.delete');
         Route::get('link_contact_us/change_status/{id}', [RestaurantContactUsLinkController::class, 'changeStatus'])->name('restaurant.link_contact_us.changeStatus');
         Route::get('link_contact_us/{id}', [RestaurantContactUsLinkController::class, 'show'])->name('restaurant.link_contact_us.show');
 
 
         // contact_us
-        Route::resource('contact_us', RestaurantContactUsController::class, ['as' => 'restaurant'])->only(['create', 'store', 'edit', 'update' , 'index']);
+        Route::resource('contact_us', RestaurantContactUsController::class, ['as' => 'restaurant'])->only(['create', 'store', 'edit', 'update', 'index']);
         Route::get('contact_us/delete/{id}', [RestaurantContactUsController::class, 'delete'])->name('restaurant.contact_us.delete');
-        Route::match( ['get' , 'post'], 'contact_us/settings', [RestaurantContactUsController::class, 'setting'])->name('restaurant.contact_us.setting');
+        Route::match(['get', 'post'], 'contact_us/settings', [RestaurantContactUsController::class, 'setting'])->name('restaurant.contact_us.setting');
 
         Route::resource('reservation/branch', ReservationBranchController::class, ['names' => [
-            'index' => 'restaurant.reservation.branch.index' ,
-            'create' => 'restaurant.reservation.branch.create' ,
-            'store' => 'restaurant.reservation.branch.store' ,
-            'edit' => 'restaurant.reservation.branch.edit' ,
-            'update' => 'restaurant.reservation.branch.update' ,
-        ]])->except(['destroy' , 'show']);
+            'index' => 'restaurant.reservation.branch.index',
+            'create' => 'restaurant.reservation.branch.create',
+            'store' => 'restaurant.reservation.branch.store',
+            'edit' => 'restaurant.reservation.branch.edit',
+            'update' => 'restaurant.reservation.branch.update',
+        ]])->except(['destroy', 'show']);
         Route::get('reservation/branch/delete/{id}', [ReservationBranchController::class, 'delete'])->name('restaurant.reservation.branch.delete');
 
 
-        Route::resource('reservation/place', ReservationPlaceController::class , ['as' => 'restaurant.reservation'])->except(['destroy' , 'show']);
-        Route::get('reservation/place/delete/{id}' , [ReservationPlaceController::class , 'delete']);
+        Route::resource('reservation/place', ReservationPlaceController::class, ['as' => 'restaurant.reservation'])->except(['destroy', 'show']);
+        Route::get('reservation/place/delete/{id}', [ReservationPlaceController::class, 'delete']);
 
-        Route::resource('reservation/tables', ReservationTableController::class, ['as' => 'restaurant.reservation'])->only(['index' , 'create'  , 'store' , 'show']);
+        Route::resource('reservation/tables', ReservationTableController::class, ['as' => 'restaurant.reservation'])->only(['index', 'create', 'store', 'show']);
 
         Route::get('reservation/orders/confirm/{id}/{code}', [ReservationTableController::class, 'confirmReservation']);
 
@@ -633,33 +711,32 @@ Route::prefix('restaurant')->group(function () {
         Route::resource('reservation/tables', ReservationTableController::class, ['as' => 'restaurant.reservation']);
         Route::get('reservation/tables/delete/{id}', [ReservationTableController::class, 'destroy']);
 
-        Route::match(['get' , 'post'] ,'reservation/settings', [ReservationReservationController::class, 'getSettings'])->name('reservation.settings');
+        Route::match(['get', 'post'], 'reservation/settings', [ReservationReservationController::class, 'getSettings'])->name('reservation.settings');
 
 
         Route::resource('reservation/order', ReservationReservationController::class, ['names' => [
-            'index' => 'restaurant.reservation.index' ,
-            'create' => 'restaurant.reservation.create' ,
-            'store' => 'restaurant.reservation.store' ,
-            'edit' => 'restaurant.reservation.edit' ,
-            'update' => 'restaurant.reservation.update' ,
-            'show' => 'restaurant.reservation.show' ,
+            'index' => 'restaurant.reservation.index',
+            'create' => 'restaurant.reservation.create',
+            'store' => 'restaurant.reservation.store',
+            'edit' => 'restaurant.reservation.edit',
+            'update' => 'restaurant.reservation.update',
+            'show' => 'restaurant.reservation.show',
         ]])->except(['destroy']);
-        Route::get('reservation/services' , [ReservationReservationController::class, 'servicesIndex'])->name('resetaurant.reservation.services');
-        Route::match( ['get' , 'post'],'reservation/cash-settings' , [ReservationReservationController::class, 'cashSettings'])->name('resetaurant.reservation.cash-settings');
-        Route::match(['get' , 'post'] , 'reservation/order/{order}/confirm' , [ReservationReservationController::class, 'confirmBankOrder'])->name('resetaurant.reservation.confirm');
-        Route::get('reservation/orders/finished' , [ReservationReservationController::class, 'finished'])->name('resetaurant.reservation.finished');
-        Route::get('reservation/orders/canceled' , [ReservationReservationController::class, 'canceled'])->name('resetaurant.reservation.canceled');
-        Route::get('reservation/orders/confirmed' , [ReservationReservationController::class, 'completed'])->name('resetaurant.reservation.confirmed');
+        Route::get('reservation/services', [ReservationReservationController::class, 'servicesIndex'])->name('resetaurant.reservation.services');
+        Route::match(['get', 'post'], 'reservation/cash-settings', [ReservationReservationController::class, 'cashSettings'])->name('resetaurant.reservation.cash-settings');
+        Route::match(['get', 'post'], 'reservation/order/{order}/confirm', [ReservationReservationController::class, 'confirmBankOrder'])->name('resetaurant.reservation.confirm');
+        Route::get('reservation/orders/finished', [ReservationReservationController::class, 'finished'])->name('resetaurant.reservation.finished');
+        Route::get('reservation/orders/canceled', [ReservationReservationController::class, 'canceled'])->name('resetaurant.reservation.canceled');
+        Route::get('reservation/orders/confirmed', [ReservationReservationController::class, 'completed'])->name('resetaurant.reservation.confirmed');
         Route::match(['get', 'post'], 'reservation/service_setting', [ReservationReservationController::class, 'service_setting'])->name('restaurant.reservation.service.setting');
 
-        Route::match(['get' , 'post'] , 'reservation/description' , [ReservationReservationController::class , 'reservationDescription'])->name('restaurant.reservation.description.edit');
+        Route::match(['get', 'post'], 'reservation/description', [ReservationReservationController::class, 'reservationDescription'])->name('restaurant.reservation.description.edit');
 
 
         Route::resource('services_store', ServiceStoreController::class, ['as' => 'restaurant'])->only(['index']);
         Route::get('services_store/{service}/pay', [ServiceStoreController::class, 'getNewSubscription'])->name('restaurant.services_store.subscription');
         Route::post('services_store/{service}/pay', [ServiceStoreController::class, 'storeNewSubscription'])->name('restaurant.services_store.subscription');
         Route::post('services_store/{service}/pay/bank', [ServiceStoreController::class, 'storeNewSubscriptionBank'])->name('restaurant.services_store.subscription_bank');
-
     });
 
     Route::group(['middleware' => ['web']], function () {
@@ -668,7 +745,7 @@ Route::prefix('restaurant')->group(function () {
             Route::get('/barcode', 'barcode')->name('RestaurantBarcode');
             Route::post('/profileEdit/{id?}', 'my_profile_edit')->name('RestaurantUpdateProfile');
             Route::post('/updateBarcode/{id?}', 'updateBarcode')->name('RestaurantUpdateBarcode');
-            Route::match( ['get' ,'post'], '/my-information/{id?}', 'updateMyInformation')->name('RestaurantUpdateInformation');
+            Route::match(['get', 'post'], '/my-information/{id?}', 'updateMyInformation')->name('RestaurantUpdateInformation');
             Route::get('/subscription/{id}/{admin?}', 'renew_subscription')->name('renewSubscription');
             Route::get('/subscription/{id}/renew/{admin?}', 'store_subscription')->name('renewSubscriptionPost');
             Route::post('/subscription/{id}/bank/{admin?}', 'renewSubscriptionBank')->name('renewSubscriptionBank');
@@ -679,7 +756,11 @@ Route::prefix('restaurant')->group(function () {
             Route::get('/information', 'information')->name('information');
             Route::post('/information', 'store_information')->name('store_information');
             Route::post('/RestaurantChangeColors/{id}', 'RestaurantChangeColors')->name('RestaurantChangeColors');
+            Route::post('/RestaurantChangeBioColors/{id}', 'RestaurantChangeBioColors')->name('RestaurantChangeBioColors');
+
             Route::get('/reset_to_main/{id}', 'Reset_to_main')->name('Reset_to_main');
+            Route::get('/Reset_to_bio_main/{id}', 'Reset_to_bio_main')->name('Reset_to_bio_main');
+
             Route::get('/myfatoora_token', 'myfatoora_token')->name('myfatoora_token');
             Route::post('/myfatoora_token', 'update_myfatoora_token')->name('myfatoora_token.update');
             Route::get('/my_restaurant_users', 'my_restaurant_users')->name('my_restaurant_users');
@@ -696,21 +777,24 @@ Route::prefix('restaurant')->group(function () {
         Route::get('/branches/subscription/{id}/{country}/{subscription}', [BranchController::class, 'renewSubscriptionBankGet'])->name('renewSubscriptionBankGet');
         Route::post('/branches/subscription/{id}', [BranchController::class, 'renewSubscriptionBank'])->name('renewBranchSubscriptionBank');
         Route::get('/branches/{id}/barcode', [BranchController::class, 'barcode'])->name('branchBarcode');
+        Route::get('/branches/{id}/print-menu', [BranchController::class, 'printMenu'])->name('branchPrintMenu');
         Route::get('/foodics/branches', [BranchController::class, 'foodics_branches'])->name('foodics_branches');
+        Route::match(['get', 'post'], '/foodics/branches/{id}/edit', [BranchController::class, 'foodicsBranchEdit'])->name('foodics_branches.edit');
         Route::get('/foodics/branch/{id}/{active}', [BranchController::class, 'active_foodics_branch'])->name('active_foodics_branch');
         Route::get('/foodics/discounts/{id}', [BranchController::class, 'discounts'])->name('foodics_discounts');
         Route::get('/branches/showBranchCart/{branch_id}/{state}', [BranchController::class, 'showBranchCart'])->name('showBranchCart');
-         Route::get('/branches/stopBranchMenu/{branch_id}/{state}', [BranchController::class, 'stopBranchMenu'])->name('stopBranchMenu');
+        Route::get('/branches/stopBranchMenu/{branch_id}/{state}', [BranchController::class, 'stopBranchMenu'])->name('stopBranchMenu');
 
         Route::get('/copy_menu/branch', [BranchController::class, 'copy_menu'])->name('copyBranchMenu');
         Route::post('/copy_menu/branch', [BranchController::class, 'copy_menu_post'])->name('copyBranchMenuPost');
         Route::get('/print_invoice/{id}', [BranchController::class, 'print_invoice'])->name('print_invoice');
 
-        Route::group(['middleware' => 'auth:restaurant'], function(){
-                    // Table Routes
+        Route::group(['middleware' => 'auth:restaurant'], function () {
+            // Table Routes
             Route::resource('/tables', TableController::class, []);
             Route::get('/service_tables/create/{id}', [TableController::class, 'create_service_table'])->name('createServiceTable');
             Route::get('/foodics/tables/{id}',  [TableController::class, 'foodics_tables'])->name('FoodicsOrderTable');
+            // Foodics table order
             Route::get('/foodics/orders',  [TableController::class, 'tableOrder'])->name('FoodicsTableOrder');
             Route::get('/foodics/foodics-info',  [TableController::class, 'getFoodicsDetails'])->name('FoodicsTableInfo');
             Route::get('/foodics/create-foodics-order',  [TableController::class, 'createFoodicsOrder'])->name('CreateFoodicsOrder');
@@ -719,6 +803,13 @@ Route::prefix('restaurant')->group(function () {
             Route::get('/tables/barcode/{id}/show', [TableController::class, 'show_barcode'])->name('showTableBarcode');
             Route::get('/whatsApp/tables/{id}',  [TableController::class, 'service_tables'])->name('WhatsAppTable');
             Route::get('/easymenu/tables/{id}',  [TableController::class, 'service_tables'])->name('EasyMenuTable');
+
+
+            // Foodics Order
+            Route::get('/foodics-orders',  [RestaurantControllerOrderController::class, 'foodicsOrder'])->name('FoodicsOrder');
+            Route::get('/foodics-orders/foodics-info',  [RestaurantControllerOrderController::class, 'getFoodicsDetails'])->name('FoodicsTableInfo');
+            Route::get('/foodics-orders/create-foodics-order',  [RestaurantControllerOrderController::class, 'createFoodicsOrder'])->name('CreateFoodicsOrder');
+            Route::get('foodics-orders/order/details',  [RestaurantControllerOrderController::class, 'orderDetails'])->name('foodicsOrderDetails');
 
             // Restaurant Employee Routes
             Route::resource('/restaurant_employees', RestaurantEmployeeController::class, []);
@@ -766,9 +857,11 @@ Route::prefix('restaurant')->group(function () {
             Route::get('/sensitivities/delete/{id}', [SensitivityController::class, 'destroy']);
 
             // sliders Routes
+            Route::post('/sliders/slider-title', [SliderController::class, 'storeSliderTitle'])->name('sliders.title');
             Route::resource('/sliders', SliderController::class, []);
             Route::get('/sliders/delete/{id}', [SliderController::class, 'destroy']);
             Route::post('/sliders/upload-video', [SliderController::class, 'uploadVideo'])->name('sliders.uploadVideo');
+
 
             // res_branches Routes
             Route::resource('/res_branches', ResBranchesController::class, []);
@@ -811,7 +904,6 @@ Route::prefix('restaurant')->group(function () {
                 Route::get('/edit_order_previous_days/{id}', 'previous_edit')->name('order_previous_days.edit');
                 Route::post('/order_previous_days/update/{id}', 'previous_update')->name('order_previous_days.update');
                 Route::get('/delete_order_previous_days/delete/{id}', 'previous_destroy');
-
             });
 
             // order setting days Routes
@@ -831,16 +923,29 @@ Route::prefix('restaurant')->group(function () {
                 Route::get('/menu_foodics_days/delete/{id}', 'foodics_destroy');
             });
 
+            // home_icons
 
+            Route::resource('home_icons', IconController::class, ['as' => 'restaurant']);
+            Route::get('/home_icons/{icon}/active/{status}', [IconController::class, 'changeStatus'])->name('restaurant.home_icons.change_status');
+            Route::get('/home_icons/delete/{id}', [IconController::class, 'destroy']);
             // posters Routes
             Route::resource('/posters', PosterController::class, []);
             Route::get('/posters/delete/{id}', [PosterController::class, 'destroy']);
+
+            // sms_methods
+            Route::match(['get', 'post'], '/sms/settings', [SmsController::class, 'settings'])->name('restaurant.sms.settings');
+            Route::match(['get', 'post'], '/sms/send', [SmsController::class, 'sendSms'])->name('restaurant.sms.sendSms');
+            Route::match(['get'], '/sms/history', [SmsController::class, 'index'])->name('restaurant.sms.index');
+            Route::match(['get'], '/sms/show/phone', [SmsController::class, 'showDetails'])->name('restaurant.sms.phone');
+            Route::match(['get'], '/sms/delete/{id}', [SmsController::class, 'delete'])->name('restaurant.sms.delete');
+
 
             // Offer Routes
             Route::resource('/offers', OfferController::class, []);
             Route::get('/offers/delete/{id}', [OfferController::class, 'destroy']);
             Route::get('/offers/photo/{id}/remove', [OfferController::class, 'remove_photo'])->name('imageOfferRemove');
 
+            Route::post('/sub_menu_category/update-image', [SubCategoryController::class, 'uploadImage'])->name('restaurant.sub_menu_category.update_image');
             Route::post('/menu_category/update-image', [MenuCategoryController::class, 'uploadImage'])->name('restaurant.menu_category.update_image');
             Route::post('/profile/update-image', [UserRestaurant::class, 'uploadImage'])->name('restaurant.profile.update_image');
             Route::post('/ads/update-image', [AdsController::class, 'uploadImage'])->name('restaurant.ads.update_image');
@@ -906,9 +1011,26 @@ Route::prefix('restaurant')->group(function () {
                 Route::post('/periods/{id}/update', 'update')->name('updateBranchPeriod');
                 Route::get('/periods/delete/{id}', 'destroy')->name('deleteBranchPeriod');
             });
+
+            Route::group(['prefix' => 'waiter'  , 'as' => 'restaurant.waiter.'] , function(){
+                Route::match(['get' , 'post'],'settings', [WaiterRequestController::class , 'getSettings'])->name('settings');
+
+                Route::get('tables/{id}/barcode' , [WaiterTableController::class , 'show_barcode'])->name('tables.barcode');
+                Route::resource('tables', WaiterTableController::class);
+                Route::get('tables/delete/{id}' , [WaiterTableController::class , 'destroy'])->name('tables.delete');
+
+                Route::get('employees/delete/{id}' , [WaiterEmployeeController::class , 'destroy'])->name('employees.delete');
+                Route::resource('employees', WaiterEmployeeController::class);
+
+                Route::get('items/delete/{id}' , [WaiterRequestController::class , 'destroy'])->name('items.delete');
+                Route::resource('items', WaiterRequestController::class);
+
+                Route::get('orders/delete/{id}' , [WaiterOrderController::class , 'destroy'])->name('orders.delete');
+                Route::post('orders/change-status' , [WaiterOrderController::class , 'changeStatus'])->name('orders.change-status');
+                Route::resource('orders', WaiterOrderController::class)->only(['index']);
+
+            });
         });
-
-
     });
 });
 /**
@@ -940,7 +1062,6 @@ Route::prefix('marketer')->group(function () {
             Route::get('/transfers', 'transfers')->name('transfersMarketer');
             Route::post('/profileChangePass/{id?}', 'change_pass_update')->name('MarketerChangePassword');
         });
-
     });
 });
 /**
@@ -962,7 +1083,6 @@ Route::prefix('casher')->group(function () {
         Route::controller(UserEmployee::class)->group(function () {
             Route::get('/profile', 'my_profile')->name('employeeProfile');
             Route::post('/profileEdit/{id?}', 'my_profile_edit')->name('employeeUpdateProfile');
-
         });
         Route::controller(EmployeeOrder::class)->group(function () {
             Route::get('/delivery/orders/{status}', 'delivery_orders')->name('employeeDeliveryOrders');
@@ -973,10 +1093,23 @@ Route::prefix('casher')->group(function () {
             Route::post('/change_table_order_status/{order}', 'change_table_order_status')->name('change_table_order_status');
             Route::post('/change_order_payment/{order}', 'change_order_payment')->name('change_order_payment');
         });
-
     });
 });
 /**
  * End @Employees Routes
  */
 
+//  start waiter routes
+Route::group(['prefix' => 'waiter' , 'as' => 'waiter.'] , function () {
+
+    Route::get('login', [WaiterControllerLoginController::class, 'showLoginForm'])->name('login');
+    Route::post('login', [WaiterControllerLoginController::class, 'login'])->name('login.submit');
+    Route::post('logout', [WaiterControllerLoginController::class, 'logout'])->name('logout');
+
+    Route::group(['middleware' => ['web', 'auth:waiter']], function () {
+        Route::get('orders' , [WaiterControllerWaiterOrderController::class , 'index'])->name('orders.index');
+        Route::post('orders/change-status' , [WaiterControllerWaiterOrderController::class , 'changeStatus'])->name('orders.change-status');
+
+    });
+});
+// end waiter routes

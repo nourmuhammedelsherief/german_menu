@@ -12,6 +12,7 @@ use App\Models\Restaurant;
 use App\Models\RestaurantContactUsLink;
 use App\Models\RestaurantDelivery;
 use App\Models\RestaurantSocial;
+use App\Models\RestaurantSubCategory;
 use App\Models\RestaurantView;
 use App\Models\ServiceSubscription;
 use App\Models\Table;
@@ -29,14 +30,12 @@ class HomeController extends Controller
 
     public function index(Request $request, $name, $category_id = null, $branch_name = null, $subCat = null)
     {
-        
-        $productsLimit = 50;
+
+        $productsLimit = 1000;
         $showMainPage = true;
         $restaurant = Restaurant::where('name_barcode', $name)
-            ->whereIn('status', ['active', 'tentative'])
-            ->where('archive', 'false')
+
             ->firstOrFail();
-        // return session()->all();
         $this->checkTheme($restaurant);
         if ($restaurant) {
             if ($branch_name != null) {
@@ -54,23 +53,30 @@ class HomeController extends Controller
                         ->where('main', 'true')
                         ->firstOrFail();
                 }
-                if (isset($branch->id) and $branch->main == 'true') {
-                    if ($restaurant->status == 'finished' || $restaurant->subscription->status == 'tentative_finished') {
-                        $table = null;
-                        return view('error', compact('restaurant', 'table', 'branch'));
-                    }
-                }
+                // if (isset($branch->id) and $branch->main == 'true') {
+                //     if ($restaurant->status == 'finished' || $restaurant->subscription->status == 'tentative_finished') {
+                //         $table = null;
+                //         return view('error', compact('restaurant', 'table', 'branch'));
+                //     }
+                // }
             } else {
                 $branch = Branch::where('restaurant_id', $restaurant->id)
                     ->where('main', 'true')
                     //    ->where('status' , 'active')
                     ->first();
-                if ($restaurant->status == 'finished' || $restaurant->subscription->status == 'tentative_finished') {
-                    $table = null;
-                    return view('error', compact('restaurant', 'table', 'branch'));
-                }
+
+                // if ($restaurant->status == 'finished' || $restaurant->status == 'inComplete' || $restaurant->subscription->status == 'tentative_finished') {
+                //     $table = null;
+                //     return view('error', compact('restaurant', 'table', 'branch'));
+                // }
             }
 
+            if (!in_array($restaurant->status, ['active', 'tentative']) or $restaurant->archive == 'true' or $restaurant->subscription->status == 'tentative_finished') :
+                $table = null;
+
+                return view('error', compact('restaurant', 'branch', 'table'));
+
+            endif;
             if ($category_id != null) {
                 $showMainPage = false;
                 $menu_category = MenuCategory::where('menu_categories.id', $category_id)->firstOrFail();
@@ -152,27 +158,39 @@ class HomeController extends Controller
 
             // api when select category
             // return $request->all();
-            if (isset($menu_category->id)):
+            if (isset($menu_category->id)) :
                 session()->put('product_restaurant_id', $restaurant->id);
                 session()->put('product_back_to', route('sliverHome', [$restaurant->name_barcode, $menu_category->id]));
             endif;
-            if ($request->wantsJson() and !empty($category_id) and $request->has('is_category')):
+            if (!empty($request->theme) and in_array($request->theme, [1, 2, 3])) :
+                $productTheme = $request->theme;
+            else :
+                if ($restaurant->product_menu_view == 'theme-3') $productTheme = 3;
+                if ($restaurant->product_menu_view == 'theme-2') $productTheme = 2;
+                else $productTheme = 1;
+            endif;
+            if ($request->wantsJson() and !empty($category_id) and $request->has('is_category')) :
+                // return var_dump($subCat);
+                if (!empty($subCat)) {
+                    $sCat = RestaurantSubCategory::find($subCat);
+                } else $sCat = null;
+
                 return response([
                     'status' => true,
                     'data' => [
                         'category_name' => $menu_category->name,
 
-                        'sub_categories' => view('website.' . session('theme_path') . 'silver.accessories.sub_categories', compact([['restaurant', 'table', 'menu_category', 'products', 'branch', 'subCat']]))->render(),
+                        'sub_categories' => view('website.' . session('theme_path') . 'silver.accessories.sub_categories', compact([['restaurant', 'table', 'menu_category', 'products', 'branch', 'subCat', 'sCat']]))->render(),
 
-                        'products' => view('website.' . session('theme_path') . 'silver.accessories.products', compact(['restaurant', 'table', 'menu_category', 'products', 'branch', 'subCat']))->render(),
+                        'products' => view('website.' . session('theme_path') . 'silver.accessories.products', compact(['restaurant', 'table', 'menu_category', 'products', 'branch', 'subCat', 'sCat', 'productTheme']))->render(),
 
-                        'ads_content' => view('website.' . session('theme_path') . 'silver.accessories.ads_popup', compact(['restaurant', 'table', 'menu_category', 'products', 'branch', 'subCat']))->render()
+                        'ads_content' => view('website.' . session('theme_path') . 'silver.accessories.ads_popup', compact(['restaurant', 'table', 'menu_category', 'products', 'branch', 'subCat', 'sCat']))->render()
                     ],
                 ]);
             endif;
             // return $products;
 
-            return view('website.' . session('theme_path') . 'silver.index', compact('restaurant', 'table', 'menu_category', 'products', 'branch', 'subCat', 'showMainPage'));
+            return view('website.' . session('theme_path') . 'silver.index', compact('restaurant', 'table', 'menu_category', 'products', 'branch', 'subCat', 'showMainPage', 'productTheme'));
         } else {
             $restaurant = Restaurant::where('name_barcode', $name)
                 ->first();
@@ -188,7 +206,7 @@ class HomeController extends Controller
 
     public function index_table(Request $request, $name, $table_barcodeName = null, $category_id = null, $branch_name = null, $subCat = null)
     {
-        $productsLimit = 50;
+        $productsLimit = 1000;
         $showMainPage = true;
         $restaurant = Restaurant::where('name_barcode', $name)
             ->whereIn('status', ['active', 'tentative'])
@@ -310,24 +328,31 @@ class HomeController extends Controller
                     ]);
                 }
             }
+            if (!empty($request->theme) and in_array($request->theme, [1, 2, 3])) :
+                $productTheme = $request->theme;
+            else :
+                if ($restaurant->product_menu_view == 'theme-3') $productTheme = 3;
+                if ($restaurant->product_menu_view == 'theme-2') $productTheme = 2;
+                else $productTheme = 1;
+            endif;
+            if ($request->wantsJson() and !empty($category_id) and $request->has('is_category')) :
 
-            if ($request->wantsJson() and !empty($category_id) and $request->has('is_category')):
                 return response([
                     'status' => true,
                     'data' => [
                         'category_name' => $menu_category->name,
                         'sub_categories' => view('website.' . session('theme_path') . 'silver.accessories.sub_categories', compact([['restaurant', 'table', 'menu_category', 'products', 'branch', 'subCat']]))->render(),
-                        'products' => view('website.' . session('theme_path') . 'silver.accessories.products', compact(['restaurant', 'table', 'menu_category', 'products', 'branch', 'subCat']))->render(),
+                        'products' => view('website.' . session('theme_path') . 'silver.accessories.products', compact(['restaurant', 'table', 'menu_category', 'products', 'branch', 'subCat', 'productTheme']))->render(),
                         'ads_content' => view('website.' . session('theme_path') . 'silver.accessories.ads_popup', compact(['restaurant', 'table', 'menu_category', 'products', 'branch', 'subCat']))->render()
                     ],
                 ]);
             endif;
             // if($restaurant->id == 1194) return $table;
-            if (isset($menu_category->id)):
+            if (isset($menu_category->id)) :
                 session()->put('product_restaurant_id', $restaurant->id);
                 session()->put('product_back_to', route('sliverHome', [$restaurant->name_barcode, $menu_category->id]));
             endif;
-            return view('website.' . session('theme_path') . 'silver.index', compact('restaurant', 'table', 'menu_category', 'products', 'branch', 'subCat', 'showMainPage'));
+            return view('website.' . session('theme_path') . 'silver.index', compact('restaurant', 'table', 'menu_category', 'products', 'branch', 'subCat', 'showMainPage', 'productTheme'));
         } else {
             $restaurant = Restaurant::where('name_barcode', $name)
                 ->first();
@@ -341,8 +366,9 @@ class HomeController extends Controller
         }
     }
 
-    public function branch_index($name, $branch_name = null, $category_id = null, $subCat = null)
+    public function branch_index(Request $request , $name, $branch_name = null, $category_id = null, $subCat = null)
     {
+        $productsLimit = 1000;
         $restaurant = Restaurant::where('name_barcode', $name)->first();
         $this->checkTheme($restaurant);
         if ($restaurant) {
@@ -398,14 +424,14 @@ class HomeController extends Controller
                         ->where('sub_category_id', $subCat)
                         ->where('active', 'true')
                         ->orderBy(DB::raw('ISNULL(arrange), arrange'), 'ASC')
-                        ->paginate(5);
+                        ->paginate($productsLimit);
                 } else {
                     $products = Product::whereRestaurantId($restaurant->id)
                         ->where('branch_id', $branch->id)
                         ->where('menu_category_id', $menu_category->id)
                         ->where('active', 'true')
                         ->orderBy(DB::raw('ISNULL(arrange), arrange'), 'ASC')
-                        ->paginate(5);
+                        ->paginate($productsLimit);
                 }
             } else {
                 $menu_category = MenuCategory::whereRestaurantId($restaurant->id)
@@ -421,7 +447,7 @@ class HomeController extends Controller
                         ->where('sub_category_id', $subCat)
                         ->where('active', 'true')
                         ->orderBy(DB::raw('ISNULL(arrange), arrange'), 'ASC')
-                        ->paginate(5);
+                        ->paginate($productsLimit);
                 } else {
                     if ($menu_category != null) {
                         $products = Product::whereRestaurantId($restaurant->id)
@@ -429,31 +455,39 @@ class HomeController extends Controller
                             ->where('menu_category_id', $menu_category->id)
                             ->where('active', 'true')
                             ->orderBy(DB::raw('ISNULL(arrange), arrange'), 'ASC')
-                            ->paginate(5);
+                            ->paginate($productsLimit);
                     } else {
                         $products = Product::whereRestaurantId($restaurant->id)
                             ->where('branch_id', $branch->id)
                             ->where('active', 'true')
                             ->where('menu_category_id', null)
                             ->orderBy(DB::raw('ISNULL(arrange), arrange'), 'ASC')
-                            ->paginate(5);
+                            ->paginate($productsLimit);
                     }
                 }
                 $branch->update([
                     'views' => $branch->views + 1,
                 ]);
             }
-            if (isset($menu_category->id)):
+            if (!empty($request->theme) and in_array($request->theme, [1, 2, 3])) :
+                $productTheme = $request->theme;
+            else :
+                if ($restaurant->product_menu_view == 'theme-3') $productTheme = 3;
+                if ($restaurant->product_menu_view == 'theme-2') $productTheme = 2;
+                else $productTheme = 1;
+            endif;
+            if (isset($menu_category->id)) :
                 session()->put('product_restaurant_id', $restaurant->id);
                 session()->put('product_back_to', route('sliverHome', [$restaurant->name_barcode, $menu_category->id]));
             endif;
             $table = null;
-            return view('website.' . session('theme_path') . 'silver.index', compact('restaurant', 'table', 'menu_category', 'products', 'branch', 'subCat'));
+            return view('website.' . session('theme_path') . 'silver.index', compact('restaurant', 'table', 'menu_category', 'products', 'branch', 'subCat' , 'productTheme'));
         }
     }
 
-    public function index_table_branch($name, $table_barcodeName = null, $branch_name = null, $category_id = null, $subCat = null)
+    public function index_table_branch(Request $request , $name, $table_barcodeName = null, $branch_name = null, $category_id = null, $subCat = null)
     {
+        $productsLimit = 1000;
         $restaurant = Restaurant::where('name_barcode', $name)->firstOrFail();
         $this->checkTheme($restaurant);
         $showMainPage = true;
@@ -507,12 +541,12 @@ class HomeController extends Controller
                 }
             }
             // check if service available or not
-            if ($table->service_id != null):
+            if ($table->service_id != null) :
                 $service_subscription = ServiceSubscription::whereRestaurantId($branch->restaurant_id)
                     ->whereBranchId($branch->id)
                     ->whereServiceId($table->service_id)
                     ->first();
-                if ($service_subscription->status != 'tentative' and $service_subscription->status != 'active'):
+                if ($service_subscription->status != 'tentative' and $service_subscription->status != 'active') :
                     abort(404);
                 endif;
             endif;
@@ -526,14 +560,14 @@ class HomeController extends Controller
                         ->where('sub_category_id', $subCat)
                         ->where('active', 'true')
                         ->orderBy(DB::raw('ISNULL(arrange), arrange'), 'ASC')
-                        ->paginate(5);
+                        ->paginate($productsLimit);
                 } else {
                     $products = Product::whereRestaurantId($restaurant->id)
                         ->where('branch_id', $branch->id)
                         ->where('menu_category_id', $menu_category->id)
                         ->where('active', 'true')
                         ->orderBy(DB::raw('ISNULL(arrange), arrange'), 'ASC')
-                        ->paginate(5);
+                        ->paginate($productsLimit);
                 }
             } else {
                 $menu_category = MenuCategory::whereRestaurantId($restaurant->id)
@@ -549,7 +583,7 @@ class HomeController extends Controller
                         ->where('sub_category_id', $subCat)
                         ->where('active', 'true')
                         ->orderBy(DB::raw('ISNULL(arrange), arrange'), 'ASC')
-                        ->paginate(5);
+                        ->paginate($productsLimit);
                 } else {
                     if ($menu_category != null) {
                         $products = Product::whereRestaurantId($restaurant->id)
@@ -557,20 +591,27 @@ class HomeController extends Controller
                             ->where('menu_category_id', $menu_category->id)
                             ->where('active', 'true')
                             ->orderBy(DB::raw('ISNULL(arrange), arrange'), 'ASC')
-                            ->paginate(5);
+                            ->paginate($productsLimit);
                     } else {
                         $products = Product::whereRestaurantId($restaurant->id)
                             ->where('branch_id', $branch->id)
                             ->where('active', 'true')
                             ->where('menu_category_id', null)
                             ->orderBy(DB::raw('ISNULL(arrange), arrange'), 'ASC')
-                            ->paginate(5);
+                            ->paginate($productsLimit);
                     }
                 }
                 $branch->update([
                     'views' => $branch->views + 1,
                 ]);
             }
+            if (!empty($request->theme) and in_array($request->theme, [1, 2, 3])) :
+                $productTheme = $request->theme;
+            else :
+                if ($restaurant->product_menu_view == 'theme-3') $productTheme = 3;
+                if ($restaurant->product_menu_view == 'theme-2') $productTheme = 2;
+                else $productTheme = 1;
+            endif;
 
             return view('website.' . session('theme_path') . 'silver.index', compact('restaurant', 'table', 'menu_category', 'products', 'branch', 'subCat', 'showMainPage'));
         }
@@ -610,12 +651,13 @@ class HomeController extends Controller
         $restaurant = Restaurant::where('name_barcode', $name)->where('enable_contact_us', 'true')->firstOrFail();
         $branch = $restaurant->branches()->where('main', 'true')->first();
         $contact = null;
-        if (!empty($item)):
+        if (!empty($item)) :
             $contact = RestaurantContactUsLink::where('status', 'true')->where('restaurant_id', $restaurant->id)->where('barcode', $item)->first();
+
         endif;
         $this->checkTheme($restaurant);
         $isContactUs = true;
-        return view('website.' . session('theme_path') . 'contact_us', compact('restaurant', 'branch', 'contact' , 'isContactUs'));
+        return view('website.' . session('theme_path') . 'contact_us', compact('restaurant', 'branch', 'contact', 'isContactUs'));
     }
 
     public function productDetails(Request $request, $name, Product $product, $table_id = null)
@@ -625,7 +667,7 @@ class HomeController extends Controller
             ->where('archive', 'false')
             ->firstOrFail();
         $this->checkTheme($restaurant);
-        if (!$restaurant->products()->where('id', $product->id)):
+        if (!$restaurant->products()->where('id', $product->id)) :
             abort(404);
         endif;
         $meal = $product;
@@ -648,5 +690,18 @@ class HomeController extends Controller
         }
 
         return view('website.' . session('theme_path') . 'silver.accessories.xproduct_details', compact('restaurant', 'meal', 'table', 'main_additions', 'branch'));
+    }
+
+    public function page1()
+    {
+
+        $restaurant = null;
+        return  view('website.' . session('theme_path') . 'page1', compact('restaurant'));
+    }
+    public function page2()
+    {
+
+        $restaurant = null;
+        return  view('website.' . session('theme_path') . 'page2', compact('restaurant'));
     }
 }

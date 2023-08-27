@@ -5,7 +5,6 @@
 @endsection
 
 @section('styles')
-
 @endsection
 
 @section('content')
@@ -18,10 +17,10 @@
                 <div class="col-sm-6">
                     <ol class="breadcrumb float-sm-right">
                         <li class="breadcrumb-item">
-                            <a href="{{url('/admin/home')}}">@lang('messages.control_panel')</a>
+                            <a href="{{ url('/admin/home') }}">@lang('messages.control_panel')</a>
                         </li>
                         <li class="breadcrumb-item active">
-                            <a href="{{route('banks.index')}}">
+                            <a href="{{ route('banks.index') }}">
                                 @lang('messages.banks')
                             </a>
                         </li>
@@ -42,23 +41,65 @@
                         </div>
                         <!-- /.card-header -->
                         <!-- form start -->
-                        <form role="form" action="{{route('restaurant.banks.setting' )}}" method="post" enctype="multipart/form-data">
-                            <input type = 'hidden' name = '_token' value = '{{Session::token()}}'>
+                        <form role="form" action="{{ route('restaurant.banks.setting') }}" method="post"
+                            enctype="multipart/form-data">
+                            <input type='hidden' name='_token' value='{{ Session::token() }}'>
 
                             <div class="card-body">
-                                <div class="form-group">
-                                    <label class="control-label"> @lang('dashboard.entry.enable_reservation_bank') </label>
-                                    <select name="enable_reservation_bank" class="form-control" required>
-                                        <option disabled selected> @lang('messages.choose_one') </option>
-                                        <option value="true" {{$restaurant->enable_reservation_bank == 'true' ? 'selected' : ''}}>{{ trans('messages.yes') }}</option>
-                                        <option value="false" {{$restaurant->enable_reservation_bank == 'false' ? 'selected' : ''}}>{{ trans('messages.no') }}</option>
-                                    </select>
-                                    @if ($errors->has('enable_reservation_bank'))
-                                        <span class="help-block">
-                                            <strong style="color: red;">{{ $errors->first('enable_reservation_bank') }}</strong>
-                                        </span>
-                                    @endif
-                                </div>
+                                @php
+                                    $checkReservation = App\Models\ServiceSubscription::whereRestaurantId($restaurant->id)
+                                        ->where('service_id', 1)
+                                        ->whereIn('status', ['active', 'tentative'])
+                                        ->first(); // for test
+                                @endphp
+                                @if ($checkReservation)
+                                    {{-- reservation enable --}}
+                                    <div class="form-group">
+                                        <label class="control-label"> @lang('dashboard.entry.enable_reservation_bank') </label>
+                                        <select name="enable_reservation_bank" class="form-control" required>
+                                            <option disabled selected> @lang('messages.choose_one') </option>
+                                            <option value="true"
+                                                {{ $restaurant->enable_reservation_bank == 'true' ? 'selected' : '' }}>
+                                                {{ trans('messages.yes') }}</option>
+                                            <option value="false"
+                                                {{ $restaurant->enable_reservation_bank == 'false' ? 'selected' : '' }}>
+                                                {{ trans('messages.no') }}</option>
+                                        </select>
+                                        @if ($errors->has('enable_reservation_bank'))
+                                            <span class="help-block">
+                                                <strong
+                                                    style="color: red;">{{ $errors->first('enable_reservation_bank') }}</strong>
+                                            </span>
+                                        @endif
+                                    </div>
+                                @endif
+                                @php
+                                    $checkParty = App\Models\ServiceSubscription::whereRestaurantId($restaurant->id)
+                                        ->where('service_id', 13)
+                                        ->whereIn('status', ['active', 'tentative'])
+                                        ->first(); // for test
+                                @endphp
+                                @if ($checkParty)
+                                    {{-- party enable --}}
+                                    <div class="form-group">
+                                        <label class="control-label"> @lang('dashboard.entry.enable_party_payment_bank') </label>
+                                        <select name="enable_party_payment_bank" class="form-control" required>
+                                            <option disabled selected> @lang('messages.choose_one') </option>
+                                            <option value="true"
+                                                {{ $restaurant->enable_party_payment_bank == 'true' ? 'selected' : '' }}>
+                                                {{ trans('messages.yes') }}</option>
+                                            <option value="false"
+                                                {{ $restaurant->enable_party_payment_bank == 'false' ? 'selected' : '' }}>
+                                                {{ trans('messages.no') }}</option>
+                                        </select>
+                                        @if ($errors->has('enable_party_payment_bank'))
+                                            <span class="help-block">
+                                                <strong
+                                                    style="color: red;">{{ $errors->first('enable_party_payment_bank') }}</strong>
+                                            </span>
+                                        @endif
+                                    </div>
+                                @endif
 
                             </div>
                             <!-- /.card-body -->

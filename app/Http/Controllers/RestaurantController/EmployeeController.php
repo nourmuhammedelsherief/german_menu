@@ -141,7 +141,7 @@ class EmployeeController extends Controller
             $restaurant = Restaurant::find($restaurant->restaurant_id);
         endif;
         $checkOrderService = ServiceSubscription::whereRestaurantId($restaurant->id)
-            ->whereIn('service_id' , [9 , 10])
+            ->whereIn('service_id' , [9 , 10 ,14])
             ->first();
         if ($checkOrderService == null)
         {

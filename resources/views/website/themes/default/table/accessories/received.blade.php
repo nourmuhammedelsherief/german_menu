@@ -111,7 +111,7 @@
 
     <style>
         .card {
-            background-color:  {{!isset($restaurant->color->id) ? '#000' : $restaurant->color->background}} !important;
+            background-color:  {{!isset($restaurant->color->id) ? '#FFF' : $restaurant->color->background}} !important;
         }
         .title{
             margin-right: 15px;

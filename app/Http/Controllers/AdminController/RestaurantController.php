@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\AdminController;
 
 use App\Http\Controllers\Controller;
+use App\Models\ArchiveCategory;
 use App\Models\Branch;
 use App\Models\Category;
 use App\Models\City;
@@ -30,106 +31,98 @@ class RestaurantController extends Controller
      *
      * @return \Illuminate\Http\Response
      */
-    public function index(Request $request , $status)
+    public function index(Request $request, $status)
     {
-        $allData = ['restaurants' , 'status'];
-        if ($status == 'active')
-        {
+        $allData = ['restaurants', 'status'];
+
+        if ($status == 'active') {
             $restaurants = Restaurant::with('subscription')
-                ->whereHas('subscription' , function ($q){
-                    $q->where('status' , 'active');
-                    $q->where('package_id' , 1);
-                    $q->where('type' , 'restaurant');
+                ->whereHas('subscription', function ($q) {
+                    $q->where('status', 'active');
+                    $q->where('package_id', 1);
+                    $q->where('type', 'restaurant');
                     $q->whereDate('end_at', '>=', now()->addDays(30));
                 })
-                ->where('status' , 'active')
-                ->where('archive' , 'false')
-                ->where('admin_activation' , 'true')
-                ->orderBy('id' , 'desc')
+                ->where('status', 'active')
+                ->where('archive', 'false')
+                ->where('admin_activation', 'true')
+                ->orderBy('id', 'desc')
                 ->paginate(1000);
-        }
-        elseif($status == 'tentative_finished')
-        {
+        } elseif ($status == 'tentative_finished') {
             $restaurants = Restaurant::with('subscription')
-                ->whereHas('subscription' , function ($q){
-                    $q->where('status' , 'tentative_finished');
-                    $q->where('package_id' , 1);
-                    $q->where('type' , 'restaurant');
+                ->whereHas('subscription', function ($q) {
+                    $q->where('status', 'tentative_finished');
+                    $q->where('package_id', 1);
+                    $q->where('type', 'restaurant');
                 })
-                ->where('status' , 'tentative')
-                ->where('archive' , 'false')
-                ->where('admin_activation' , 'true')
-                ->orderBy('id' , 'desc')
+                ->where('status', 'tentative')
+                ->where('archive', 'false')
+                ->where('admin_activation', 'true')
+                ->orderBy('id', 'desc')
                 ->paginate(1000);
-        }
-        elseif($status == 'tentative_active')
-        {
+        } elseif ($status == 'tentative_active') {
             $restaurants = Restaurant::with('subscription')
-                ->whereHas('subscription' , function ($q){
-                    $q->where('status' , 'tentative');
-                    $q->where('package_id' , 1);
-                    $q->where('type' , 'restaurant');
+                ->whereHas('subscription', function ($q) {
+                    $q->where('status', 'tentative');
+                    $q->where('package_id', 1);
+                    $q->where('type', 'restaurant');
                 })
-                ->where('status' , 'tentative')
-                ->where('archive' , 'false')
-                ->where('admin_activation' , 'true')
-                ->orderBy('id' , 'desc')
+                ->where('status', 'tentative')
+                ->where('archive', 'false')
+                ->where('admin_activation', 'true')
+                ->orderBy('id', 'desc')
                 ->paginate(1000);
-        }
-        elseif($status == 'finished')
-        {
+        } elseif ($status == 'finished') {
             $restaurants = Restaurant::with('subscription')
-                ->whereHas('subscription' , function ($q){
-                    $q->where('status' , 'finished');
-                    $q->where('package_id' , 1);
-                    $q->where('type' , 'restaurant');
+                ->whereHas('subscription', function ($q) {
+                    $q->where('status', 'finished');
+                    $q->where('package_id', 1);
+                    $q->where('type', 'restaurant');
                 })
-                ->where('status' , 'finished')
-                ->where('archive' , 'false')
-                ->where('admin_activation' , 'true')
-                ->orderBy('id' , 'desc')
+                ->where('status', 'finished')
+                ->where('archive', 'false')
+                ->where('admin_activation', 'true')
+                ->orderBy('id', 'desc')
                 ->paginate(1000);
-        }
-        elseif($status == 'less_30_day')
-        {
+        } elseif ($status == 'less_30_day') {
             $restaurants = Restaurant::with('subscription')
-                ->whereHas('subscription' , function ($q){
-                    $q->where('status' , 'active');
-                    $q->where('package_id' , 1);
-                    $q->where('type' , 'restaurant');
+                ->whereHas('subscription', function ($q) {
+                    $q->where('status', 'active');
+                    $q->where('package_id', 1);
+                    $q->where('type', 'restaurant');
                     //    $q->where('end_at', '>', now()->subDays(30));
                     $q->whereDate('end_at', '<=', now()->addDays(30));
                 })
-                ->where('status' , 'active')
-                ->where('archive' , 'false')
-                ->where('admin_activation' , 'true')
-                ->orderBy('id' , 'desc')
+                ->where('status', 'active')
+                ->where('archive', 'false')
+                ->where('admin_activation', 'true')
+                ->orderBy('id', 'desc')
                 ->paginate(1000);
-        }
-        elseif($status == 'inComplete')
-        {
-            $restaurants = Restaurant::where('status' , 'inComplete')
-                ->where('archive' , 'false')
-                ->orderBy('id' , 'desc')
+        } elseif ($status == 'inComplete') {
+            $restaurants = Restaurant::where('status', 'inComplete')
+                ->where('archive', 'false')
+                ->orderBy('id', 'desc')
                 ->paginate(1000);
-        }
-        elseif($status == 'archived')
-        {
-            $restaurants = Restaurant::where('archive' , 'true')
-                ->orderBy('id' , 'desc')
+        } elseif ($status == 'archived') {
+            $archiveCategories = ArchiveCategory::withCount('restaurants')->get();
+            $allData[] = 'archiveCategories';
+            $restaurants = Restaurant::where('archive', 'true')
+                ->orderBy('id', 'desc');
+            if ($request->archive_id > 0) $restaurants = $restaurants->where('archive_category_id', $request->archive_id);
+            elseif ($request->archive_id == -1) $restaurants = $restaurants->whereNull('archive_category_id');
+            $restaurants = $restaurants->paginate(1000);
+        } elseif ($status == 'InActive') {
+            $restaurants = Restaurant::where('admin_activation', 'false')
+                ->whereNotIn('status', ['inComplete'])
+                ->where('archive', 'false')
+                ->orderBy('id', 'desc')
                 ->paginate(1000);
-        }elseif ($status == 'InActive')
-        {
-            $restaurants = Restaurant::where('admin_activation' , 'false')
-                ->whereNotIn('status' , ['inComplete'])
-                ->orderBy('id' , 'desc')
-                ->paginate(1000);
-        }elseif($status == 'categories'){
+        } elseif ($status == 'categories') {
             $categoryId = (!empty($request->category_id) && is_numeric($request->category_id)) ? $request->category_id : 0;
 
-            $restaurants = Restaurant::with('subscription' )
-                ->whereHas('restaurantCategories' , function($query)use($categoryId){
-                    $query->where('category_id' , $categoryId);
+            $restaurants = Restaurant::with('subscription')
+                ->whereHas('restaurantCategories', function ($query) use ($categoryId) {
+                    $query->where('category_id', $categoryId);
                 })
                 // ->whereHas('subscription' , function ($q){
                 //     $q->where('status' , 'active');
@@ -140,96 +133,86 @@ class RestaurantController extends Controller
                 // ->where('status' , 'active')
                 // ->where('archive' , 'false')
                 // ->where('admin_activation' , 'true')
-                ->orderBy('id' , 'desc')
+                ->orderBy('id', 'desc')
                 ->paginate(1000);
             $category = Category::find($categoryId);
             $allData[] = 'category';
         }
 
-        return view('admin.restaurants.index' , compact($allData));
+        return view('admin.restaurants.index', compact($allData));
     }
 
     public function branches($status)
     {
-        if ($status == 'active')
-        {
+        if ($status == 'active') {
             $branches = Branch::with('subscription')
-                ->whereHas('subscription' , function ($q){
-                    $q->where('status' , 'active');
+                ->whereHas('subscription', function ($q) {
+                    $q->where('status', 'active');
                     $q->whereDate('end_at', '>=', now()->addDays(30));
                 })
-                ->where('status' , 'active')
-                ->where('archive' , 'false')
-                ->where('main' , 'false')
-                ->orderBy('id' , 'desc')
+                ->where('status', 'active')
+                ->where('archive', 'false')
+                ->where('main', 'false')
+                ->orderBy('id', 'desc')
                 ->get();
-        }elseif($status == 'tentativeA')
-        {
+        } elseif ($status == 'tentativeA') {
             $branches = Branch::with('subscription')
-                ->whereHas('subscription' , function ($q){
-                    $q->where('status' , 'tentative');
+                ->whereHas('subscription', function ($q) {
+                    $q->where('status', 'tentative');
                 })
-                ->where('status' , 'tentative')
-                ->where('main' , 'false')
-                ->where('archive' , 'false')
-                ->orderBy('id' , 'desc')
+                ->where('status', 'tentative')
+                ->where('main', 'false')
+                ->where('archive', 'false')
+                ->orderBy('id', 'desc')
                 ->get();
-        }
-        elseif($status == 'tentative_finished')
-        {
+        } elseif ($status == 'tentative_finished') {
             $branches = Branch::with('subscription')
-                ->whereHas('subscription' , function ($q){
-                    $q->where('status' , 'tentative_finished');
+                ->whereHas('subscription', function ($q) {
+                    $q->where('status', 'tentative_finished');
                 })
-                ->where('status' , 'tentative_finished')
-                ->where('main' , 'false')
-                ->where('archive' , 'false')
-                ->orderBy('id' , 'desc')
+                ->where('status', 'tentative_finished')
+                ->where('main', 'false')
+                ->where('archive', 'false')
+                ->orderBy('id', 'desc')
                 ->get();
-        }
-        elseif($status == 'finished')
-        {
+        } elseif ($status == 'finished') {
             $branches = Branch::with('subscription')
-                ->whereHas('subscription' , function ($q){
-                    $q->where('status' , 'finished');
+                ->whereHas('subscription', function ($q) {
+                    $q->where('status', 'finished');
                 })
-                ->where('status' , 'finished')
-                ->where('main' , 'false')
-                ->where('archive' , 'false')
-                ->orderBy('id' , 'desc')
+                ->where('status', 'finished')
+                ->where('main', 'false')
+                ->where('archive', 'false')
+                ->orderBy('id', 'desc')
                 ->get();
-        }
-        elseif($status == 'less_30_day')
-        {
+        } elseif ($status == 'less_30_day') {
             $branches = Branch::with('subscription')
-                ->whereHas('subscription' , function ($q){
-                    $q->where('status' , 'active');
-                    $q->where('package_id' , 1);
-//                    $q->where('end_at', '>', now()->subDays(30));
+                ->whereHas('subscription', function ($q) {
+                    $q->where('status', 'active');
+                    $q->where('package_id', 1);
+                    //                    $q->where('end_at', '>', now()->subDays(30));
                     $q->whereDate('end_at', '<=', now()->addDays(30));
                 })
-                ->where('status' , 'active')
-                ->where('archive' , 'false')
-                ->where('main' , 'false')
-                ->orderBy('id' , 'desc')
+                ->where('status', 'active')
+                ->where('archive', 'false')
+                ->where('main', 'false')
+                ->orderBy('id', 'desc')
                 ->get();
-        }
-        elseif($status == 'archived')
-        {
-            $branches = Branch::where('archive' , 'true')
-                ->where('main' , 'false')
-                ->orderBy('id' , 'desc')
+        } elseif ($status == 'archived') {
+            $branches = Branch::where('archive', 'true')
+                ->where('main', 'false')
+                ->orderBy('id', 'desc')
                 ->get();
-        }elseif ($status == 'in_complete')
-        {
-            $branches = Branch::where('status' , 'not_active')
-                ->where('main' , 'false')
-                ->orderBy('id' , 'desc')
+        } elseif ($status == 'in_complete') {
+            $branches = Branch::where('status', 'not_active')
+                ->where('main', 'false')
+                ->orderBy('id', 'desc')
                 ->get();
         }
 
-        return view('admin.restaurants.branches' , compact('branches' , 'status'));
+        return view('admin.restaurants.branches', compact('branches', 'status'));
     }
+
 
     /**
      * Show the form for creating a new resource.
@@ -238,9 +221,9 @@ class RestaurantController extends Controller
      */
     public function create()
     {
-        $countries = Country::where('active' , 'true')->get();
+        $countries = Country::where('active', 'true')->get();
         $categories = Category::all();
-        return view('admin.restaurants.create' , compact('countries' , 'categories'));
+        return view('admin.restaurants.create', compact('countries', 'categories'));
     }
 
     /**
@@ -251,7 +234,7 @@ class RestaurantController extends Controller
      */
     public function store(Request $request)
     {
-        $this->validate($request , [
+        $this->validate($request, [
             'email' => 'required|string|email|max:255|unique:restaurants',
             'password' => 'required|string|min:8|confirmed',
             'country_id' => 'required|exists:countries,id',
@@ -260,12 +243,12 @@ class RestaurantController extends Controller
             'name_ar' => 'required|string|max:255',
             'city_id' => 'required|exists:cities,id',
             'name_barcode'  => 'required|string|max:191|unique:restaurants|regex:/(^([\pL\s\-\_]+)([a-zA-Z]+)(\d+)?$)/u',
-//            'seller_code' => 'nullable|exists:seller_codes,seller_name',
+            //            'seller_code' => 'nullable|exists:seller_codes,seller_name',
             'category_id' => 'required',
             'end_at' => 'required|date',
-//            'latitude' => 'required',
+            //            'latitude' => 'required',
         ]);
-        $barcode  = str_replace(' ' , '-' , $request->name_barcode);
+        $barcode  = str_replace(' ', '-', $request->name_barcode);
         $restaurant = Restaurant::create([
             'name_ar' => $request->name_ar,
             'name_en' => $request->name_en,
@@ -274,14 +257,14 @@ class RestaurantController extends Controller
             'country_id' => $request->country_id,
             'phone_number' => $request->phone_number,
             'city_id' => $request->city_id,
-            'name_barcode' =>$barcode ,
+            'name_barcode' => $barcode,
             'package_id' => 1,
             'status' => 'tentative',
         ]);
 
         defaultResturantData($restaurant);
         // create the main Branch for this  restaurant
-        $barcode  = str_replace(' ' , '-' , $request->name_barcode);
+        $barcode  = str_replace(' ', '-', $request->name_barcode);
         $branch = Branch::create([
             'restaurant_id' => $restaurant->id,
             'country_id'    => $restaurant->country_id,
@@ -308,13 +291,13 @@ class RestaurantController extends Controller
             'status' => 'tentative',    // active ,notActive , tentative , finished
             'end_at' => $request->end_at,
             'type' => 'restaurant',
-            'is_new' => 1 ,
+            'is_new' => 1,
             'tax_value' => $tax_value,
         ]);
 
         // update the main branch
         $main_branch = Branch::whereRestaurantId($restaurant->id)
-            ->where('main' , 'true')
+            ->where('main', 'true')
             ->first();
         $main_branch->update([
             'status'  => 'active',
@@ -342,7 +325,7 @@ class RestaurantController extends Controller
             'tax_value' => $tax_value,
         ]);
         flash(trans('messages.created'))->success();
-        return redirect()->route('restaurants' , 'active');
+        return redirect()->route('restaurants', 'active');
     }
 
     /**
@@ -355,7 +338,7 @@ class RestaurantController extends Controller
     {
         $user = Restaurant::findOrFail($id);
         $cities = City::whereCountryId($user->country_id)->get();
-        return view('admin.restaurants.show' , compact('user' , 'cities'));
+        return view('admin.restaurants.show', compact('user', 'cities'));
     }
 
     /**
@@ -367,42 +350,42 @@ class RestaurantController extends Controller
     public function edit($id)
     {
         $restaurant = Restaurant::findOrFail($id);
-        $countries = Country::where('active' , 'true')->get();
+        $countries = Country::where('active', 'true')->get();
         $categories = Category::all();
-        return view('admin.restaurants.edit' , compact('countries' ,'restaurant', 'categories'));
+        return view('admin.restaurants.edit', compact('countries', 'restaurant', 'categories'));
     }
 
     public function editInComplete($id)
     {
         $restaurant = Restaurant::findOrFail($id);
-        $countries = Country::where('active' , 'true')->get();
+        $countries = Country::where('active', 'true')->get();
         $categories = Category::all();
         $inComplete = true;
-        return view('admin.restaurants.edit' , compact('countries' , 'inComplete' ,'restaurant', 'categories'));
+        return view('admin.restaurants.edit', compact('countries', 'inComplete', 'restaurant', 'categories'));
     }
 
     public function updateInComplete(Request $request, $id)
     {
         $restaurant = Restaurant::findOrFail($id);
-        $this->validate($request , [
-            'email' => 'required|string|email|max:255|unique:restaurants,email,'.$restaurant->id,
+        $this->validate($request, [
+            'email' => 'required|string|email|max:255|unique:restaurants,email,' . $restaurant->id,
             'password' => 'nullable|string|min:8|confirmed',
             'country_id' => 'required|exists:countries,id',
-            'phone_number' => ['required', 'unique:restaurants,phone_number,' .$restaurant->id, 'regex:/^((05)|(01))[0-9]{8}/'],
+            'phone_number' => ['required', 'unique:restaurants,phone_number,' . $restaurant->id, 'regex:/^((05)|(01))[0-9]{8}/'],
             'name_en' => 'required|string|max:255',
             'name_ar' => 'required|string|max:255',
             'city_id' => 'required|exists:cities,id',
-            'name_barcode'  => 'required|string|max:191|unique:restaurants,name_barcode,'.$restaurant->id,
-//            'seller_code' => 'nullable|exists:seller_codes,seller_name',
+            'name_barcode'  => 'required|string|max:191|unique:restaurants,name_barcode,' . $restaurant->id,
+            //            'seller_code' => 'nullable|exists:seller_codes,seller_name',
         ]);
 
         $package = $restaurant->package;
         // update the main branch
         $check_branch = Branch::whereRestaurantId($restaurant->id)->with('subscription')
-            ->where('main' , 'true')
+            ->where('main', 'true')
             ->first();
         // return $check_branch;
-        $barcode  = str_replace(' ' , '-' , $request->name_barcode);
+        $barcode  = str_replace(' ', '-', $request->name_barcode);
         $restaurant->update([
             'name_ar' => $request->name_ar,
             'name_en' => $request->name_en,
@@ -413,26 +396,24 @@ class RestaurantController extends Controller
             'city_id' => $request->city_id,
             'name_barcode' => $barcode,
             'status' => $restaurant->status == 'inComplete' ? 'tentative' : 'active',
-            'package_id' =>$package->id,
+            'package_id' => $package->id,
             'menu_arrange' => 'true',
             'product_arrange' => 'true',
         ]);
-        if (isset($check_branch->id))
-        {
+        if (isset($check_branch->id)) {
             $check_branch->update([
                 'status'  => 'active',
             ]);
             $check_price = CountryPackage::whereCountry_id($restaurant->country_id)
                 ->wherePackageId($request->package_id)
                 ->first();
-            if ($check_price == null)
-            {
+            if ($check_price == null) {
 
                 $package_actual_price = $package->price;
-            }else{
+            } else {
                 $package_actual_price = $check_price->price;
             }
-            if(!isset($check_branch->subscription->id)):
+            if (!isset($check_branch->subscription->id)) :
 
                 $subscription = Subscription::create([
                     'package_id' => $package->id,
@@ -443,7 +424,7 @@ class RestaurantController extends Controller
                     'end_at' => Carbon::now()->addDays(Setting::find(1)->tentative_period),
                     'type' => 'restaurant',
                 ]);
-            else:
+            else :
                 $subscription = $check_branch->subscription;
             endif;
             // return $check_branch->subscription;
@@ -462,7 +443,7 @@ class RestaurantController extends Controller
                     'commission' => $total_commission,
                 ]);
                 // store this operation to marketer history
-                if($markterOperation = MarketerOperation::where('restaurant_id' , $restaurant->id)->where('seller_code_id' , $seller_code->id)->where('status' , 'not_done')->first()):
+                if ($markterOperation = MarketerOperation::where('restaurant_id', $restaurant->id)->where('seller_code_id', $seller_code->id)->where('status', 'not_done')->first()) :
                     $markterOperation->update([
                         'marketer_id'   => $seller_code->marketer_id,
                         'seller_code_id' => $seller_code->id,
@@ -471,7 +452,7 @@ class RestaurantController extends Controller
                         'status'    => 'not_done',
                         'amount'    => $total_commission,
                     ]);
-                else:
+                else :
                     MarketerOperation::create([
                         'marketer_id'   => $seller_code->marketer_id,
                         'seller_code_id' => $seller_code->id,
@@ -488,7 +469,7 @@ class RestaurantController extends Controller
                 // ]);
             }
             $main_branch = $check_branch;
-        }else{
+        } else {
 
             $main_branch = Branch::create([
                 'restaurant_id' => $restaurant->id,
@@ -503,16 +484,14 @@ class RestaurantController extends Controller
                 'phone_number'  => $restaurant->phone_number,
             ]);
         }
-        if (empty($restaurant->subscription->id))
-        {
+        if (empty($restaurant->subscription->id)) {
             $check_price = CountryPackage::whereCountry_id($restaurant->country_id)
                 ->wherePackageId($request->package_id)
                 ->first();
-            if ($check_price == null)
-            {
+            if ($check_price == null) {
 
                 $package_actual_price = $package->price;
-            }else{
+            } else {
                 $package_actual_price = $check_price->price;
             }
             $subscription = Subscription::create([
@@ -524,7 +503,6 @@ class RestaurantController extends Controller
                 'end_at' => Carbon::now()->addDays(Setting::find(1)->tentative_period),
                 'type' => 'restaurant',
             ]);
-
         }
         defaultResturantData($restaurant);
         $restaurant->update([
@@ -532,7 +510,7 @@ class RestaurantController extends Controller
             'product_arrange' => 'true',
         ]);
         flash(trans('messages.updated'))->success();
-        return redirect()->route('restaurants' , 'tentative_active');
+        return redirect()->route('restaurants', 'tentative_active');
     }
     /**
      * Update the specified resource in storage.
@@ -544,24 +522,24 @@ class RestaurantController extends Controller
     public function update(Request $request, $id)
     {
         $restaurant = Restaurant::findOrFail($id);
-        $this->validate($request , [
-            'email' => 'required|string|email|max:255|unique:restaurants,email,'.$restaurant->id,
+        $this->validate($request, [
+            'email' => 'required|string|email|max:255|unique:restaurants,email,' . $restaurant->id,
             'password' => 'nullable|string|min:8|confirmed',
             'country_id' => 'required|exists:countries,id',
-            'phone_number' => ['required', 'unique:restaurants,phone_number,' .$restaurant->id, 'regex:/^((05)|(01)|())[0-9]{8}/'],
+            'phone_number' => ['required', 'unique:restaurants,phone_number,' . $restaurant->id, 'regex:/^((05)|(01)|())[0-9]{8}/'],
             'name_en' => 'required|string|max:255',
             'name_ar' => 'required|string|max:255',
             'city_id' => 'required|exists:cities,id',
             'end_at'   => 'sometimes|date',
-            'name_barcode'  => 'required|string|max:191|unique:restaurants,name_barcode,'.$restaurant->id,
+            'name_barcode'  => 'required|string|max:191|unique:restaurants,name_barcode,' . $restaurant->id,
 
         ]);
 
         // update the main branch
         $check_branch = Branch::whereRestaurantId($restaurant->id)->with('subscription')
-            ->where('main' , 'true')
+            ->where('main', 'true')
             ->first();
-        $barcode  = str_replace(' ' , '-' , $request->name_barcode);
+        $barcode  = str_replace(' ', '-', $request->name_barcode);
         $restaurant->update([
             'name_ar' => $request->name_ar,
             'name_en' => $request->name_en,
@@ -575,15 +553,13 @@ class RestaurantController extends Controller
             'product_arrange' => 'true',
             'status' => $restaurant->status == 'tentative' ? 'tentative' : 'active',
         ]);
-        if ($restaurant->subscription != null and $request->end_at != null)
-        {
+        if ($restaurant->subscription != null and $request->end_at != null) {
             $restaurant->subscription->update([
                 'end_at'  => $request->end_at,
             ]);
         }
 
-        if (isset($check_branch->id))
-        {
+        if (isset($check_branch->id)) {
             $check_branch->update([
                 'status'  => 'active',
             ]);
@@ -591,7 +567,7 @@ class RestaurantController extends Controller
                 'status'  => $restaurant->status == 'tentative' ? 'tentative' : 'active',
             ]);
             $main_branch = $check_branch;
-        }else{
+        } else {
             $main_branch = Branch::create([
                 'restaurant_id' => $restaurant->id,
                 'country_id'    => $restaurant->country_id,
@@ -603,21 +579,19 @@ class RestaurantController extends Controller
                 'status'        => 'active',
                 'email'         => $restaurant->email,
                 'phone_number'  => $restaurant->phone_number,
-//            'latitude'      => $restaurant->latitude,
-//            'longitude'     => $restaurant->longitude,
+                //            'latitude'      => $restaurant->latitude,
+                //            'longitude'     => $restaurant->longitude,
             ]);
         }
-        if (empty($restaurant->subscription->id))
-        {
+        if (empty($restaurant->subscription->id)) {
             $package = $restaurant->package;
             $check_price = CountryPackage::whereCountry_id($restaurant->country_id)
                 ->wherePackageId($package->id)
                 ->first();
-            if ($check_price == null)
-            {
+            if ($check_price == null) {
 
                 $package_actual_price = $package->price;
-            }else{
+            } else {
                 $package_actual_price = $check_price->price;
             }
             Subscription::create([
@@ -631,22 +605,22 @@ class RestaurantController extends Controller
             ]);
         }
 
-//
-//        // store restaurant categories
-//        if ($request->category_id != null) {
-//            foreach ($request->category_id as $category) {
-//                RestaurantCategory::create([
-//                    'category_id' => $category,
-//                    'restaurant_id' => $restaurant->id,
-//                ]);
-//            }
-//        }
-        if(!empty($request->password)):
+        //
+        //        // store restaurant categories
+        //        if ($request->category_id != null) {
+        //            foreach ($request->category_id as $category) {
+        //                RestaurantCategory::create([
+        //                    'category_id' => $category,
+        //                    'restaurant_id' => $restaurant->id,
+        //                ]);
+        //            }
+        //        }
+        if (!empty($request->password)) :
             // return $restaurant;
-            Auth::guard('restaurant')->logoutOtherDevices2($restaurant , $request->password);
+            Auth::guard('restaurant')->logoutOtherDevices2($restaurant, $request->password);
         endif;
         flash(trans('messages.updated'))->success();
-        return redirect()->route('restaurants' , 'active');
+        return redirect()->route('restaurants', 'active');
     }
 
     /**
@@ -658,30 +632,22 @@ class RestaurantController extends Controller
     public function destroy($id)
     {
         $restaurant = Restaurant::findOrFail($id);
-        if ($restaurant->logo != null)
-        {
-            if ($restaurant->logo != 'logo.png')
-            {
+        if ($restaurant->logo != null) {
+            if ($restaurant->logo != 'logo.png') {
                 @unlink(public_path('/uploads/restaurants/logo/' . $restaurant->logo));
             }
         }
-        if ($restaurant->sensitivities->count() > 0)
-        {
-            foreach ($restaurant->sensitivities as $sensitivity)
-            {
-                if ($sensitivity->photo != 'fish.png' && $sensitivity->photo != 'egg.png' && $sensitivity->photo != 'hop.png' && $sensitivity->photo != 'aqra.png' && $sensitivity->photo != 'milk.png' && $sensitivity->photo != 'kardal.png' && $sensitivity->photo != 'raky.png' && $sensitivity->photo != 'butter.png' && $sensitivity->photo != 'capret.png' && $sensitivity->photo != 'rfs.png' && $sensitivity->photo != 'kago.png' && $sensitivity->photo != 'smsm.png' && $sensitivity->photo != 'soia.png' && $sensitivity->photo != 'terms.png')
-                {
+        if ($restaurant->sensitivities->count() > 0) {
+            foreach ($restaurant->sensitivities as $sensitivity) {
+                if ($sensitivity->photo != 'fish.png' && $sensitivity->photo != 'egg.png' && $sensitivity->photo != 'hop.png' && $sensitivity->photo != 'aqra.png' && $sensitivity->photo != 'milk.png' && $sensitivity->photo != 'kardal.png' && $sensitivity->photo != 'raky.png' && $sensitivity->photo != 'butter.png' && $sensitivity->photo != 'capret.png' && $sensitivity->photo != 'rfs.png' && $sensitivity->photo != 'kago.png' && $sensitivity->photo != 'smsm.png' && $sensitivity->photo != 'soia.png' && $sensitivity->photo != 'terms.png') {
                     @unlink(public_path('/sensitivities/' . $sensitivity->photo));
                 }
                 $sensitivity->delete();
             }
         }
-        if ($restaurant->products->count() > 0)
-        {
-            foreach ($restaurant->products  as $product)
-            {
-                if ($product->photo != null)
-                {
+        if ($restaurant->products->count() > 0) {
+            foreach ($restaurant->products  as $product) {
+                if ($product->photo != null) {
                     @unlink(public_path('/uploads/products/' . $product->photo));
                 }
                 $product->delete();
@@ -697,37 +663,37 @@ class RestaurantController extends Controller
     {
         $serviceSubscription = ServiceSubscription::findOrFail($id);
         $restaurant = $serviceSubscription->restaurant;
-        return view('admin.restaurants.subscriptions.control_service' , compact('restaurant' , 'serviceSubscription'));
+        return view('admin.restaurants.subscriptions.control_service', compact('restaurant', 'serviceSubscription'));
     }
-    public function controlServiceChanges(Request $request , $id)
+    public function controlServiceChanges(Request $request, $id)
     {
-        $this->validate($request , [
+        $this->validate($request, [
             'days' => 'required|numeric',
         ]);
         $serviceSubscription = ServiceSubscription::findOrFail($id);
-        
+
         $serviceSubscription->update([
-        //            'package_id' => $request->package_id == null ? $serviceSubscription->package->id : $request->package_id,
+            //            'package_id' => $request->package_id == null ? $serviceSubscription->package->id : $request->package_id,
             'end_at'     => $request->days == null ? $serviceSubscription->end_at : Carbon::now()->addDays($request->days),
             'status'     => $serviceSubscription->status == 'tentative' ? 'tentative' : 'active',
         ]);
-        
+
         flash(trans('messages.updated'))->success();
-        return redirect()->route('admin.service.service_restaurants' , [$serviceSubscription->service_id , $serviceSubscription->status]);
+        return redirect()->route('admin.service.service_restaurants', [$serviceSubscription->service_id, $serviceSubscription->status]);
     }
     public function control_subscription($id)
     {
         $restaurant = Restaurant::findOrFail($id);
-        return view('admin.restaurants.subscriptions.control' , compact('restaurant'));
+        return view('admin.restaurants.subscriptions.control', compact('restaurant'));
     }
-    public function controlChanges(Request $request , $id)
+    public function controlChanges(Request $request, $id)
     {
-        $this->validate($request , [
+        $this->validate($request, [
             'days' => 'required|numeric',
         ]);
         $restaurant = Restaurant::findOrFail($id);
         $restaurant->subscription->update([
-        //            'package_id' => $request->package_id == null ? $restaurant->subscription->package->id : $request->package_id,
+            //            'package_id' => $request->package_id == null ? $restaurant->subscription->package->id : $request->package_id,
             'end_at'     => $request->days == null ? $restaurant->subscription->end_at : Carbon::now()->addDays($request->days),
             'status'     => $restaurant->status == 'tentative' ? 'tentative' : 'active',
         ]);
@@ -736,7 +702,7 @@ class RestaurantController extends Controller
         ]);
         // update the main branch
         $main_branch = Branch::whereRestaurantId($restaurant->id)
-            ->where('main' , 'true')
+            ->where('main', 'true')
             ->first();
         $main_branch->update([
             'status'  => 'active',
@@ -746,17 +712,17 @@ class RestaurantController extends Controller
             'end_at'     => $request->days == null ? $restaurant->subscription->end_at : Carbon::now()->addDays($request->days),
         ]);
         flash(trans('messages.updated'))->success();
-        return redirect()->route('showRestaurant' , $restaurant->id);
+        return redirect()->route('showRestaurant', $restaurant->id);
     }
 
     public function control_branch_subscription($id)
     {
         $branch = Branch::findOrFail($id);
-        return view('admin.restaurants.subscriptions.control_branch' , compact('branch'));
+        return view('admin.restaurants.subscriptions.control_branch', compact('branch'));
     }
-    public function controlBranchChanges(Request $request , $id)
+    public function controlBranchChanges(Request $request, $id)
     {
-        $this->validate($request , [
+        $this->validate($request, [
             'days' => 'required|numeric',
         ]);
         $branch = Branch::findOrFail($id);
@@ -772,23 +738,25 @@ class RestaurantController extends Controller
         return redirect()->back();
     }
 
-    public function ArchiveRestaurant(Request $request , $id , $state)
+    public function ArchiveRestaurant(Request $request, $id, $state)
     {
         $restaurant = Restaurant::findOrFail($id);
-        if(!empty($request->archive_category_id)) $archive = $request->archive_category_id;
-        elseif($state == 'true'){
+        if (!empty($request->archive_category_id)) $archive = $request->archive_category_id > 0 ? $request->archive_category_id : null;
+        elseif ($state == 'true') {
             flash('يرجي اختيار سبب الارشفة')->error();
             return redirect()->back();
         }
 
         $restaurant->update([
             'archive'   => $state,
-            'archive_category_id' => $state == 'false' ? $restaurant->archive_category_id : $archive
+            'archive_category_id' => $state == 'false' ? $restaurant->archive_category_id : $archive,
+            'archive_reason' => $request->archive_reason,
+            'archived_by_id' => auth('admin')->Id(),
         ]);
         flash(trans('messages.updated'))->success();
         return redirect()->back();
     }
-    public function ArchiveBranch($id , $state)
+    public function ArchiveBranch($id, $state)
     {
         $branch = Branch::findOrFail($id);
         $branch->update([
@@ -808,8 +776,8 @@ class RestaurantController extends Controller
     public function edit_branch($id)
     {
         $branch = Branch::findOrFail($id);
-        $countries = Country::where('active' , 'true')->get();
-        return view('admin.restaurants.branches.edit' , compact('branch' , 'countries'));
+        $countries = Country::where('active', 'true')->get();
+        return view('admin.restaurants.branches.edit', compact('branch', 'countries'));
     }
     public function update_branch(Request $request, $id)
     {
@@ -818,7 +786,7 @@ class RestaurantController extends Controller
             'city_id' => 'required|exists:cities,id',
             'name_ar' => 'nullable|string|max:191',
             'name_en' => 'nullable|string|max:191|unique:branches,name_barcode,' . $id,
-//            'name_barcode' => 'required|string|max:191|unique:branches,name_barcode,' . $id,
+            //            'name_barcode' => 'required|string|max:191|unique:branches,name_barcode,' . $id,
         ]);
         if ($request->name_ar == null && $request->name_en == null) {
             flash(trans('messages.name_required'))->error();
@@ -843,12 +811,11 @@ class RestaurantController extends Controller
         $branch->update([
             'status'  => 'active'
         ]);
-        if ($branch->subscription != null)
-        {
+        if ($branch->subscription != null) {
             $branch->subscription->update([
                 'status'  => 'active'
             ]);
-        }else{
+        } else {
             Subscription::create([
                 'package_id'   => 1,
                 'restaurant_id' => $branch->restaurant_id,
@@ -870,8 +837,7 @@ class RestaurantController extends Controller
             'admin_activation' => 'true',
         ]);
         $subscription = Subscription::whereRestaurantId($restaurant->id)->first();
-        if ($subscription)
-        {
+        if ($subscription) {
             $subscription->update([
                 'end_at' => Carbon::now()->addDays(Setting::find(1)->tentative_period),
             ]);
@@ -879,4 +845,13 @@ class RestaurantController extends Controller
         return redirect()->back();
     }
 
+    public function loginToRestaurant(Request $request, Restaurant $restaurant)
+    {
+        if (auth('admin')->check()) :
+            Auth::guard('restaurant')->logout();
+            Auth::guard('restaurant')->login($restaurant, true);
+            return redirect(route('restaurant.home'));
+        endif;
+        return redirect()->back();
+    }
 }

@@ -53,17 +53,20 @@
                                 <th>@lang('dashboard.countries')</th>
                                 <th> @lang('messages.restaurants') </th>
                                 {{--                                <th> @lang('messages.orders_count') </th>--}}
-                                <th>@lang('messages.operations')</th>
+                                @if(auth()->guard('admin')->user()->role == 'admin')
+                                    <th>@lang('messages.operations')</th>
+                                @endif
                             </tr>
                             </thead>
                             <tbody>
-                            <?php $i=0 ?>
+                            <?php $i = 0 ?>
                             @foreach($services as $item)
                                 <tr class="odd gradeX">
 
                                     <td>
                                         <div class="image-preview" style="width: 100px;height:100px;">
-                                            <img src="{{asset($item->image_path)}}" alt="" style="width:100%;height: 100%;">
+                                            <img src="{{asset($item->image_path)}}" alt=""
+                                                 style="width:100%;height: 100%;">
                                         </div>
                                     </td>
                                     <td>
@@ -78,11 +81,13 @@
                                         @endif
                                     </td>
                                     <td>
-                                        <a class="btn btn-info" href="{{route('admin.service.country.index' , $item->id)}}">{{$item->prices_count}}
+                                        <a class="btn btn-info"
+                                           href="{{route('admin.service.country.index' , $item->id)}}">{{$item->prices_count}}
                                         </a>
                                     </td>
                                     <td>
-                                        <a class="btn btn-primary" href="{{route('admin.service.service_restaurants' , [$item->id , 'active'])}}">
+                                        <a class="btn btn-primary"
+                                           href="{{route('admin.service.service_restaurants' , [$item->id , 'active'])}}">
                                             {{App\Models\ServiceSubscription::with('restaurant')
                                               ->whereHas('restaurant' , function ($q){
                                                   $q->where('archive' , 'false');
@@ -114,12 +119,15 @@
                                     {{--                                            {{\App\Models\Order::whereIn('type',['previous' , 'takeaway' , 'delivery'])->count()}}--}}
                                     {{--                                        @endif--}}
                                     {{--                                    </td>--}}
-                                    <td>
-                                        <a class="btn btn-success" href="{{route('admin.service.edit' , $item->id)}}">
-                                            <i class="fa fa-user-edit"></i> @lang('messages.edit')
-                                        </a>
+                                    @if(auth()->guard('admin')->user()->role == 'admin')
+                                        <td>
+                                            <a class="btn btn-success"
+                                               href="{{route('admin.service.edit' , $item->id)}}">
+                                                <i class="fa fa-user-edit"></i> @lang('messages.edit')
+                                            </a>
 
-                                    </td>
+                                        </td>
+                                    @endif
                                 </tr>
                             @endforeach
                             </tbody>
@@ -146,8 +154,8 @@
         $(function () {
             $("#example1").DataTable({
                 lengthMenu: [
-                    [10, 25, 50 , 100, -1],
-                    [10, 25, 50,  100,'All'],
+                    [10, 25, 50, 100, -1],
+                    [10, 25, 50, 100, 'All'],
                 ],
             });
             $('#example2').DataTable({
@@ -161,10 +169,10 @@
         });
     </script>
     <script>
-        $(document).ready(function() {
+        $(document).ready(function () {
             var CSRF_TOKEN = $('meta[name="X-CSRF-TOKEN"]').attr('content');
 
-            $('body').on('click', '.delete_city', function() {
+            $('body').on('click', '.delete_city', function () {
                 var id = $(this).attr('data');
 
                 var swal_text = 'حذف ' + $(this).attr('data_name') + '؟';
@@ -179,13 +187,13 @@
                     confirmButtonText: "تأكيد",
                     cancelButtonText: "إغلاق",
                     closeOnConfirm: false
-                }, function() {
+                }, function () {
 
                     {{--var url = '{{ route("imageProductRemove", ":id") }}';--}}
 
                         {{--url = url.replace(':id', id);--}}
 
-                        window.location.href = "{{ url('/') }}" + "/admin/packages/delete/"+id;
+                        window.location.href = "{{ url('/') }}" + "/admin/packages/delete/" + id;
 
 
                 });

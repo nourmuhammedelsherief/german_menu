@@ -21,7 +21,7 @@
                 <div class="col-sm-6">
                     <ol class="breadcrumb float-sm-right">
                         <li class="breadcrumb-item"><a
-                                href="{{url('/restaurant/home')}}">@lang('messages.control_panel')</a></li>
+                                    href="{{ url('/restaurant/home') }}">@lang('messages.control_panel')</a></li>
                         <li class="breadcrumb-item active"> @lang('messages.profile') </li>
                     </ol>
                 </div>
@@ -47,6 +47,11 @@
                                                         data-toggle="tab">@lang('messages.external_data')</a></li>
                                 <li class="nav-item"><a class="nav-link" href="#colors"
                                                         data-toggle="tab">@lang('messages.site_colors')</a></li>
+                                <li class="nav-item">
+                                    <a class="nav-link" href="#bio_colors" data-toggle="tab">
+                                        {{app()->getLocale() == 'ar' ? 'التحكم بألوان البايو' : 'Boi Colors Control' }}
+                                    </a>
+                                </li>
                                 <li class="nav-item"><a class="nav-link" href="#barcode"
                                                         data-toggle="tab">@lang('messages.my_barcode')</a></li>
 
@@ -56,7 +61,7 @@
                         <div class="card-body">
                             <div class="tab-content">
                                 <div class="tab-pane" id="barcode">
-                                    <form action="{{route('RestaurantUpdateBarcode')}}" class="form-horizontal"
+                                    <form action="{{ route('RestaurantUpdateBarcode') }}" class="form-horizontal"
                                           method="post" enctype="multipart/form-data">
                                         @csrf
                                         <div class="form-group">
@@ -65,7 +70,7 @@
 
                                             <div class="col-sm-9">
                                                 <input type="text" class="form-control" name="name_ar"
-                                                       value="{{$user->name_ar}}" id="name_ar"
+                                                       value="{{ $user->name_ar }}" id="name_ar"
                                                        placeholder="@lang('messages.name_ar')">
                                             </div>
                                             @if ($errors->has('name_ar'))
@@ -81,10 +86,10 @@
 
                                             <div class="col-sm-9">
                                                 <input type="text" class="form-control" name="name_en"
-                                                       value="{{$user->name_en}}" id="name_en"
+                                                       value="{{ $user->name_en }}" id="name_en"
                                                        placeholder="@lang('messages.name_en')">
                                             </div>
-                                            {{--                                            <h6 style="color: red">@lang('messages.whenChangeName')</h6>--}}
+                                            {{--                                            <h6 style="color: red">@lang('messages.whenChangeName')</h6> --}}
                                             @if ($errors->has('name_en'))
                                                 <div class="alert alert-danger">
                                                     <button class="close" data-close="alert"></button>
@@ -98,7 +103,7 @@
 
                                             <div class="col-sm-9">
                                                 <input disabled type="text" class="form-control" name="name_barcode"
-                                                       value="{{$user->name_barcode}}" id="name_en"
+                                                       value="{{ $user->name_barcode }}" id="name_en"
                                                        placeholder="@lang('messages.name_barcode')">
                                             </div>
                                             <h6 style="color: red">@lang('messages.whenChangeName')</h6>
@@ -128,20 +133,20 @@
                                 @php
                                     $user = Auth::guard('restaurant')->user();
                                     if ($user->type == 'employee'):
-                                    $user = \App\Models\Restaurant::find($user->restaurant_id);
+                                        $user = \App\Models\Restaurant::find($user->restaurant_id);
                                     endif;
                                     $check_price = \App\Models\CountryPackage::whereCountry_id($user->country_id)
-                                                 ->wherePackageId($user->subscription->package_id)
-                                                 ->first();
-                                        if ($check_price == null) {
-                                            $package_price = \App\Models\Package::find($user->subscription->package_id)->price;
-                                        } else {
-                                            $package_price = $check_price->price;
-                                        }
-                                        $tax = \App\Models\Setting::find(1)->tax;
-                                        $subscription_price = $user->subscription->price;
-                                        $tax_value_package = $package_price * $tax / 100;
-                                        $package_price = $package_price + $tax_value_package;
+                                        ->wherePackageId($user->subscription->package_id)
+                                        ->first();
+                                    if ($check_price == null) {
+                                        $package_price = \App\Models\Package::find($user->subscription->package_id)->price;
+                                    } else {
+                                        $package_price = $check_price->price;
+                                    }
+                                    $tax = \App\Models\Setting::find(1)->tax;
+                                    $subscription_price = $user->subscription->price;
+                                    $tax_value_package = ($package_price * $tax) / 100;
+                                    $package_price = $package_price + $tax_value_package;
                                 @endphp
                                 <div class="active tab-pane" id="subscription">
                                     <!-- The timeline -->
@@ -154,7 +159,7 @@
                                                 <h3 class="timeline-header border-0">
                                                     @lang('messages.welcomeRestaurant')
                                                     <a href="#">
-                                                        {{app()->getLocale() == 'ar' ? $user->name_ar : $user->name_en}}
+                                                        {{ app()->getLocale() == 'ar' ? $user->name_ar : $user->name_en }}
                                                     </a>
                                                     @lang('messages.at')
                                                     @lang('messages.appName')
@@ -167,29 +172,29 @@
                                                 <h3 class="timeline-header border-0">
                                                     @lang('messages.package_price')
                                                     <a href="#">
-                                                        {{number_format((float)$package_price, 2, '.', '')}}
+                                                        {{ number_format((float) $package_price, 2, '.', '') }}
                                                     </a>
-                                                    {{app()->getLocale() == 'ar' ? $user->country->currency_ar : $user->country->currency_en}}
+                                                    {{ app()->getLocale() == 'ar' ? $user->country->currency_ar : $user->country->currency_en }}
                                                     @lang('messages.including_tax')
                                                 </h3>
                                             </div>
                                         </div>
-                                        @if($user->subscription->seller_code_id != null)
+                                        @if ($user->subscription->seller_code_id != null)
                                             <div>
                                                 <i class="far fa-money-bill-alt bg-gray"></i>
                                                 <div class="timeline-item">
                                                     <h3 class="timeline-header border-0">
                                                         @lang('messages.package_price_discount')
-                                                        @if($user->subscription->seller_code_id != null)
+                                                        @if ($user->subscription->seller_code_id != null)
                                                             <a href="#">
-                                                                {{number_format((float)$subscription_price, 2, '.', '')}}
+                                                                {{ number_format((float) $subscription_price, 2, '.', '') }}
                                                             </a>
                                                         @else
                                                             <a href="#">
-                                                                {{number_format((float)$package_price, 2, '.', '')}}
+                                                                {{ number_format((float) $package_price, 2, '.', '') }}
                                                             </a>
                                                         @endif
-                                                        {{app()->getLocale() == 'ar' ? $user->country->currency_ar : $user->country->currency_en}}
+                                                        {{ app()->getLocale() == 'ar' ? $user->country->currency_ar : $user->country->currency_en }}
                                                     </h3>
                                                 </div>
                                             </div>
@@ -198,15 +203,16 @@
                                                 <div class="timeline-item">
                                                     <h3 class="timeline-header border-0">
 
-                                                        @if($user->subscription->seller_code_id != null)
-                                                            @if($user->subscription->seller_code->used_type == 'code')
+                                                        @if ($user->subscription->seller_code_id != null)
+                                                            @if ($user->subscription->seller_code->used_type == 'code')
                                                                 @lang('messages.seller_code')
-                                                                <a href="#">{{$user->subscription->seller_code->seller_name}}</a>
+                                                                <a
+                                                                        href="#">{{ $user->subscription->seller_code->seller_name }}</a>
                                                             @else
                                                                 @lang('messages.seller_code_url')
-                                                                <a href="#">{{$user->subscription->seller_code->custom_url}} </a>
+                                                                <a href="#">{{ $user->subscription->seller_code->custom_url }}
+                                                                </a>
                                                             @endif
-
                                                         @else
                                                             <a href="#">
                                                                 @lang('messages.notFound')
@@ -221,22 +227,22 @@
                                             <div class="timeline-item">
                                                 <h3 class="timeline-header border-0">
                                                     @lang('messages.next_subscription_price')
-                                                    @if($user->subscription->seller_code_id != null)
-                                                        @if($user->subscription->seller_code->permanent == 'true')
+                                                    @if ($user->subscription->seller_code_id != null)
+                                                        @if ($user->subscription->seller_code->permanent == 'true')
                                                             <a href="#">
-                                                                {{number_format((float)$subscription_price, 2, '.', '')}}
-                                                                {{app()->getLocale() == 'ar' ? $user->country->currency_ar : $user->country->currency_en}}
+                                                                {{ number_format((float) $subscription_price, 2, '.', '') }}
+                                                                {{ app()->getLocale() == 'ar' ? $user->country->currency_ar : $user->country->currency_en }}
                                                             </a>
                                                         @else
                                                             <a href="#">
-                                                                {{number_format((float)$package_price, 2, '.', '')}}
-                                                                {{app()->getLocale() == 'ar' ? $user->country->currency_ar : $user->country->currency_en}}
+                                                                {{ number_format((float) $package_price, 2, '.', '') }}
+                                                                {{ app()->getLocale() == 'ar' ? $user->country->currency_ar : $user->country->currency_en }}
                                                             </a>
                                                         @endif
                                                     @else
                                                         <a href="#">
-                                                            {{number_format((float)$package_price, 2, '.', '')}}
-                                                            {{app()->getLocale() == 'ar' ? $user->country->currency_ar : $user->country->currency_en}}
+                                                            {{ number_format((float) $package_price, 2, '.', '') }}
+                                                            {{ app()->getLocale() == 'ar' ? $user->country->currency_ar : $user->country->currency_en }}
                                                         </a>
                                                     @endif
                                                     @lang('messages.including_tax')
@@ -248,12 +254,12 @@
                                             <div class="timeline-item">
                                                 <h3 class="timeline-header border-0">
                                                     @lang('messages.state')
-                                                    @if($user->subscription->status == 'active')
+                                                    @if ($user->subscription->status == 'active')
                                                         <a href="#" class="btn btn-success">
                                                             @lang('messages.active')
                                                         </a>
                                                     @elseif($user->subscription->status == 'tentative')
-                                                        <a href="#" class="btn btn-info"> 
+                                                        <a href="#" class="btn btn-info">
                                                             @lang('messages.free_tentative_period')
                                                         </a>
                                                     @elseif($user->subscription->status == 'finished')
@@ -270,12 +276,12 @@
                                             </div>
                                         </div>
 
-                                        @if($user->subscription->end_at > Carbon\Carbon::now())
+                                        @if ($user->subscription->end_at > Carbon\Carbon::now())
                                             <div>
                                                 <i class="far fa-clock bg-gray"></i>
                                                 <div class="timeline-item">
                                                     <h3 class="timeline-header border-0">
-                                                        {{app()->getLocale() == 'ar' ? 'باقي علي أنتهاء الأشتراك الخاص بكم' : 'The rest of your subscription has expired'}}
+                                                        {{ app()->getLocale() == 'ar' ? 'باقي علي أنتهاء الأشتراك الخاص بكم' : 'The rest of your subscription has expired' }}
                                                         <a href="#">
                                                             <?php
                                                             $ticketTime = strtotime($user->subscription->end_at);
@@ -283,22 +289,22 @@
                                                             // This difference is in seconds.
                                                             $difference = $ticketTime - time();
                                                             ?>
-                                                            {{round($difference / 86400)}}
+                                                            {{ round($difference / 86400) }}
                                                         </a>
-                                                        {{app()->getLocale() == 'ar' ? 'يوم' : 'Day'}}
+                                                        {{ app()->getLocale() == 'ar' ? 'يوم' : 'Day' }}
                                                     </h3>
-                                                    @if($user->subscription->end_at < \Carbon\Carbon::now()->addMonth() and $user->subscription->status == 'active')
+                                                    @if ($user->subscription->end_at < \Carbon\Carbon::now()->addMonth() and $user->subscription->status == 'active')
                                                         <p>
                                                             <a class="btn btn-info"
-                                                               href="{{route('renewSubscription' , $user->id)}}">
-                                                                {{app()->getLocale() == 'ar' ? 'تجديد الأشتراك' : 'Renew Subscription'}}
+                                                               href="{{ route('renewSubscription', $user->id) }}">
+                                                                {{ app()->getLocale() == 'ar' ? 'تجديد الأشتراك' : 'Renew Subscription' }}
                                                             </a>
                                                         </p>
                                                     @endif
-                                                    @if($user->subscription->status == 'tentative')
+                                                    @if ($user->subscription->status == 'tentative')
                                                         <a class="btn btn-success"
-                                                           href="{{route('renewSubscription' , $user->id)}}">
-                                                            {{app()->getLocale() == 'ar' ? 'تفعيل الأشتراك' : 'Active Subscription'}}
+                                                           href="{{ route('renewSubscription', $user->id) }}">
+                                                            {{ app()->getLocale() == 'ar' ? 'تفعيل الأشتراك' : 'Active Subscription' }}
                                                         </a>
                                                     @endif
                                                 </div>
@@ -311,15 +317,16 @@
                                                 <h3 class="timeline-header border-0">
                                                     @lang('messages.subscribe_end_at')
                                                     <a href="#">
-                                                        {{$user->subscription->end_at->format('Y-m-d')}}
+                                                        {{ $user->subscription->end_at->format('Y-m-d') }}
                                                     </a>
-                                                    @if($user->subscription->status == 'finished' or $user->subscription->status == 'tentative_finished')
+                                                    @if ($user->subscription->status == 'finished' or $user->subscription->status == 'tentative_finished')
                                                         <a class="btn btn-danger" href="#">
                                                             @lang('messages.finished')
                                                         </a>
                                                         <hr>
                                                         <a class="btn btn-success"
-                                                           href="{{route('renewSubscription' , $user->id)}}"> @lang('messages.renewSubscription') </a>
+                                                           href="{{ route('renewSubscription', $user->id) }}">
+                                                            @lang('messages.renewSubscription') </a>
                                                     @endif
                                                 </h3>
                                             </div>
@@ -330,7 +337,7 @@
                                                 <h3 class="timeline-header border-0">
                                                     @lang('messages.menu_total_views')
                                                     <a href="#">
-                                                        {{$user->views}}
+                                                        {{ $user->views }}
                                                     </a>
                                                 </h3>
                                             </div>
@@ -339,11 +346,13 @@
                                             <i class="far fa-money-bill-alt bg-gray"></i>
                                             <div class="timeline-item">
                                                 <h3 class="timeline-header border-0">
-                                                    {{app()->getLocale() == 'ar' ? 'الزيارات اليومية' : 'Daily Views'}}
+                                                    {{ app()->getLocale() == 'ar' ? 'الزيارات اليومية' : 'Daily Views' }}
                                                     <a href="#">
-                                                        <?php $daily_views = \App\Models\RestaurantView::whereRestaurantId($user->id)->orderBy('id', 'desc')->first(); ?>
-                                                        @if($daily_views != null)
-                                                            {{$daily_views->views}}
+                                                        <?php $daily_views = \App\Models\RestaurantView::whereRestaurantId($user->id)
+                                                            ->orderBy('id', 'desc')
+                                                            ->first(); ?>
+                                                        @if ($daily_views != null)
+                                                            {{ $daily_views->views }}
                                                         @else
                                                             0
                                                         @endif
@@ -352,14 +361,14 @@
                                                 </h3>
                                             </div>
                                         </div>
-                                        @if($user->admin_activation == 'false')
+                                        @if ($user->admin_activation == 'false')
                                             @php
-                                                $url = 'https://api.whatsapp.com/send?phone='.\App\Models\Setting::find(1)->active_whatsapp_number.'&text=';
-                                                $content = 'لقد قمت بتسجيل حساب جديد لديكم وأريد تفعيل الفترة التجريبية';
+                                                $url = 'https://api.whatsapp.com/send?phone=' . \App\Models\Setting::find(1)->active_whatsapp_number . '&text=';
+                                                $content = 'لقد قمت بتسجيل حساب جديد لديكم وأريد اكمال الاجراءات المطلوبه لتفعيل الحساب';
                                             @endphp
-                                            <a href="{{$url . $content}}" class="btn btn-success" target="_blank">
+                                            <a href="{{ $url . $content }}" class="btn btn-success" target="_blank">
                                                 <i class="fab fa-whatsapp"></i>
-                                                {{app()->getLocale() == 'ar' ? 'لتفعيل الفترة التجريبية أضغط هنا' : 'To Have The Tentative Period Contact the Admin'}}
+                                                {{ app()->getLocale() == 'ar' ? 'لتفعيل الفترة التجريبية أضغط هنا' : 'To Have The Tentative Period Contact the Admin' }}
                                             </a>
                                         @endif
                                         <div>
@@ -369,7 +378,7 @@
                                 </div>
 
                                 <div class="tab-pane" id="main_data">
-                                    <form action="{{route('RestaurantUpdateProfile')}}" class="form-horizontal"
+                                    <form action="{{ route('RestaurantUpdateProfile') }}" class="form-horizontal"
                                           method="post" enctype="multipart/form-data">
                                         @csrf
 
@@ -379,7 +388,7 @@
 
                                             <div class="col-sm-9">
                                                 <input type="email" class="form-control" name="email"
-                                                       value="{{$user->email}}" id="email"
+                                                       value="{{ $user->email }}" id="email"
                                                        placeholder="@lang('messages.email')">
                                             </div>
                                             @if ($errors->has('email'))
@@ -395,7 +404,7 @@
 
                                             <div class="col-sm-9">
                                                 <input type="text" class="form-control" name="phone_number"
-                                                       value="{{$user->phone_number}}" id="phone_number"
+                                                       value="{{ $user->phone_number }}" id="phone_number"
                                                        placeholder="@lang('messages.phone_number')" disabled>
                                             </div>
                                             @if ($errors->has('phone_number'))
@@ -405,7 +414,7 @@
                                                 </div>
                                             @endif
                                         </div>
-                                        @if(auth('restaurant')->id() == 1145)
+                                        @if (auth('restaurant')->id() == 1145)
                                             <div class="form-group">
                                                 <label for="website_theme"
                                                        class="col-sm-3 control-label">@lang('messages.website_theme')</label>
@@ -414,8 +423,9 @@
                                                     <select name="theme_id" id="website_theme"
                                                             class="form-control select2">
                                                         @foreach ($themes as $item)
-                                                            <option
-                                                                value="{{$item->id}}" {{$item->id == $user->theme_id ? 'selected' : ''}}>{{$item->name}}</option>
+                                                            <option value="{{ $item->id }}"
+                                                                    {{ $item->id == $user->theme_id ? 'selected' : '' }}>
+                                                                {{ $item->name }}</option>
                                                         @endforeach
                                                     </select>
                                                 </div>
@@ -427,41 +437,41 @@
                                                 @endif
                                             </div>
                                         @endif
-                                        {{--                                        <div class="form-group">--}}
-                                        {{--                                            <label for="city_id"--}}
-                                        {{--                                                   class="col-sm-3 control-label">@lang('messages.city')</label>--}}
+                                        {{--                                        <div class="form-group"> --}}
+                                        {{--                                            <label for="city_id" --}}
+                                        {{--                                                   class="col-sm-3 control-label">@lang('messages.city')</label> --}}
 
-                                        {{--                                            <div class="col-sm-9">--}}
-                                        {{--                                                <select name="city_id" class="form-control">--}}
-                                        {{--                                                    <option disabled selected> @lang('messages.choose_city') </option>--}}
-                                        {{--                                                    @foreach($cities as $city)--}}
-                                        {{--                                                        <option--}}
-                                        {{--                                                            value="{{$city->id}}" {{$city->id == $user->city_id ? 'selected' : ''}}>--}}
-                                        {{--                                                            @if(app()->getLocale() == 'ar')--}}
-                                        {{--                                                                {{$city->name_ar}}--}}
-                                        {{--                                                            @else--}}
-                                        {{--                                                                {{$city->name_en}}--}}
-                                        {{--                                                            @endif--}}
-                                        {{--                                                        </option>--}}
-                                        {{--                                                    @endforeach--}}
-                                        {{--                                                </select>--}}
-                                        {{--                                            </div>--}}
-                                        {{--                                            @if ($errors->has('city_id'))--}}
-                                        {{--                                                <div class="alert alert-danger">--}}
-                                        {{--                                                    <button class="close" data-close="alert"></button>--}}
-                                        {{--                                                    <span> {{ $errors->first('city_id') }}</span>--}}
-                                        {{--                                                </div>--}}
-                                        {{--                                            @endif--}}
-                                        {{--                                        </div>--}}
+                                        {{--                                            <div class="col-sm-9"> --}}
+                                        {{--                                                <select name="city_id" class="form-control"> --}}
+                                        {{--                                                    <option disabled selected> @lang('messages.choose_city') </option> --}}
+                                        {{--                                                    @foreach ($cities as $city) --}}
+                                        {{--                                                        <option --}}
+                                        {{--                                                            value="{{$city->id}}" {{$city->id == $user->city_id ? 'selected' : ''}}> --}}
+                                        {{--                                                            @if (app()->getLocale() == 'ar') --}}
+                                        {{--                                                                {{$city->name_ar}} --}}
+                                        {{--                                                            @else --}}
+                                        {{--                                                                {{$city->name_en}} --}}
+                                        {{--                                                            @endif --}}
+                                        {{--                                                        </option> --}}
+                                        {{--                                                    @endforeach --}}
+                                        {{--                                                </select> --}}
+                                        {{--                                            </div> --}}
+                                        {{--                                            @if ($errors->has('city_id')) --}}
+                                        {{--                                                <div class="alert alert-danger"> --}}
+                                        {{--                                                    <button class="close" data-close="alert"></button> --}}
+                                        {{--                                                    <span> {{ $errors->first('city_id') }}</span> --}}
+                                        {{--                                                </div> --}}
+                                        {{--                                            @endif --}}
+                                        {{--                                        </div> --}}
                                         <div class="form-group">
                                             <label for="phone_number"
                                                    class="col-sm-3 control-label">@lang('messages.ar_activation')</label>
 
                                             <div class="col-sm-9">
-                                                <input type="radio" class="lang" name="ar"
-                                                       value="true" {{$user->ar == 'true' ? 'checked' : ''}}> @lang('messages.yes')
-                                                <input type="radio" class="lang" name="ar"
-                                                       value="false" {{$user->ar == 'false' ? 'checked' : ''}}> @lang('messages.no')
+                                                <input type="radio" class="lang" name="ar" value="true"
+                                                        {{ $user->ar == 'true' ? 'checked' : '' }}> @lang('messages.yes')
+                                                <input type="radio" class="lang" name="ar" value="false"
+                                                        {{ $user->ar == 'false' ? 'checked' : '' }}> @lang('messages.no')
                                             </div>
                                             @if ($errors->has('ar'))
                                                 <div class="alert alert-danger">
@@ -475,10 +485,10 @@
                                                    class="col-sm-3 control-label">@lang('messages.en_activation')</label>
 
                                             <div class="col-sm-9">
-                                                <input type="radio" class="lang" name="en"
-                                                       value="true" {{$user->en == 'true' ? 'checked' : ''}}> @lang('messages.yes')
-                                                <input type="radio" class="lang" name="en"
-                                                       value="false" {{$user->en == 'false' ? 'checked' : ''}}> @lang('messages.no')
+                                                <input type="radio" class="lang" name="en" value="true"
+                                                        {{ $user->en == 'true' ? 'checked' : '' }}> @lang('messages.yes')
+                                                <input type="radio" class="lang" name="en" value="false"
+                                                        {{ $user->en == 'false' ? 'checked' : '' }}> @lang('messages.no')
                                             </div>
                                             @if ($errors->has('en'))
                                                 <div class="alert alert-danger">
@@ -489,15 +499,15 @@
                                         </div>
                                         {{-- default lang --}}
                                         <div class="form-group default_lang"
-                                             style="display: {{($user->ar == 'true' and $user->en == 'true' ) ? 'block' : 'none'}}">
+                                             style="display: {{ ($user->ar == 'true' and $user->en == 'true') ? 'block' : 'none' }}">
                                             <label for="phone_number"
                                                    class="col-sm-3 control-label">@lang('messages.default_lang')</label>
 
                                             <div class="col-sm-9">
-                                                <input type="radio" name="default_lang"
-                                                       value="ar" {{$user->default_lang == 'ar' ? 'checked' : ''}}> @lang('messages.ar')
-                                                <input type="radio" name="default_lang"
-                                                       value="en" {{$user->default_lang == 'en' ? 'checked' : ''}}> @lang('messages.en')
+                                                <input type="radio" name="default_lang" value="ar"
+                                                        {{ $user->default_lang == 'ar' ? 'checked' : '' }}> @lang('messages.ar')
+                                                <input type="radio" name="default_lang" value="en"
+                                                        {{ $user->default_lang == 'en' ? 'checked' : '' }}> @lang('messages.en')
                                             </div>
                                             @if ($errors->has('ar'))
                                                 <div class="alert alert-danger">
@@ -512,11 +522,13 @@
 
                                             <div class="col-sm-9">
                                                 <input type="radio" id="noCheck" onclick="javascript:yesnoCheck();"
-                                                       name="enable_fixed_category"
-                                                       value="true" {{$user->enable_fixed_category == 'true' ? 'checked' : ''}}> @lang('messages.yes')
+                                                       name="enable_fixed_category" value="true"
+                                                        {{ $user->enable_fixed_category == 'true' ? 'checked' : '' }}>
+                                                @lang('messages.yes')
                                                 <input type="radio" onclick="javascript:yesnoCheck();" id="yesCheck"
-                                                       name="enable_fixed_category"
-                                                       value="false" {{$user->enable_fixed_category == 'false' ? 'checked' : ''}}> @lang('messages.no')
+                                                       name="enable_fixed_category" value="false"
+                                                        {{ $user->enable_fixed_category == 'false' ? 'checked' : '' }}>
+                                                @lang('messages.no')
                                             </div>
                                             @if ($errors->has('enable_fixed_category'))
                                                 <div class="alert alert-danger">
@@ -530,16 +542,16 @@
                                         <div class="form-group image-editor-preview">
                                             <label for="">{{ trans('messages.photo') }}</label>
                                             <label class="custom-label" data-toggle="tooltip"
-                                                   title="{{trans('dashboard.change_image')}}">
+                                                   title="{{ trans('dashboard.change_image') }}">
                                                 <img class="rounded" id="avatar"
-                                                     src="{{asset(isset($user->image_path) ? $user->image_path : null)}}"
+                                                     src="{{ asset(isset($user->image_path) ? $user->image_path : null) }}"
                                                      alt="avatar">
                                                 <input type="file" class="sr-only" id="image-uploader"
                                                        data-product_id="" name="image" accept="image/*">
                                             </label>
 
                                             @error('image_name')
-                                            <p class="text-center text-danger">{{$message}}</p>
+                                            <p class="text-center text-danger">{{ $message }}</p>
                                             @enderror
                                             <div class="progress">
                                                 <div class="progress-bar progress-bar-striped progress-bar-animated"
@@ -561,7 +573,7 @@
                                 </div>
                                 <!-- /.tab-pane -->
                                 <div class="tab-pane" id="change_password">
-                                    <form action="{{route('RestaurantChangePassword')}}" class="form-horizontal"
+                                    <form action="{{ route('RestaurantChangePassword') }}" class="form-horizontal"
                                           method="post" enctype="multipart/form-data">
                                         @csrf
                                         <div class="form-group">
@@ -605,37 +617,59 @@
                                     </form>
                                 </div>
                                 <div class="tab-pane" id="external_data">
-                                    <form action="{{route('RestaurantChangeExternal')}}" class="form-horizontal"
+                                    <form action="{{ route('RestaurantChangeExternal') }}" class="form-horizontal"
                                           method="post" enctype="multipart/form-data">
                                         @csrf
-                                        {{--                                        @if(\Illuminate\Support\Facades\$user->subscription->package_id == 1 || \Illuminate\Support\Facades\$user->subscription->package_id == 2)--}}
-                                        {{--                                            <div class="form-group">--}}
-                                        {{--                                                <label for="cart"--}}
-                                        {{--                                                       class="col-sm-3 control-label">@lang('messages.cart_show')</label>--}}
 
-                                        {{--                                                <div class="col-sm-9">--}}
-                                        {{--                                                    <input type="radio" name="cart"--}}
-                                        {{--                                                           value="true" {{$user->cart == 'true' ? 'checked' : ''}}> @lang('messages.yes')--}}
-                                        {{--                                                    <input type="radio" name="cart"--}}
-                                        {{--                                                           value="false" {{$user->cart == 'false' ? 'checked' : ''}}> @lang('messages.no')--}}
-                                        {{--                                                </div>--}}
-                                        {{--                                                @if ($errors->has('cart'))--}}
-                                        {{--                                                    <div class="alert alert-danger">--}}
-                                        {{--                                                        <button class="close" data-close="alert"></button>--}}
-                                        {{--                                                        <span> {{ $errors->first('cart') }}</span>--}}
-                                        {{--                                                    </div>--}}
-                                        {{--                                                @endif--}}
-                                        {{--                                            </div>--}}
-                                        {{--                                        @endif--}}
+                                        {{--                                            <div class="form-group"> --}}
+                                        {{--                                                <label for="cart" --}}
+                                        {{--                                                       class="col-sm-3 control-label">@lang('messages.cart_show')</label> --}}
+
+                                        {{--                                                <div class="col-sm-9"> --}}
+                                        {{--                                                    <input type="radio" name="cart" --}}
+                                        {{--                                                           value="true" {{$user->cart == 'true' ? 'checked' : ''}}> @lang('messages.yes') --}}
+                                        {{--                                                    <input type="radio" name="cart" --}}
+                                        {{--                                                           value="false" {{$user->cart == 'false' ? 'checked' : ''}}> @lang('messages.no') --}}
+                                        {{--                                                </div> --}}
+                                        {{--                                                @if ($errors->has('cart')) --}}
+                                        {{--                                                    <div class="alert alert-danger"> --}}
+                                        {{--                                                        <button class="close" data-close="alert"></button> --}}
+                                        {{--                                                        <span> {{ $errors->first('cart') }}</span> --}}
+                                        {{--                                                    </div> --}}
+                                        {{--                                                @endif --}}
+                                        {{--                                            </div> --}}
+                                        {{--                                        @endif --}}
+                                        <div class="form-group">
+                                            <label for="cart"
+                                                   class="col-sm-12 control-label">@lang('dashboard.product_menu_view')</label>
+
+                                            <div class="col-sm-9">
+                                                <input type="radio" name="product_menu_view" value="theme-1"
+                                                        {{ $user->product_menu_view == 'theme-1' ? 'checked' : '' }}>
+                                                @lang('dashboard._product_menu_view.theme-1')
+                                                <input type="radio" name="product_menu_view" value="theme-2"
+                                                        {{ $user->product_menu_view == 'theme-2' ? 'checked' : '' }}>
+                                                @lang('dashboard._product_menu_view.theme-2')
+                                                <input type="radio" name="product_menu_view" value="theme-3"
+                                                        {{ $user->product_menu_view == 'theme-3' ? 'checked' : '' }}>
+                                                @lang('dashboard._product_menu_view.theme-3')
+                                            </div>
+                                            @if ($errors->has('product_menu_view'))
+                                                <div class="alert alert-danger">
+                                                    <button class="close" data-close="alert"></button>
+                                                    <span> {{ $errors->first('product_menu_view') }}</span>
+                                                </div>
+                                            @endif
+                                        </div>
                                         <div class="form-group">
                                             <label for="cart"
                                                    class="col-sm-3 control-label">@lang('messages.categories_menu')</label>
 
                                             <div class="col-sm-9">
-                                                <input type="radio" name="menu"
-                                                       value="vertical" {{$user->menu == 'vertical' ? 'checked' : ''}}> @lang('messages.vertical')
-                                                <input type="radio" name="menu"
-                                                       value="horizontal" {{$user->menu == 'horizontal' ? 'checked' : ''}}> @lang('messages.horizontal')
+                                                <input type="radio" name="menu" value="vertical"
+                                                        {{ $user->menu == 'vertical' ? 'checked' : '' }}> @lang('messages.vertical')
+                                                <input type="radio" name="menu" value="horizontal"
+                                                        {{ $user->menu == 'horizontal' ? 'checked' : '' }}> @lang('messages.horizontal')
                                             </div>
                                             @if ($errors->has('menu'))
                                                 <div class="alert alert-danger">
@@ -646,14 +680,16 @@
                                         </div>
                                         <div class="form-group">
                                             <label for="cart" class="col-sm-3 control-label">
-                                                {{app()->getLocale() == 'ar' ?  'عرض قائمه الفروع بالموقع': 'show branches list at website'}}
+                                                {{ app()->getLocale() == 'ar' ? 'عرض قائمه الفروع بالموقع' : 'show branches list at website' }}
                                             </label>
 
                                             <div class="col-sm-9">
-                                                <input type="radio" name="show_branches_list"
-                                                       value="true" {{$user->show_branches_list == 'true' ? 'checked' : ''}}> @lang('messages.yes')
-                                                <input type="radio" name="show_branches_list"
-                                                       value="false" {{$user->show_branches_list == 'false' ? 'checked' : ''}}> @lang('messages.no')
+                                                <input type="radio" name="show_branches_list" value="true"
+                                                        {{ $user->show_branches_list == 'true' ? 'checked' : '' }}>
+                                                @lang('messages.yes')
+                                                <input type="radio" name="show_branches_list" value="false"
+                                                        {{ $user->show_branches_list == 'false' ? 'checked' : '' }}>
+                                                @lang('messages.no')
                                             </div>
                                             @if ($errors->has('show_branches_list'))
                                                 <div class="alert alert-danger">
@@ -663,29 +699,31 @@
                                             @endif
                                         </div>
 
-                                        @if($user->ar == 'true')
+                                        @if ($user->ar == 'true')
                                             <div class="form-group">
                                                 <label class="control-label"> @lang('messages.description_ar') </label>
                                                 <textarea class="textarea" name="description_ar"
                                                           placeholder="@lang('messages.description_ar')"
-                                                          style="width: 100%; height: 200px; font-size: 14px; line-height: 18px; border: 1px solid #dddddd; pediting: 10px;">{{$user->description_ar}}</textarea>
+                                                          style="width: 100%; height: 200px; font-size: 14px; line-height: 18px; border: 1px solid #dddddd; pediting: 10px;">{{ $user->description_ar }}</textarea>
                                                 @if ($errors->has('description_ar'))
                                                     <span class="help-block">
-                                            <strong style="color: red;">{{ $errors->first('description_ar') }}</strong>
-                                        </span>
+                                                        <strong
+                                                                style="color: red;">{{ $errors->first('description_ar') }}</strong>
+                                                    </span>
                                                 @endif
                                             </div>
                                         @endif
-                                        @if($user->en == 'true')
+                                        @if ($user->en == 'true')
                                             <div class="form-group">
                                                 <label class="control-label"> @lang('messages.description_en') </label>
                                                 <textarea class="textarea" name="description_en"
                                                           placeholder="@lang('messages.description_en')"
-                                                          style="width: 100%; height: 200px; font-size: 14px; line-height: 18px; border: 1px solid #dddddd; pediting: 10px;">{{$user->description_en}}</textarea>
+                                                          style="width: 100%; height: 200px; font-size: 14px; line-height: 18px; border: 1px solid #dddddd; pediting: 10px;">{{ $user->description_en }}</textarea>
                                                 @if ($errors->has('description_en'))
                                                     <span class="help-block">
-                                            <strong style="color: red;">{{ $errors->first('description_en') }}</strong>
-                                        </span>
+                                                        <strong
+                                                                style="color: red;">{{ $errors->first('description_en') }}</strong>
+                                                    </span>
                                                 @endif
                                             </div>
                                         @endif
@@ -700,30 +738,29 @@
                                 <div class="tab-pane" id="colors">
                                     <div class="form-group">
                                         <div class="col-sm-offset-2 col-sm-10">
-                                            <a href="{{route('Reset_to_main' , $user->id)}}"
+                                            <a href="{{ route('Reset_to_main', $user->id) }}"
                                                class="btn btn-primary">@lang('messages.reset_to_main')
                                             </a>
                                         </div>
                                     </div>
-                                    <form action="{{route('RestaurantChangeColors' , $user->id)}}"
-                                          class="form-horizontal"
-                                          method="post" enctype="multipart/form-data">
+                                    <form action="{{ route('RestaurantChangeColors', $user->id) }}"
+                                          class="form-horizontal" method="post" enctype="multipart/form-data">
                                         @csrf
                                         <div class="form-group">
                                             <label class="control-label"> @lang('messages.main_heads') </label>
                                             <input name="main_heads" type="color" class="form-control"
-                                                   value="{{$user->color == null ? null : $user->color->main_heads}}">
+                                                   value="{{ $user->color == null ? null : $user->color->main_heads }}">
                                             @if ($errors->has('main_heads'))
                                                 <span class="help-block">
                                                     <strong
-                                                        style="color: red;">{{ $errors->first('main_heads') }}</strong>
+                                                            style="color: red;">{{ $errors->first('main_heads') }}</strong>
                                                 </span>
                                             @endif
                                         </div>
                                         <div class="form-group">
                                             <label class="control-label"> @lang('messages.icons') </label>
                                             <input name="icons" type="color" class="form-control"
-                                                   value="{{$user->color == null ? null : $user->color->icons}}">
+                                                   value="{{ $user->color == null ? null : $user->color->icons }}">
                                             @if ($errors->has('icons'))
                                                 <span class="help-block">
                                                     <strong style="color: red;">{{ $errors->first('icons') }}</strong>
@@ -733,47 +770,164 @@
                                         <div class="form-group">
                                             <label class="control-label"> @lang('messages.options_description') </label>
                                             <input name="options_description" type="color" class="form-control"
-                                                   value="{{$user->color == null ? null : $user->color->options_description}}">
+                                                   value="{{ $user->color == null ? null : $user->color->options_description }}">
                                             @if ($errors->has('options_description'))
                                                 <span class="help-block">
                                                     <strong
-                                                        style="color: red;">{{ $errors->first('options_description') }}</strong>
+                                                            style="color: red;">{{ $errors->first('options_description') }}</strong>
                                                 </span>
                                             @endif
                                         </div>
                                         <div class="form-group">
                                             <label class="control-label"> @lang('messages.background') </label>
                                             <input name="background" type="color" class="form-control"
-                                                   value="{{$user->color == null ? null : $user->color->background}}">
+                                                   value="{{ $user->color == null ? null : $user->color->background }}">
                                             @if ($errors->has('background'))
                                                 <span class="help-block">
                                                     <strong
-                                                        style="color: red;">{{ $errors->first('background') }}</strong>
+                                                            style="color: red;">{{ $errors->first('background') }}</strong>
                                                 </span>
                                             @endif
                                         </div>
                                         <div class="form-group">
                                             <label class="control-label"> @lang('messages.product_background') </label>
                                             <input name="product_background" type="color" class="form-control"
-                                                   value="{{$user->color == null ? null : $user->color->product_background}}">
+                                                   value="{{ $user->color == null ? null : $user->color->product_background }}">
                                             @if ($errors->has('product_background'))
                                                 <span class="help-block">
                                                     <strong
-                                                        style="color: red;">{{ $errors->first('product_background') }}</strong>
+                                                            style="color: red;">{{ $errors->first('product_background') }}</strong>
                                                 </span>
                                             @endif
                                         </div>
                                         <div class="form-group">
                                             <label class="control-label"> @lang('messages.category_background') </label>
                                             <input name="category_background" type="color" class="form-control"
-                                                   value="{{$user->color == null ? null : $user->color->category_background}}">
+                                                   value="{{ $user->color == null ? null : $user->color->category_background }}">
                                             @if ($errors->has('category_background'))
                                                 <span class="help-block">
                                                     <strong
-                                                        style="color: red;">{{ $errors->first('category_background') }}</strong>
+                                                            style="color: red;">{{ $errors->first('category_background') }}</strong>
                                                 </span>
                                             @endif
                                         </div>
+                                        <div class="form-group">
+                                            <div class="col-sm-offset-2 col-sm-10">
+                                                <button type="submit"
+                                                        class="btn btn-danger">@lang('messages.save')</button>
+                                            </div>
+                                        </div>
+                                    </form>
+
+                                </div>
+                                <div class="tab-pane" id="bio_colors">
+                                    <div class="form-group">
+                                        <div class="col-sm-offset-2 col-sm-10">
+                                            <a href="{{ route('Reset_to_bio_main', $user->id) }}"
+                                               class="btn btn-primary">@lang('messages.reset_to_main')
+                                            </a>
+                                        </div>
+                                    </div>
+                                    <form action="{{ route('RestaurantChangeBioColors', $user->id) }}"
+                                          class="form-horizontal" method="post" enctype="multipart/form-data">
+                                        @csrf
+                                        <div class="form-group">
+                                            <label class="control-label"> @lang('messages.background') </label>
+                                            <input name="background" type="color" class="form-control"
+                                                   value="{{ $user->bio_color == null ? null : $user->bio_color->background }}">
+                                            @if ($errors->has('background'))
+                                                <span class="help-block">
+                                                    <strong
+                                                            style="color: red;">{{ $errors->first('background') }}</strong>
+                                                </span>
+                                            @endif
+                                        </div>
+                                        <div class="form-group">
+                                            <label class="control-label"> @lang('messages.main_heads') </label>
+                                            <input name="main_line" type="color" class="form-control"
+                                                   value="{{ $user->bio_color == null ? null : $user->bio_color->main_line }}">
+                                            @if ($errors->has('main_line'))
+                                                <span class="help-block">
+                                                    <strong
+                                                            style="color: red;">{{ $errors->first('main_line') }}</strong>
+                                                </span>
+                                            @endif
+                                        </div>
+                                        <div class="form-group">
+                                            <label class="control-label"> {{app()->getLocale() == 'ar' ? 'الأقسام الرئيسية' : 'Main Categories'}} </label>
+                                            <input name="main_cats" type="color" class="form-control"
+                                                   value="{{ $user->bio_color == null ? null : $user->bio_color->main_cats }}">
+                                            @if ($errors->has('main_cats'))
+                                                <span class="help-block">
+                                                    <strong style="color: red;">{{ $errors->first('main_cats') }}</strong>
+                                                </span>
+                                            @endif
+                                        </div>
+                                        <div class="form-group">
+                                            <label class="control-label"> {{app()->getLocale() == 'ar' ? 'الأقسام الفرعية' : 'Sub Categories'}} </label>
+                                            <input name="sub_cats" type="color" class="form-control"
+                                                   value="{{ $user->bio_color == null ? null : $user->bio_color->sub_cats }}">
+                                            @if ($errors->has('sub_cats'))
+                                                <span class="help-block">
+                                                    <strong
+                                                            style="color: red;">{{ $errors->first('sub_cats') }}</strong>
+                                                </span>
+                                            @endif
+                                        </div>
+
+                                        <div class="form-group">
+                                            <label class="control-label"> {{app()->getLocale() == 'ar' ? 'خلفية الأقسام الفرعية':'Sub Categories Background'}} </label>
+                                            <input name="sub_background" type="color" class="form-control"
+                                                   value="{{ $user->bio_color == null ? null : $user->bio_color->sub_background }}">
+                                            @if ($errors->has('sub_background'))
+                                                <span class="help-block">
+                                                    <strong
+                                                            style="color: red;">{{ $errors->first('sub_background') }}</strong>
+                                                </span>
+                                            @endif
+                                        </div>
+                                        <div class="form-group">
+                                            <label class="control-label"> {{app()->getLocale() == 'ar' ? 'لون خط الأقسام الفرعية' : 'Sub Categories Line Color'}} </label>
+                                            <input name="sub_cats_line" type="color" class="form-control"
+                                                   value="{{ $user->bio_color == null ? null : $user->bio_color->sub_cats_line }}">
+                                            @if ($errors->has('sub_cats_line'))
+                                                <span class="help-block">
+                                                    <strong
+                                                            style="color: red;">{{ $errors->first('sub_cats_line') }}</strong>
+                                                </span>
+                                            @endif
+                                        </div>
+
+                                        <div class="form-group ">
+                                            <label class="control-label col-md-3"> {{app()->getLocale() == 'ar' ? 'صورة الخلفية' : 'Background Image'}} </label>
+                                            <div class="col-md-9">
+                                                <div class="fileinput fileinput-new" data-provides="fileinput">
+                                                    <div class="fileinput-preview thumbnail" data-trigger="fileinput"
+                                                         style="width: 200px; height: 150px; border: 1px solid black;">
+                                                        @if($user->bio_color and $user->bio_color->background_image != null)
+                                                            <img src="{{asset('/uploads/bio_backgrounds/' . $user->bio_color->background_image)}}">
+                                                        @endif
+                                                    </div>
+                                                    <div>
+                                                <span class="btn red btn-outline btn-file">
+                                                    <span
+                                                            class="fileinput-new btn btn-info"> @lang('messages.choose_photo') </span>
+                                                    <span
+                                                            class="fileinput-exists btn btn-primary"> @lang('messages.change') </span>
+                                                    <input type="file" name="background_image"> </span>
+                                                        <a href="javascript:;" class="btn btn-danger fileinput-exists"
+                                                           data-dismiss="fileinput"> @lang('messages.remove') </a>
+                                                    </div>
+                                                </div>
+                                                @if ($errors->has('background_image'))
+                                                    <span class="help-block">
+                                                <strong style="color: red;">{{ $errors->first('background_image') }}</strong>
+                                            </span>
+                                                @endif
+                                            </div>
+
+                                        </div>
+
                                         <div class="form-group">
                                             <div class="col-sm-offset-2 col-sm-10">
                                                 <button type="submit"
@@ -858,7 +1012,7 @@
         </div><!-- /.container-fluid -->
     </section>
     @php
-        $itemId = $user->id ;
+        $itemId = $user->id;
         $imageUploaderUrl = route('restaurant.profile.update_image');
     @endphp
     @include('restaurant.products.product_image_modal')
@@ -881,7 +1035,8 @@
         $(function () {
             $('input.lang').on('change', function () {
                 console.log($(this));
-                if ($('input[name=ar]:checked').val() == 'true' && $('input[name=en]:checked').val() == 'true') {
+                if ($('input[name=ar]:checked').val() == 'true' && $('input[name=en]:checked').val() ==
+                    'true') {
                     $('.form-group.default_lang').fadeIn(300);
                 } else {
                     $('.form-group.default_lang').fadeOut(300);

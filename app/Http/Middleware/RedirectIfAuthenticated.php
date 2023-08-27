@@ -19,29 +19,35 @@ class RedirectIfAuthenticated
      */
     public function handle($request, Closure $next, $guard = null)
     {
-        switch ($guard){
+        switch ($guard) {
             case 'admin':
-                if (Auth::guard($guard)->check()){
+                if (Auth::guard($guard)->check()) {
                     return redirect()->route('admin.home');
                 }
                 break;
             case 'restaurant':
-                if (Auth::guard($guard)->check()){
+                if (Auth::guard($guard)->check()) {
                     return redirect()->route('restaurant.home');
                 }
                 break;
             case 'marketer':
-                if (Auth::guard($guard)->check()){
+                if (Auth::guard($guard)->check()) {
                     return redirect()->route('marketer.home');
                 }
                 break;
             case 'employee':
-                if (Auth::guard($guard)->check()){
+                if (Auth::guard($guard)->check()) {
                     return redirect()->route('employee.home');
                 }
                 break;
+
+            case 'waiter':
+                if (Auth::guard($guard)->check()) {
+                    return redirect()->route('waiter.orders.index');
+                }
+                break;
             default:
-                if (Auth::guard($guard)->check()){
+                if (Auth::guard($guard)->check()) {
                     return redirect()->route('home');
                 }
         }

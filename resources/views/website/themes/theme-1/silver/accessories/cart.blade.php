@@ -168,7 +168,7 @@
             </div>
             <br>
             @if($branch->foodics_status == 'true' && $restaurant->foodics_access_token != null)
-                <form method="post" action="{{route('FoodicsOrder' , $branch->id)}}">
+                <form method="post" action="{{route('silverFoodicsOrder' , $branch->id)}}">
                     @csrf
                     <input type="hidden" id="lat" name="latitude" value="" readonly="yes" required>
                     <input type="hidden" id="lng" name="longitude" value="" readonly="yes" required>

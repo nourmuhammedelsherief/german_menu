@@ -31,6 +31,8 @@ use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Storage;
+use PDF;
 
 class BranchController extends Controller
 {
@@ -114,6 +116,8 @@ class BranchController extends Controller
             'name_barcode' => $barcode,
             'status' => 'tentative',
             'main' => 'false',
+            'description_ar' => $request->description_ar , 
+            'description_en' => $request->description_en , 
         ]);
         $end_at = Carbon::now()->addDays(Setting::first()->branch_service_tentative_period);
         Subscription::create([
@@ -373,6 +377,8 @@ class BranchController extends Controller
             'tax_value' => "required_if:tax,==,ture",
             'state' => 'required|in:open,closed,busy,unspecified',
             'tax_number' => 'nullable|max:191',
+            'description_ar' => 'nullable|min:1' , 
+            'description_en' => 'nullable|min:1' , 
 //            'name_barcode' => 'required|string|max:191|unique:branches,name_barcode,' . $id,
         ]);
         if ($request->name_ar == null && $request->name_en == null) {
@@ -388,6 +394,8 @@ class BranchController extends Controller
                 'total_tax_price' => $request->total_tax_price,
                 'tax_number' => $request->tax_number == null ? null : $request->tax_number,
                 'state' => $request->state,
+                'description_ar' => $request->description_ar , 
+                'description_en' => $request->description_en , 
 //            'name_barcode' => $barcode,
             ]);
         } else {
@@ -400,6 +408,8 @@ class BranchController extends Controller
                 'tax_value' => $request->tax_value,
                 'state' => $request->state,
                 'tax_number' => $request->tax_number == null ? null : $request->tax_number,
+                'description_ar' => $request->description_ar , 
+                'description_en' => $request->description_en , 
 //            'name_barcode' => $barcode,
             ]);
         }
@@ -490,7 +500,23 @@ class BranchController extends Controller
         $branches = RestaurantFoodicsBranch::whereRestaurantId($restaurant->id)->get();
         return view('restaurant.branches.foodics_branches', compact('branches'));
     }
+    public function foodicsBranchEdit(Request $request , $id)
+    {
+        
+        $branch = RestaurantFoodicsBranch::findOrFail($id);
 
+        if($request->method() == 'POST'):
+            $branch->update([
+                'latitude' => $request->latitude , 
+                'longitude' => $request->longitude , 
+                
+            ]);
+            flash(trans('messages.updated'))->success();
+            return redirect(route('foodics_branches'));
+        endif;
+        
+        return view('restaurant.branches.foodics_branch_edit' , compact('branch'));
+    }
     public function active_foodics_branch($id, $active)
     {
         $branch = RestaurantFoodicsBranch::findOrFail($id);
@@ -726,4 +752,61 @@ class BranchController extends Controller
         $branch = Branch::findOrFail($id);
         return view('restaurant.branches.invoice', compact('branch'));
     }
+
+    
+    public function printMenu(Request $request ,  $id){
+        if(!auth('restaurant')->check()):
+            return redirect(url('restaurant/login'));
+        endif;
+        ini_set("pcre.backtrack_limit", "5000000000000");
+        $restaurant = auth('restaurant')->user();
+        $branch = $restaurant->branches()->findOrFail($id);
+        $menuCategories = MenuCategory::where('active' , 'true')->where('branch_id' , $branch->id)->with(['products' => function($query){
+            $query->where('active' , 'true')->orderBy('arrange')->with('sizes');
+        }])->orderBy('arrange')->get();
+        $images = [];
+        foreach($menuCategories as $c):
+            foreach($c->products as $p):
+                $images['m-' . $p->id] = null ;
+                
+                if((!empty($p->photo) and Storage::disk('public_storage')->exists($p->image_path))):
+                    $type = pathinfo($p->image_path, PATHINFO_EXTENSION);
+                    $images['m-' . $p->id] = 'data:image/' . $type . ';base64,' . base64_encode(file_get_contents($p->image_path));
+                endif;
+            endforeach;
+        endforeach;
+        $restaurantImage = null ;
+        if((!empty($restaurant->logo) and Storage::disk('public_storage')->exists($restaurant->image_path))):
+            $type = pathinfo($restaurant->image_path, PATHINFO_EXTENSION);
+            $restaurantImage = 'data:image/' . $type . ';base64,' . base64_encode(file_get_contents($restaurant->image_path));
+        endif;
+
+        $pdf = PDF::loadView('restaurant.branches.print_menu', compact('menuCategories' , 'branch' , 'restaurant' , 'images' , 'restaurantImage'));
+        $fileName = trans('dashboard.menu') . ' ' . $branch->name;
+        return $pdf->download($fileName.'.pdf');
+        // $defaultConfig = (new Mpdf\Config\ConfigVariables())->getDefaults();
+        // $fontDirs = $defaultConfig['fontDir'];
+
+        // $defaultFontConfig = (new Mpdf\Config\FontVariables())->getDefaults();
+        // $fontData = $defaultFontConfig['fontdata'];
+
+        // $mpdf = new \Mpdf\Mpdf([
+        //     'fontDir' => array_merge($fontDirs, [
+        //         __DIR__ . '/fonts',
+        //     ]),
+        //     'fontdata' => $fontData + [ // lowercase letters only in font key
+        //         'frutiger' => [
+        //             'R' => 'Frutiger-Normal.ttf',
+        //             'I' => 'FrutigerObl-Normal.ttf',
+        //         ],
+        //         'useOTL' => 0xFF,
+        //         'useKashida' => 75,
+        //     ],
+        //     'default_font' => 'frutiger'
+        // ]);
+
+        
+        
+    }
+
 }

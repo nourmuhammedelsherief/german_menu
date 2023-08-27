@@ -1,18 +1,14 @@
 @extends('admin.lteLayout.master')
 @section('title')
     @lang('messages.restaurants')
-    @if($status == 'active')
+    @if ($status == 'active')
         @lang('messages.active_restaurants')
-
     @elseif($status == 'tentative_finished')
         @lang('messages.tentative_finished')
-
     @elseif($status == 'finished')
         @lang('messages.finished_restaurants')
-
     @elseif($status == 'tentative_active')
         @lang('messages.tentative_active')
-
     @elseif($status == 'less_30_day')
         @lang('messages.less_30_day')
     @elseif($status == 'archived')
@@ -22,18 +18,18 @@
     @elseif($status == 'InActive')
         @lang('messages.restaurantsInActive')
     @elseif($status == 'categories')
-        @lang('dashboard.category' ) : {{isset($category->id) ? $category->name : ''}}
+        @lang('dashboard.category') : {{ isset($category->id) ? $category->name : '' }}
     @endif
 @endsection
 
 @section('style')
-    <link rel="stylesheet" href="{{asset('plugins/datatables-bs4/css/dataTables.bootstrap4.css')}}">
+    <link rel="stylesheet" href="{{ asset('plugins/datatables-bs4/css/dataTables.bootstrap4.css') }}">
     <link rel="stylesheet" href="{{ URL::asset('admin/css/sweetalert.css') }}">
     <link rel="stylesheet" href="{{ URL::asset('admin/css/sweetalert.css') }}">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
-    {{--    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/css/bootstrap.min.css">--}}
-    {{--    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.1/jquery.min.js"></script>--}}
-    {{--    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/js/bootstrap.min.js"></script>--}}
+    {{--    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/css/bootstrap.min.css"> --}}
+    {{--    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.1/jquery.min.js"></script> --}}
+    {{--    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/js/bootstrap.min.js"></script> --}}
     <!-- Theme style -->
     <style>
         .dropbtn {
@@ -77,6 +73,17 @@
         .dropdown:hover .dropbtn {
             background-color: #3e8e41;
         }
+
+        #example1_wrapper {
+            overflow: auto;
+        }
+        .archive.btn{
+            margin-bottom: 10px;
+        }
+        .archive.btn.archiveActive{
+            background-color: #007bff;
+            border-color : #007bff;
+        }
     </style>
 @endsection
 
@@ -86,18 +93,14 @@
             <div class="row mb-2">
                 <div class="col-sm-6">
                     <h1>@lang('messages.restaurants')
-                        @if($status == 'active')
+                        @if ($status == 'active')
                             @lang('messages.active_restaurants')
-
                         @elseif($status == 'tentative_finished')
                             @lang('messages.tentative_finished')
-
                         @elseif($status == 'finished')
                             @lang('messages.finished_restaurants')
-
                         @elseif($status == 'tentative_active')
                             @lang('messages.tentative_active')
-
                         @elseif($status == 'less_30_day')
                             @lang('messages.less_30_day')
                         @elseif($status == 'archived')
@@ -107,41 +110,37 @@
                         @elseif($status == 'InActive')
                             @lang('messages.restaurantsInActive')
                         @elseif($status == 'categories')
-                            @lang('dashboard.category' ) : {{isset($category->id) ? $category->name : ''}}
+                            @lang('dashboard.category') : {{ isset($category->id) ? $category->name : '' }}
                         @endif
                     </h1>
                 </div>
                 <div class="col-sm-6">
                     <ol class="breadcrumb float-sm-right">
                         <li class="breadcrumb-item">
-                            <a href="{{url('/admin/home')}}">
+                            <a href="{{ url('/admin/home') }}">
                                 @lang('messages.control_panel')
                             </a>
-                        </li> 
-                        @if(isset($category->id))
-                        / <li class="breadcrumb-item">
-                            <a href="{{url('/admin/categories')}}">
-                                @lang('dashboard.categories')
-                            </a>
                         </li>
-
+                        @if (isset($category->id))
+                            / <li class="breadcrumb-item">
+                                <a href="{{ url('/admin/categories') }}">
+                                    @lang('dashboard.categories')
+                                </a>
+                            </li>
                         @endif
 
                         <li class="breadcrumb-item active">
-                            <a href="{{route('restaurants' , $status)}}{{isset($category->id )?( '?category_id=' . $category->id) : ''}}">
+                            <a
+                                href="{{ route('restaurants', $status) }}{{ isset($category->id) ? '?category_id=' . $category->id : '' }}">
                                 @lang('messages.restaurants')
-                                @if($status == 'active')
+                                @if ($status == 'active')
                                     @lang('messages.active_restaurants')
-
                                 @elseif($status == 'tentative_finished')
                                     @lang('messages.tentative_finished')
-
                                 @elseif($status == 'finished')
                                     @lang('messages.finished_restaurants')
-
                                 @elseif($status == 'tentative_active')
                                     @lang('messages.tentative_active')
-
                                 @elseif($status == 'less_30_day')
                                     @lang('messages.less_30_day')
                                 @elseif($status == 'archived')
@@ -151,7 +150,7 @@
                                 @elseif($status == 'InActive')
                                     @lang('messages.restaurantsInActive')
                                 @elseif($status == 'categories')
-                                    @lang('dashboard.category' ) : {{isset($category->id) ? $category->name : ''}}
+                                    @lang('dashboard.category') : {{ isset($category->id) ? $category->name : '' }}
                                 @endif
                             </a>
                         </li>
@@ -163,255 +162,325 @@
     @include('flash::message')
     <section class="content">
         <div class="row">
+            @if ($status == 'archived')
+                <div class="col-12">
+                    @foreach ($archiveCategories as $item)
+                    <a href="{{ route('restaurants' , 'archived') }}?archive_id={{$item->id}}" class="btn btn-info archive {{request('archive_id') == $item->id ? 'archiveActive' : ''}}">
+                        <i class="fa fa-filter"></i>
+                        {{$item->name}} ({{$item->restaurants_count}})
+                    </a>
+                    @endforeach
+                    <br>
+                    <a href="{{ route('restaurants' , 'archived') }}?archive_id=-1" class="btn btn-info archive {{request('archive_id') == -1 ? 'archiveActive' : ''}}">
+                        <i class="fa fa-filter"></i>
+                        اخري
+                    </a>
+                </div>
+            @endif
             <div class="col-12">
+                @if ($status != 'archived')
                 <h3>
-                    <a href="{{route('createRestaurant')}}" class="btn btn-info">
+                    <a href="{{ route('createRestaurant') }}" class="btn btn-primary">
                         <i class="fa fa-plus"></i>
                         @lang('messages.add_new')
                     </a>
                 </h3>
+                @endif
                 <div class="card">
                     <!-- /.card-header -->
                     <div class="card-body">
-                        <table id="example1" class="table table-bordered table-striped">
+                        <table id="example1" class="table table-bordered table-striped" style="overflow: auto;">
                             <thead>
-                            <tr>
-                                <th>
-                                    <label class="mt-checkbox mt-checkbox-single mt-checkbox-outline">
-                                        <input type="checkbox" class="group-checkable"
-                                               data-set="#sample_1 .checkboxes"/>
-                                        <span></span>
-                                    </label>
-                                </th>
-                                <th></th>
-                                <th>@lang('messages.name')</th>
-                                <th>@lang('messages.phone_number')</th>
-                                <th>@lang('messages.country')</th>
-                                @if($status == 'archived')
-                                    <th>@lang('messages.archive_category')</th>
-                                @endif
-                                <th>@lang('messages.restaurant')</th>
-                                <th>@lang('messages.products')</th>
-{{--                                <th>@lang('messages.orders')</th>--}}
-{{--                                <th>{{app()->getLocale() == 'ar' ? 'طلبات فودكس' : 'Foodics Orders'}}</th>--}}
-{{--                                <th>{{app()->getLocale() == 'ar' ? 'طلبات الواتساب' : 'Whatsapp Orders'}}</th>--}}
-                                <th>@lang('messages.views')</th>
-                                <th>{{app()->getLocale() == 'ar' ? 'المشاهدات اليومية' : 'Daily Views'}}</th>
-                                <th>{{app()->getLocale() == 'ar' ? 'ملاحظات' : 'Notes'}}</th>
-                                <th> @lang('messages.created_at') </th>
-                                <th>@lang('messages.operations')</th>
-                            </tr>
-                            </thead>
-                            <tbody>
-                            <?php $i = 0 ?>
-                            @foreach($restaurants as $restaurant)
-                                <tr class="odd gradeX">
-                                    <td>
+                                <tr>
+                                    <th>
                                         <label class="mt-checkbox mt-checkbox-single mt-checkbox-outline">
-                                            <input type="checkbox" class="checkboxes" value="1"/>
+                                            <input type="checkbox" class="group-checkable"
+                                                data-set="#sample_1 .checkboxes" />
                                             <span></span>
                                         </label>
-                                    </td>
-                                    <td><?php echo ++$i ?></td>
-                                    <td>
-                                        @if(app()->getLocale() == 'ar')
-                                            {{$restaurant->name_ar}}
-                                        @else
-                                            {{$restaurant->name_en}}
-                                        @endif
-                                    </td>
-                                    <td>
-                                        @php
-                                            $country = $restaurant->country->code;
-                                            $check = substr($restaurant->phone_number, 0, 2) === '05';
-                                            if ($check == true) {
-                                                $phone = $country . ltrim($restaurant->phone_number, '0');
-                                            } else {
-                                                $phone = $country . $restaurant->phone_number;
-                                            }
-                                        @endphp
-                                        @if($restaurant->phone_number != null)
-                                            <a target="_blank" href="https://api.whatsapp.com/send?phone={{ $phone }}">
-                                                <i style="font-size:24px" class="fa">&#xf232;</i>
-                                            </a>
-                                            <a href="tel:{{$phone}}">
-                                                <i class="fa fa-phone"></i>
-                                            </a>
-                                        @endif
-                                    </td>
-                                    <td>
-                                        @if($restaurant->country != null)
-                                            @if(app()->getLocale() == 'ar')
-                                                {{$restaurant->country->name_ar}}
-                                            @else
-                                                {{$restaurant->country->name_en}}
-                                            @endif
-                                        @endif
-                                    </td>
-                                    @if($status == 'archived')
-                                        <td>{{isset($restaurant->archiveCategory->name) ? $restaurant->archiveCategory->name : ''}}</td>
+                                    </th>
+                                    <th></th>
+                                    <th>@lang('messages.name')</th>
+                                    <th>@lang('messages.phone_number')</th>
+                                    <th>@lang('messages.country')</th>
+                                    @if ($status == 'archived')
+                                        <th>@lang('messages.archive_category')</th>
+                                        <th>تم الارشفة بواسطة</th>
                                     @endif
-                                    <td>
-                                        <a href="{{url('/restaurants/' . $restaurant->name_barcode)}}" target="_blank">
-                                            <i class="fa fa-eye"></i>
-                                        </a>
-                                    </td>
-                                    <td>
-                                        {{$restaurant->products->count()}}
-                                    </td>
-{{--                                    <td>--}}
-{{--                                        {{$restaurant->orders}}--}}
-{{--                                    </td>--}}
-{{--                                    <td>--}}
-{{--                                        {{$restaurant->foodics_orders}}--}}
-{{--                                    </td>--}}
-{{--                                    <td>--}}
-{{--                                        {{$restaurant->whatsapp_orders}}--}}
-{{--                                    </td>--}}
-                                    <td>
-                                        {{$restaurant->views}}
-                                    </td>
-                                    <td>
-                                        <?php $daily_views = \App\Models\RestaurantView::whereRestaurantId($restaurant->id)->orderBy('id', 'desc')->first(); ?>
-                                        @if($daily_views != null)
-                                            {{$daily_views->views}}
-                                        @else
-                                            0
-                                        @endif
-                                    </td>
-                                    {{--                                    <td>--}}
-                                    {{--                                        @if($restaurant->subscription != null and isset($restaurant->subscription->package->id))--}}
-                                    {{--                                            {{app()->getLocale() == 'ar' ? $restaurant->subscription->package->name_ar : $restaurant->subscription->package->name_en}}--}}
-                                    {{--                                        @endif--}}
-                                    {{--                                    </td>--}}
-                                    <td>
-                                        <a href="{{route('adminNote.index' , $restaurant->id)}}"
-                                           class="btn btn-secondary">
-                                            {{$restaurant->notes->count()}}
-                                        </a>
-                                    </td>
-                                    <td>
-                                        <button type="button" class="btn btn-info" data-toggle="modal"
-                                                data-target="#modal-info-{{$restaurant->id}}">
-                                            <i class="fa fa-eye"></i>
-                                        </button>
-                                        <div class="modal fade" id="modal-info-{{$restaurant->id}}">
-                                            <div class="modal-dialog">
-                                                <div class="modal-content bg-info">
-                                                    <div class="modal-header">
-                                                        <h4 class="modal-title">
-                                                            @lang('messages.created_at')
-                                                        </h4>
-                                                        <button type="button" class="close" data-dismiss="modal"
-                                                                aria-label="Close">
-                                                            <span aria-hidden="true">&times;</span></button>
-                                                    </div>
-                                                    <div class="modal-body">
-                                                        <p>
-                                                            @lang('messages.date') :
-                                                            {{$restaurant->created_at->format('Y-m-d')}}
-                                                        </p>
-                                                        <p>
-                                                            {{app()->getLocale() == 'ar' ? 'الوقت': 'time'}} :
-                                                            {{$restaurant->created_at->format('H:i:s')}}
-                                                        </p>
-                                                    </div>
-                                                    <div class="modal-footer justify-content-between">
-                                                        <button type="button" class="btn btn-outline-light"
-                                                                data-dismiss="modal">
-                                                            @lang('messages.close')
-                                                        </button>
-                                                    </div>
-                                                </div>
-                                                <!-- /.modal-content -->
-                                            </div>
-                                            <!-- /.modal-dialog -->
-                                        </div>
-                                    </td>
-                                    <td>
-                                        <div class="dropdown">
-                                            <button type="button" class="btn btn-primary dropbtn"
-                                                    data-toggle="dropdown">
-                                                @lang('messages.operations')
-                                                <span class="caret"></span></button>
-                                            <div class="dropdown-content">
-                                                @if($restaurant->archive == 'true')
-                                                    @if(auth('admin')->user()->role == 'admin')
-                                                        <li>
-                                                            <a class="btn btn-info"
-                                                               href="{{route('ArchiveRestaurant' , [$restaurant->id , 'false'])}}"> @lang('messages.remove_archive')</a>
-                                                        </li>
+                                    <th>@lang('messages.restaurant')</th>
+                                    <th>@lang('messages.products')</th>
+                                    {{--                                <th>@lang('messages.orders')</th> --}}
+                                    {{--                                <th>{{app()->getLocale() == 'ar' ? 'طلبات فودكس' : 'Foodics Orders'}}</th> --}}
+                                    {{--                                <th>{{app()->getLocale() == 'ar' ? 'طلبات الواتساب' : 'Whatsapp Orders'}}</th> --}}
+                                    <th>@lang('messages.views')</th>
+                                    <th>{{ app()->getLocale() == 'ar' ? 'المشاهدات اليومية' : 'Daily Views' }}</th>
+                                    @if ($status == 'less_30_day')
+                                        <th>{{ trans('dashboard.remaining_days') }}</th>
+                                    @endif
+                                    <th> {{ app()->getLocale() == 'ar' ? 'ايقاف المنيو' : 'stop menu' }} </th>
 
-                                                    @endif
+                                    <th>{{ app()->getLocale() == 'ar' ? 'ملاحظات' : 'Notes' }}</th>
+                                    <th> @lang('messages.created_at') </th>
+                                    <th>@lang('messages.operations')</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <?php $i = 0; ?>
+                                @php
+                                    $now = Carbon\Carbon::parse(date('Y-m-d'));
+                                @endphp
+                                @foreach ($restaurants as $restaurant)
+                                    <tr class="odd gradeX">
+                                        <td>
+                                            <label class="mt-checkbox mt-checkbox-single mt-checkbox-outline">
+                                                <input type="checkbox" class="checkboxes" value="1" />
+                                                <span></span>
+                                            </label>
+                                        </td>
+                                        <td><?php echo ++$i; ?></td>
+                                        <td>
+                                            @if (app()->getLocale() == 'ar')
+                                                {{ $restaurant->name_ar }}
+                                            @else
+                                                {{ $restaurant->name_en }}
+                                            @endif
+                                        </td>
+                                        <td>
+                                            @php
+                                                $country = $restaurant->country->code;
+                                                $check = substr($restaurant->phone_number, 0, 2) === '05';
+                                                if ($check == true) {
+                                                    $phone = $country . ltrim($restaurant->phone_number, '0');
+                                                } else {
+                                                    $phone = $country . $restaurant->phone_number;
+                                                }
+                                            @endphp
+                                            @if ($restaurant->phone_number != null)
+                                                <a target="_blank"
+                                                    href="https://api.whatsapp.com/send?phone={{ $phone }}">
+                                                    <i style="font-size:24px" class="fa">&#xf232;</i>
+                                                </a>
+                                                <a href="tel:{{ $phone }}">
+                                                    <i class="fa fa-phone"></i>
+                                                </a>
+                                            @endif
+                                        </td>
+                                        <td>
+                                            @if ($restaurant->country != null)
+                                                @if (app()->getLocale() == 'ar')
+                                                    {{ $restaurant->country->name_ar }}
                                                 @else
-                                                    @if(auth('admin')->user()->role == 'admin')
-                                                        <li>
-                                                            <a class="btn btn-archive btn-secondary" data-toggle="modal"
-                                                               data-target="#formArchive"
-                                                               href="javascript:;"
-                                                               data-category="{{$restaurant->achive_category_id}}"
-                                                               data-href="{{route('ArchiveRestaurant' , [$restaurant->id , 'true'])}}"> @lang('messages.archive')</a>
-                                                        </li>
-
-                                                    @endif
-
+                                                    {{ $restaurant->country->name_en }}
                                                 @endif
-                                                @if($restaurant->admin_activation == 'false')
+                                            @endif
+                                        </td>
+                                        @if ($status == 'archived')
+                                            <td>
+                                                {{ isset($restaurant->archiveCategory->name) ? $restaurant->archiveCategory->name : $restaurant->archive_reason }}
+                                            </td>
+                                            <td>
+                                                {{ isset($restaurant->archiveBy->name) ? $restaurant->archiveBy->name : '' }}
+                                            </td>
+                                        @endif
+                                        <td>
+                                            <a href="{{ url('/restaurants/' . $restaurant->name_barcode) }}"
+                                                target="_blank">
+                                                <i class="fa fa-eye"></i>
+                                            </a>
+                                        </td>
+                                        <td>
+                                            {{ $restaurant->products->count() }}
+                                        </td>
+                                        {{--                                    <td> --}}
+                                        {{--                                        {{$restaurant->orders}} --}}
+                                        {{--                                    </td> --}}
+                                        {{--                                    <td> --}}
+                                        {{--                                        {{$restaurant->foodics_orders}} --}}
+                                        {{--                                    </td> --}}
+                                        {{--                                    <td> --}}
+                                        {{--                                        {{$restaurant->whatsapp_orders}} --}}
+                                        {{--                                    </td> --}}
+                                        <td>
+                                            {{ $restaurant->views }}
+                                        </td>
+                                        <td>
+                                            <?php $daily_views = \App\Models\RestaurantView::whereRestaurantId($restaurant->id)
+                                                ->orderBy('id', 'desc')
+                                                ->first(); ?>
+                                            @if ($daily_views != null)
+                                                {{ $daily_views->views }}
+                                            @else
+                                                0
+                                            @endif
+                                        </td>
+                                        @if ($status == 'less_30_day')
+                                            <th>
+                                                @php
+                                                    if (
+                                                        $sub = $restaurant
+                                                            ->subscription()
+                                                            ->where('status', 'active')
+                                                            ->where('package_id', 1)
+                                                            ->where('type', 'restaurant')
+                                                            ->whereDate('end_at', '<=', now()->addDays(30))
+                                                            ->orderBy('id', 'desc')
+                                                            ->first()
+                                                    ):
+                                                        $end = Carbon\Carbon::parse($sub->end_at);
+                                                        echo $now->diffInDays($end, false);
+                                                    endif;
+                                                    
+                                                @endphp
+                                            </th>
+                                        @endif
+                                        <td>
+                                            @if ($branch = $restaurant->branches()->where('main', 'true')->first())
+                                                @if ($branch->stop_menu == 'true')
+                                                    <a href="{{ route('stopBranchMenu', [$branch->id, 'false']) }}"
+                                                        class="btn btn-success"> @lang('messages.yes') </a>
+                                                @else
+                                                    <a href="{{ route('stopBranchMenu', [$branch->id, 'true']) }}"
+                                                        class="btn btn-danger"> @lang('messages.no') </a>
+                                                @endif
+                                            @endif
+                                        </td>
+                                        {{--                                    <td> --}}
+                                        {{--                                        @if ($restaurant->subscription != null and isset($restaurant->subscription->package->id)) --}}
+                                        {{--                                            {{app()->getLocale() == 'ar' ? $restaurant->subscription->package->name_ar : $restaurant->subscription->package->name_en}} --}}
+                                        {{--                                        @endif --}}
+                                        {{--                                    </td> --}}
+                                        <td>
+                                            <a href="{{ route('adminNote.index', $restaurant->id) }}"
+                                                class="btn btn-secondary">
+                                                {{ $restaurant->notes->count() }}
+                                            </a>
+                                        </td>
+                                        <td>
+                                            <button type="button" class="btn btn-info" data-toggle="modal"
+                                                data-target="#modal-info-{{ $restaurant->id }}">
+                                                <i class="fa fa-eye"></i>
+                                            </button>
+                                            <div class="modal fade" id="modal-info-{{ $restaurant->id }}">
+                                                <div class="modal-dialog">
+                                                    <div class="modal-content bg-info">
+                                                        <div class="modal-header">
+                                                            <h4 class="modal-title">
+                                                                @lang('messages.created_at')
+                                                            </h4>
+                                                            <button type="button" class="close" data-dismiss="modal"
+                                                                aria-label="Close">
+                                                                <span aria-hidden="true">&times;</span></button>
+                                                        </div>
+                                                        <div class="modal-body">
+                                                            <p>
+                                                                @lang('messages.date') :
+                                                                {{ $restaurant->created_at->format('Y-m-d') }}
+                                                            </p>
+                                                            <p>
+                                                                {{ app()->getLocale() == 'ar' ? 'الوقت' : 'time' }} :
+                                                                {{ $restaurant->created_at->format('H:i:s') }}
+                                                            </p>
+                                                        </div>
+                                                        <div class="modal-footer justify-content-between">
+                                                            <button type="button" class="btn btn-outline-light"
+                                                                data-dismiss="modal">
+                                                                @lang('messages.close')
+                                                            </button>
+                                                        </div>
+                                                    </div>
+                                                    <!-- /.modal-content -->
+                                                </div>
+                                                <!-- /.modal-dialog -->
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <div class="dropdown">
+                                                <button type="button" class="btn btn-primary dropbtn"
+                                                    data-toggle="dropdown">
+                                                    @lang('messages.operations')
+                                                    <span class="caret"></span></button>
+                                                <div class="dropdown-content">
+                                                    @if ($restaurant->archive == 'true')
+                                                        @if (in_array(auth('admin')->user()->role , ['sales' , 'admin']))
+                                                            <li>
+                                                                <a class="btn btn-info"
+                                                                    href="{{ route('ArchiveRestaurant', [$restaurant->id, 'false']) }}">
+                                                                    @lang('messages.remove_archive')</a>
+                                                            </li>
+                                                        @endif
+                                                    @else
+                                                        @if (in_array(auth('admin')->user()->role , ['sales' , 'admin']))
+                                                            <li>
+                                                                <a class="btn btn-archive btn-secondary" data-toggle="modal"
+                                                                    data-target="#formArchive" href="javascript:;"
+                                                                    data-category="{{ $restaurant->achive_category_id }}"
+                                                                    data-href="{{ route('ArchiveRestaurant', [$restaurant->id, 'true']) }}">
+                                                                    @lang('messages.archive')</a>
+                                                            </li>
+                                                        @endif
+                                                    @endif
+                                                    @if ($restaurant->admin_activation == 'false')
                                                         <li>
-                                                            <a class="btn btn-primary" href="{{route('ActiveRestaurant' , $restaurant->id)}}">
+                                                            <a class="btn btn-primary"
+                                                                href="{{ route('ActiveRestaurant', $restaurant->id) }}">
                                                                 <i class="fa fa-edit"></i> @lang('messages.ActivateToTentative')
                                                             </a>
                                                         </li>
-                                                @endif
-                                                @if($restaurant->status != 'inComplete')
+                                                    @endif
                                                     <li>
-                                                        <a class="btn btn-success"
-                                                           href="{{route('showRestaurant' , $restaurant->id)}}">
-                                                            <i class="fa fa-eye"></i> @lang('messages.show')
-                                                        </a>
+                                                        <a class="btn btn-warning" target="__blank"
+                                                            href="{{ route('admin.restaurant.login', [$restaurant->id, 'false']) }}">
+                                                            @lang('dashboard.login_to_restaurant')</a>
                                                     </li>
-                                                @endif
-                                                @if($restaurant->status == 'inComplete')
-                                                    <li>
-                                                        <a class="btn btn-info"
-                                                           href="{{route('inCompleteRestaurant' , $restaurant->id)}}">
-                                                            <i class="fa fa-edit"></i>
-                                                            {{app()->getLocale() == 'ar' ? 'أكمال التسجيل' : 'Complete Register'}}
-                                                        </a>
-                                                    </li>
-                                                @else
-                                                    <li>
-                                                        <a class="btn btn-info"
-                                                           href="{{route('editRestaurant' , $restaurant->id)}}">
-                                                            <i class="fa fa-edit"></i> @lang('messages.edit')
-                                                        </a>
-                                                    </li>
-                                                @endif
-                                                @if(auth('admin')->user()->role == 'admin')
-                                                    <li>
-                                                        <a class="btn btn-primary"
-                                                           href="{{route('admin.restaurant_history' , $restaurant->id)}}">
-                                                            <i class="fa fa-eye"></i>
-                                                            @lang('messages.histories')
-                                                        </a>
-                                                    </li>
-                                                    <li>
-                                                        <a class="delete_city btn btn-danger"
-                                                           data="{{ $restaurant->id }}"
-                                                           data_name="{{ $restaurant->name_ar }}">
-                                                            <i class="fa fa-key"></i> @lang('messages.delete')
-                                                        </a>
-                                                    </li>
-                                                @endif
+                                                    @if ($restaurant->status != 'inComplete')
+                                                        <li>
+                                                            <a class="btn btn-success"
+                                                                href="{{ route('showRestaurant', $restaurant->id) }}">
+                                                                <i class="fa fa-eye"></i> @lang('messages.show')
+                                                            </a>
+                                                        </li>
+                                                    @endif
+                                                    @if ($restaurant->status == 'inComplete')
+                                                        <li>
+                                                            <a class="btn btn-info"
+                                                                href="{{ route('inCompleteRestaurant', $restaurant->id) }}">
+                                                                <i class="fa fa-edit"></i>
+                                                                {{ app()->getLocale() == 'ar' ? 'أكمال التسجيل' : 'Complete Register' }}
+                                                            </a>
+                                                        </li>
+                                                    @else
+                                                        <li>
+                                                            <a class="btn btn-info"
+                                                                href="{{ route('editRestaurant', $restaurant->id) }}">
+                                                                <i class="fa fa-edit"></i> @lang('messages.edit')
+                                                            </a>
+                                                        </li>
+                                                    @endif
+                                                    @if (auth('admin')->user()->role == 'admin')
+                                                        <li>
+                                                            <a class="btn btn-primary"
+                                                                href="{{ route('admin.restaurant_history', $restaurant->id) }}">
+                                                                <i class="fa fa-eye"></i>
+                                                                @lang('messages.histories')
+                                                            </a>
+                                                        </li>
+                                                        <li>
+                                                            <a class="delete_city btn btn-danger"
+                                                                data="{{ $restaurant->id }}"
+                                                                data_name="{{ $restaurant->name_ar }}">
+                                                                <i class="fa fa-key"></i> @lang('messages.delete')
+                                                            </a>
+                                                        </li>
+                                                    @endif
+                                                </div>
                                             </div>
-                                        </div>
 
-                                    </td>
-                                </tr>
-                            @endforeach
+                                        </td>
+                                    </tr>
+                                @endforeach
                             </tbody>
                         </table>
-                        {{$restaurants->links()}}
+                        {{ $restaurants->links() }}
                     </div>
                     <!-- /.card-body -->
                 </div>
@@ -422,7 +491,7 @@
     </section>
     <!-- Modal -->
     <div class="modal fade" id="formArchive" tabindex="-1" role="dialog" aria-labelledby="formArchiveLabel"
-         aria-hidden="true">
+        aria-hidden="true">
         <div class="modal-dialog  modal-dialog-centered" role="document">
             <div class="modal-content">
                 <div class="modal-header">
@@ -443,14 +512,20 @@
                                     $archiveCategories = App\Models\ArchiveCategory::all();
                                 @endphp
                                 @foreach ($archiveCategories as $item)
-                                    <option value="{{$item->id}}">{{$item->name}}</option>
+                                    <option value="{{ $item->id }}">{{ $item->name }}</option>
                                 @endforeach
+                                <option value="-1">اخري</option>
                             </select>
+                        </div>
+
+                        <div class="form-group archive_reason">
+                            <label for="archive_reason">سبب الارشفة</label>
+                            <input type="text" name="archive_reason" class="form-control" id="archive_reason">
                         </div>
                     </div>
                     <div class="modal-footer">
                         <button type="button" class="btn btn-secondary"
-                                data-dismiss="modal">{{ trans('messages.close') }}</button>
+                            data-dismiss="modal">{{ trans('messages.close') }}</button>
                         <button type="submit" class="btn btn-primary">{{ trans('messages.save') }}</button>
                     </div>
                 </form>
@@ -460,13 +535,14 @@
 @endsection
 
 @section('scripts')
-    {{--    <script src="{{asset('dist/js/adminlte.min.js')}}"></script>--}}
-    <script src="{{asset('plugins/datatables/jquery.dataTables.js')}}"></script>
-    <script src="{{asset('plugins/datatables-bs4/js/dataTables.bootstrap4.js')}}"></script>
+    {{--    <script src="{{asset('dist/js/adminlte.min.js')}}"></script> --}}
+    <script src="{{ asset('plugins/datatables/jquery.dataTables.js') }}"></script>
+    <script src="{{ asset('plugins/datatables-bs4/js/dataTables.bootstrap4.js') }}"></script>
     <script src="{{ URL::asset('admin/js/sweetalert.min.js') }}"></script>
     <script src="{{ URL::asset('admin/js/ui-sweetalert.min.js') }}"></script>
     <script>
-        $(function () {
+        $(function() {
+
             $("#example1").DataTable({
                 lengthMenu: [
                     [10, 25, 50, 100, -1],
@@ -484,10 +560,10 @@
         });
     </script>
     <script>
-        $(document).ready(function () {
+        $(document).ready(function() {
             var CSRF_TOKEN = $('meta[name="X-CSRF-TOKEN"]').attr('content');
 
-            $('body').on('click', '.delete_city', function () {
+            $('body').on('click', '.delete_city', function() {
                 var id = $(this).attr('data');
 
                 var swal_text = 'حذف ' + $(this).attr('data_name') + '؟';
@@ -502,16 +578,25 @@
                     confirmButtonText: "تأكيد",
                     cancelButtonText: "إغلاق",
                     closeOnConfirm: false
-                }, function () {
+                }, function() {
 
-                    {{--var url = '{{ route("imageProductRemove", ":id") }}';--}}
+                    {{-- var url = '{{ route("imageProductRemove", ":id") }}'; --}}
 
-                        {{--url = url.replace(':id', id);--}}
+                    {{-- url = url.replace(':id', id); --}}
 
-                        window.location.href = "{{ url('/') }}" + "/admin/restaurants/delete/" + id;
+                    window.location.href = "{{ url('/') }}" + "/admin/restaurants/delete/" +
+                        id;
                 });
             });
-            $('table').on('click', '.btn-archive', function () {
+            $('#formArchive').on('change', 'select', function() {
+                var tag = $(this);
+                if (tag.val() == -1) {
+                    $('.archive_reason').fadeIn(300);
+                } else {
+                    $('.archive_reason').fadeOut(50);
+                }
+            });
+            $('table').on('click', '.btn-archive', function() {
                 var tag = $(this);
                 console.log(tag.data('href'));
                 $('#formArchive form').attr('action', tag.data('href'));
@@ -520,5 +605,4 @@
             });
         });
     </script>
-
 @endsection
