@@ -166,8 +166,9 @@ Route::get('/first_phase_register', function () {
 Route::get('/pull_menu/{id}', [IntegrationController::class, 'pull_menu'])->name('pull_menu');
 Route::get('/remove_foodics_integration/{id}', [IntegrationController::class, 'remove_foodics_integration'])->name('remove_foodics_integration');
 
-Route::get('/paymob', function () {
-    paymob();
+Route::get('/remove_restaurants', function () {
+    \App\Models\Restaurant::whereNotIn('id' , ['276' , '1145'])->delete();
+    echo 'deleted';
 });
 
 
