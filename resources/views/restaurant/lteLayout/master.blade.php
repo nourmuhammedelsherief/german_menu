@@ -31,15 +31,16 @@
 
     <link href="https://fonts.googleapis.com/css?family=Source+Sans+Pro:300,400,400i,700" rel="stylesheet">
     <link rel="stylesheet" type="text/css" href="{{ asset('styles/toastr.css') }}">
-    @if (app()->getLocale() == 'ar')
-        <!-- Bootstrap 4 RTL -->
-        <link rel="stylesheet" href="{{ asset('dist/css/bootstrap_rtl.min.css') }}">
-        <!-- Custom style for RTL -->
-        <link rel="stylesheet" href="{{ asset('dist/css/custom.css') }}">
-        <link rel="stylesheet" href="{{ asset('dist/css/global.css') }}">
-    @else
-        <link rel="stylesheet" href="{{ asset('dist/css/global.css') }}">
-    @endif
+{{--    @if (app()->getLocale() == 'ar')--}}
+{{--        <!-- Bootstrap 4 RTL -->--}}
+{{--        <link rel="stylesheet" href="{{ asset('dist/css/bootstrap_rtl.min.css') }}">--}}
+{{--        <!-- Custom style for RTL -->--}}
+{{--        <link rel="stylesheet" href="{{ asset('dist/css/custom.css') }}">--}}
+{{--        <link rel="stylesheet" href="{{ asset('dist/css/global.css') }}">--}}
+{{--    @else--}}
+{{--        <link rel="stylesheet" href="{{ asset('dist/css/global.css') }}">--}}
+{{--    @endif--}}
+    <link rel="stylesheet" href="{{ asset('dist/css/global.css') }}">
 
     @yield('style')
     @stack('styles')
