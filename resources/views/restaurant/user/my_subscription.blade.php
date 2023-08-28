@@ -47,11 +47,6 @@
                                                         data-toggle="tab">@lang('messages.external_data')</a></li>
                                 <li class="nav-item"><a class="nav-link" href="#colors"
                                                         data-toggle="tab">@lang('messages.site_colors')</a></li>
-                                <li class="nav-item">
-                                    <a class="nav-link" href="#bio_colors" data-toggle="tab">
-                                        {{app()->getLocale() == 'ar' ? 'التحكم بألوان البايو' : 'Boi Colors Control' }}
-                                    </a>
-                                </li>
                                 <li class="nav-item"><a class="nav-link" href="#barcode"
                                                         data-toggle="tab">@lang('messages.my_barcode')</a></li>
 
@@ -811,123 +806,6 @@
                                                 </span>
                                             @endif
                                         </div>
-                                        <div class="form-group">
-                                            <div class="col-sm-offset-2 col-sm-10">
-                                                <button type="submit"
-                                                        class="btn btn-danger">@lang('messages.save')</button>
-                                            </div>
-                                        </div>
-                                    </form>
-
-                                </div>
-                                <div class="tab-pane" id="bio_colors">
-                                    <div class="form-group">
-                                        <div class="col-sm-offset-2 col-sm-10">
-                                            <a href="{{ route('Reset_to_bio_main', $user->id) }}"
-                                               class="btn btn-primary">@lang('messages.reset_to_main')
-                                            </a>
-                                        </div>
-                                    </div>
-                                    <form action="{{ route('RestaurantChangeBioColors', $user->id) }}"
-                                          class="form-horizontal" method="post" enctype="multipart/form-data">
-                                        @csrf
-                                        <div class="form-group">
-                                            <label class="control-label"> @lang('messages.background') </label>
-                                            <input name="background" type="color" class="form-control"
-                                                   value="{{ $user->bio_color == null ? null : $user->bio_color->background }}">
-                                            @if ($errors->has('background'))
-                                                <span class="help-block">
-                                                    <strong
-                                                            style="color: red;">{{ $errors->first('background') }}</strong>
-                                                </span>
-                                            @endif
-                                        </div>
-                                        <div class="form-group">
-                                            <label class="control-label"> @lang('messages.main_heads') </label>
-                                            <input name="main_line" type="color" class="form-control"
-                                                   value="{{ $user->bio_color == null ? null : $user->bio_color->main_line }}">
-                                            @if ($errors->has('main_line'))
-                                                <span class="help-block">
-                                                    <strong
-                                                            style="color: red;">{{ $errors->first('main_line') }}</strong>
-                                                </span>
-                                            @endif
-                                        </div>
-                                        <div class="form-group">
-                                            <label class="control-label"> {{app()->getLocale() == 'ar' ? 'الأقسام الرئيسية' : 'Main Categories'}} </label>
-                                            <input name="main_cats" type="color" class="form-control"
-                                                   value="{{ $user->bio_color == null ? null : $user->bio_color->main_cats }}">
-                                            @if ($errors->has('main_cats'))
-                                                <span class="help-block">
-                                                    <strong style="color: red;">{{ $errors->first('main_cats') }}</strong>
-                                                </span>
-                                            @endif
-                                        </div>
-                                        <div class="form-group">
-                                            <label class="control-label"> {{app()->getLocale() == 'ar' ? 'الأقسام الفرعية' : 'Sub Categories'}} </label>
-                                            <input name="sub_cats" type="color" class="form-control"
-                                                   value="{{ $user->bio_color == null ? null : $user->bio_color->sub_cats }}">
-                                            @if ($errors->has('sub_cats'))
-                                                <span class="help-block">
-                                                    <strong
-                                                            style="color: red;">{{ $errors->first('sub_cats') }}</strong>
-                                                </span>
-                                            @endif
-                                        </div>
-
-                                        <div class="form-group">
-                                            <label class="control-label"> {{app()->getLocale() == 'ar' ? 'خلفية الأقسام الفرعية':'Sub Categories Background'}} </label>
-                                            <input name="sub_background" type="color" class="form-control"
-                                                   value="{{ $user->bio_color == null ? null : $user->bio_color->sub_background }}">
-                                            @if ($errors->has('sub_background'))
-                                                <span class="help-block">
-                                                    <strong
-                                                            style="color: red;">{{ $errors->first('sub_background') }}</strong>
-                                                </span>
-                                            @endif
-                                        </div>
-                                        <div class="form-group">
-                                            <label class="control-label"> {{app()->getLocale() == 'ar' ? 'لون خط الأقسام الفرعية' : 'Sub Categories Line Color'}} </label>
-                                            <input name="sub_cats_line" type="color" class="form-control"
-                                                   value="{{ $user->bio_color == null ? null : $user->bio_color->sub_cats_line }}">
-                                            @if ($errors->has('sub_cats_line'))
-                                                <span class="help-block">
-                                                    <strong
-                                                            style="color: red;">{{ $errors->first('sub_cats_line') }}</strong>
-                                                </span>
-                                            @endif
-                                        </div>
-
-                                        <div class="form-group ">
-                                            <label class="control-label col-md-3"> {{app()->getLocale() == 'ar' ? 'صورة الخلفية' : 'Background Image'}} </label>
-                                            <div class="col-md-9">
-                                                <div class="fileinput fileinput-new" data-provides="fileinput">
-                                                    <div class="fileinput-preview thumbnail" data-trigger="fileinput"
-                                                         style="width: 200px; height: 150px; border: 1px solid black;">
-                                                        @if($user->bio_color and $user->bio_color->background_image != null)
-                                                            <img src="{{asset('/uploads/bio_backgrounds/' . $user->bio_color->background_image)}}">
-                                                        @endif
-                                                    </div>
-                                                    <div>
-                                                <span class="btn red btn-outline btn-file">
-                                                    <span
-                                                            class="fileinput-new btn btn-info"> @lang('messages.choose_photo') </span>
-                                                    <span
-                                                            class="fileinput-exists btn btn-primary"> @lang('messages.change') </span>
-                                                    <input type="file" name="background_image"> </span>
-                                                        <a href="javascript:;" class="btn btn-danger fileinput-exists"
-                                                           data-dismiss="fileinput"> @lang('messages.remove') </a>
-                                                    </div>
-                                                </div>
-                                                @if ($errors->has('background_image'))
-                                                    <span class="help-block">
-                                                <strong style="color: red;">{{ $errors->first('background_image') }}</strong>
-                                            </span>
-                                                @endif
-                                            </div>
-
-                                        </div>
-
                                         <div class="form-group">
                                             <div class="col-sm-offset-2 col-sm-10">
                                                 <button type="submit"
