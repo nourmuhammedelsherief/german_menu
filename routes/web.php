@@ -133,10 +133,10 @@ Route::post('form_register_post', [\App\Http\Controllers\HomeController::class, 
 
 
 Route::get('test', [TestController::class, 'index']);
-Route::get('/', function () {
-    // return redirect()->to('https://web.easymenu.site');
-    return view('welcome');
-});
+//Route::get('/', function () {
+//    // return redirect()->to('https://web.easymenu.site');
+//    return view('welcome');
+//});
 Route::get('/login', function () {
     return redirect()->to('https://easymenu.site/restaurant/login');
 });
