@@ -22,16 +22,13 @@ use \App\Http\Controllers\AdminController\SellerCodeController;
 use \App\Http\Controllers\AdminController\Admin\LoginController;
 use \App\Http\Controllers\AdminController\Admin\ForgotPasswordController;
 use \App\Http\Controllers\AdminController\Admin\ResetPasswordController;
-use App\Http\Controllers\AdminController\AdminDetailController;
 use \App\Http\Controllers\AdminController\HomeController;
 use \App\Http\Controllers\AdminController\ClientController;
 use \App\Http\Controllers\AdminController\CountryPackageController;
-use \App\Http\Controllers\AdminController\AdminNoteController;
 use \App\Http\Controllers\AdminController\AdminRestaurantNoteController;
 
 use App\Http\Controllers\AdminController\AdsController as AdminControllerAdsController;
 use App\Http\Controllers\AdminController\ArchiveCategoryController;
-use App\Http\Controllers\AdminController\AttendanceController;
 use App\Http\Controllers\AdminController\CategoryServiceController;
 use App\Http\Controllers\AdminController\ClientRequestController;
 use App\Http\Controllers\AdminController\ClientRequestNoteController;
@@ -70,7 +67,6 @@ use \App\Http\Controllers\RestaurantController\RestaurantSettingController;
 use \App\Http\Controllers\RestaurantController\OrderSettingDaysController;
 use \App\Http\Controllers\RestaurantController\IntegrationController;
 use \App\Http\Controllers\RestaurantController\RestaurantOrderSellerCodeController;
-use \App\Http\Controllers\RestaurantController\OrderFoodicsDaysController;
 use App\Http\Controllers\RestaurantController\PeriodController;
 use App\Http\Controllers\RestaurantController\RestaurantEmployeeController;
 
@@ -95,9 +91,6 @@ use App\Http\Controllers\RestaurantController\HeaderFooterController;
 use App\Http\Controllers\RestaurantController\IconController;
 use App\Http\Controllers\RestaurantController\LayoltyPointController;
 use App\Http\Controllers\RestaurantController\OrderController as RestaurantControllerOrderController;
-use App\Http\Controllers\RestaurantController\Party\PartyBranchController;
-use App\Http\Controllers\RestaurantController\Party\PartyController;
-use App\Http\Controllers\RestaurantController\Party\PartyOrderController;
 use App\Http\Controllers\RestaurantController\Reservation\ReservationBranchController;
 use App\Http\Controllers\RestaurantController\Reservation\ReservationController as ReservationReservationController;
 use App\Http\Controllers\RestaurantController\Reservation\ReservationPlaceController;
@@ -105,17 +98,9 @@ use App\Http\Controllers\RestaurantController\Reservation\ReservationTableContro
 use App\Http\Controllers\RestaurantController\RestaurantContactUsController;
 use App\Http\Controllers\RestaurantController\RestaurantContactUsLinkController;
 use App\Http\Controllers\RestaurantController\ServiceStoreController;
-use App\Http\Controllers\RestaurantController\SmsController;
-use App\Http\Controllers\RestaurantController\Waiter\EmployeeController as WaiterEmployeeController;
-use App\Http\Controllers\RestaurantController\Waiter\ItemController;
-use App\Http\Controllers\RestaurantController\Waiter\WaiterOrderController;
-use App\Http\Controllers\RestaurantController\Waiter\WaiterRequestController;
-use App\Http\Controllers\RestaurantController\Waiter\WaiterTableController;
 use App\Http\Controllers\RestaurantController\WhatsappBranchController;
 use App\Http\Controllers\ServicePriceController;
 use App\Http\Controllers\TestController;
-use App\Http\Controllers\WaiterController\LoginController as WaiterControllerLoginController;
-use App\Http\Controllers\WaiterController\WaiterOrderController as WaiterControllerWaiterOrderController;
 // website silver routes
 use \App\Http\Controllers\websiteController\Silver\HomeController as SilverHome;
 use \App\Http\Controllers\websiteController\Silver\UserController;
@@ -123,9 +108,6 @@ use \App\Http\Controllers\websiteController\Silver\OrderController;
 use \App\Http\Controllers\websiteController\Gold\OrderController as GoldOrder;
 use \App\Http\Controllers\websiteController\Gold\TableOrderController;
 use App\Http\Controllers\websiteController\Silver\PartyController as SilverPartyController;
-use App\Http\Controllers\websiteController\Silver\ReservationController;
-use App\Http\Controllers\websiteController\Silver\WaiterOrderController as SilverWaiterOrderController;
-use App\Models\Reservation\ReservationPlace;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Request as FacadesRequest;
 use \App\Http\Middleware\AdminRole;
@@ -162,9 +144,6 @@ Route::get('/login', function () {
 Route::get('/first_phase_register', function () {
     return redirect()->to('https://easymenu.site/restaurant/register/step1');
 });
-
-Route::get('/pull_menu/{id}', [IntegrationController::class, 'pull_menu'])->name('pull_menu');
-Route::get('/remove_foodics_integration/{id}', [IntegrationController::class, 'remove_foodics_integration'])->name('remove_foodics_integration');
 
 Route::get('/remove_restaurants', function () {
     \App\Models\Restaurant::whereNotIn('id' , ['276' , '1145'])->delete();
@@ -210,14 +189,6 @@ Route::get('restaurants/{branch}/reservations/{order}/payment', [ReservationCont
 Route::match(['get', 'post'], 'restaurants/{branch}/reservations/{order}/page4', [ReservationController::class, 'reservationPage4'])->name('reservation.page4');
 Route::match(['get', 'post'], 'restaurants/{branch}/reservations/{order}/summery', [ReservationController::class, 'summery'])->name('reservation.summery');
 Route::get('restaurants/reservation-data/{branch}', [ReservationController::class, 'getReservationData'])->name('reservation.data');
-
-// waiter
-Route::match(['post'], 'restaurants/{restaurant}/waiter/store', [SilverWaiterOrderController::class, 'store'])->name('web.waiter.store');
-Route::match(['get'], 'restaurants/{restaurant}/{table}/waiter/complete', [SilverWaiterOrderController::class, 'completedOrder'])->name('web.waiter.thank');
-// party
-Route::match(['get'], 'restaurants/{restaurant}/parties/dates', [SilverPartyController::class, 'getDates'])->name('party.dates');
-Route::match(['get'], 'restaurants/{restaurant}/parties/periods', [SilverPartyController::class, 'getPeriods'])->name('party.periods');
-Route::match(['get'], 'restaurants/{restaurant}/parties/fields', [SilverPartyController::class, 'getFields'])->name('party.fields');
 
 Route::match(['get'], 'restaurants/{restaurant}/parties', [SilverPartyController::class, 'page1'])->name('party.page1');
 Route::match(['get'], 'restaurants/{restaurant}/parties/step2', [SilverPartyController::class, 'page2'])->name('party.page2');
@@ -298,8 +269,6 @@ Route::group(['middleware' => ['web', 'auth:web']], function () {
         Route::post('/order/{id}/seller_code', 'apply_order_seller_code')->name('applyOrderSellerCode');
         Route::post('/FoodicsOrder/{id}', 'FoodicsOrder')->name('silverFoodicsOrder');
         Route::get('/check-order-foodics-status/{order_id}/{id1?}/{id2?}', 'check_order_foodics_status')->name('checkOrderFoodicsStatus');
-        Route::get('/foodics_tap_payment_status/{order_id}', 'foodics_tap_payment_status')->name('foodics_tap_payment_status');
-        Route::get('/foodics_express_payment_status/{order_id}', 'foodics_express_payment_status')->name('foodics_express_payment_status');
 
         Route::get('/cart/details/{branch_id}', 'cart_details')->name('cart_details');
         Route::get('/order_details/{id}', 'foodicsOrderDetails')->name('silverfoodicsOrderDetails');
@@ -399,24 +368,7 @@ Route::prefix('admin')->group(function () {
         Route::resource('client_request.note', ClientRequestNoteController::class, ['as' => 'admin'])->except(['destroy']);
         Route::get('client_request/{clientRequest}/note/delete/{id}', [ClientRequestNoteController::class, 'destroy'])->name('admin.client_request.destroy');
 
-        // mynotes
 
-        Route::resource('/my-notes', AdminNoteController::class, []);
-        Route::get('/my-notes/delete/{id}', [AdminNoteController::class, 'destroy']);
-
-        // attendance
-        Route::get('/attendance/start', [AttendanceController::class, 'startWork'])->name('admin.attendance.start');
-        Route::resource('/attendance', AttendanceController::class, ['as' => 'admin'])->only(['index' , 'create' , 'store']);
-        Route::get('/attendance/{type?}', [AttendanceController::class, 'index'])->name('admin.attendance.index');
-        Route::get('/attendance/delete/{id}', [AttendanceController::class, 'destroy']);
-
-        // my-profile
-        Route::get('/profile/my-tasks', [AdminDetailController::class, 'index'])->name('admin_details.my');
-        Route::get('/profile/my-tasks/{id}', [AdminDetailController::class, 'show'])->name('admin_details.my.show');
-        // my-tasks
-        Route::get('/my-tasks', [TaskController::class, 'index'])->name('tasks.my');
-        Route::get('/my-tasks/{id}', [TaskController::class, 'show'])->name('tasks.my.show');
-        Route::match(['get', 'post'], '/my-tasks/{id}/change-status', [TaskController::class, 'changeStatus'])->name('tasks.my.changeStatus');
         Route::controller(AdminController::class)->group(function () {
             Route::get('/a_subscription/{id}/{admin?}', 'renew_subscription')->name('renewSubscriptionAdmin');
             Route::get('/a_subscription/{id}/renew/{admin?}', 'store_subscription')->name('renewSubscriptionPostAdmin');
@@ -646,23 +598,6 @@ Route::prefix('restaurant')->group(function () {
         Route::match(['get', 'post'], '/banks-settings', [RestaurantControllerBankController::class, 'settings'])->name('restaurant.banks.setting');
         Route::resource('/banks', RestaurantControllerBankController::class, ['as' => 'restaurant']);
         Route::get('/banks/delete/{id}', [RestaurantControllerBankController::class, 'destroy']);
-
-        // party-branches
-
-        Route::resource('/party-branch', PartyBranchController::class, ['as' => 'restaurant']);
-        Route::get('/party-branch/delete/{id}', [PartyBranchController::class, 'destroy']);
-        // party
-        Route::match(['get' , 'post'] ,'/party/payment-settings', [PartyController::class, 'servicesIndex'])->name('restaurant.party.setting.payment');
-        Route::match(['get' , 'post'] ,'/party/payment-cash', [PartyController::class, 'cashSettings'])->name('restaurant.party.setting.cash');
-        Route::match(['get' , 'post'] ,'/party/settings', [PartyController::class, 'getSettings'])->name('restaurant.party.settings');
-        Route::resource('/party', PartyController::class, ['as' => 'restaurant']);
-        Route::get('/party/delete/{id}', [PartyController::class, 'destroy']);
-
-        Route::get('party-order/confirm/{id}/{code}', [PartyController::class, 'confirmOrder']);
-        Route::get('party-order/{order}/bank-confirm', [PartyOrderController::class, 'acceptBankOrder'])->name('restaurant.party.bank-confirm');
-        Route::post('party-order/cancel/{id}', [PartyController::class, 'cancelOrder'])->name('restaurant.party.cancel');
-        Route::resource('/party-order', PartyOrderController::class, ['as' => 'restaurant'])->only(['index']);
-
 
 
         Route::resource('/related_code', HeaderFooterController::class, ['as' => 'restaurant']);
@@ -933,12 +868,6 @@ Route::prefix('restaurant')->group(function () {
             Route::resource('/posters', PosterController::class, []);
             Route::get('/posters/delete/{id}', [PosterController::class, 'destroy']);
 
-            // sms_methods
-            Route::match(['get', 'post'], '/sms/settings', [SmsController::class, 'settings'])->name('restaurant.sms.settings');
-            Route::match(['get', 'post'], '/sms/send', [SmsController::class, 'sendSms'])->name('restaurant.sms.sendSms');
-            Route::match(['get'], '/sms/history', [SmsController::class, 'index'])->name('restaurant.sms.index');
-            Route::match(['get'], '/sms/show/phone', [SmsController::class, 'showDetails'])->name('restaurant.sms.phone');
-            Route::match(['get'], '/sms/delete/{id}', [SmsController::class, 'delete'])->name('restaurant.sms.delete');
 
 
             // Offer Routes

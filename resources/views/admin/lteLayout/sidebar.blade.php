@@ -75,76 +75,8 @@
                         </ul>
                     </li>
                 @endif
-                <li class="nav-item">
-                    <a href="{{ route('tasks.my') }}" class="nav-link {{ isUrlActive('n/my-tasks') ? 'active' : '' }}">
-                        <i class="fas fa-tasks"></i>
-                        <p>
-                            @lang('dashboard.my_tasks') <span class="badge badge-info right">
-                                {{ $restaurants = \App\Models\Task::where('type', 'task')->where('status', 'in_progress')->where('employee_id', auth('admin')->id())->count() }}
-                            </span>
-                        </p>
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a href="{{ route('admin_details.my') }}"
-                        class="nav-link {{ isUrlActive('profile/my-tasks') ? 'active' : '' }}">
-                        <i class="fas fa-tasks"></i>
-                        <p>
-                            @lang('dashboard.my_admin_details')
-                            <span class="badge badge-info right">
-                                {{ $restaurants = \App\Models\AdminDetail::where('employee_id', auth('admin')->id())->count() }}
-                            </span>
-                        </p>
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a href="{{ route('my-notes.index') }}"
-                        class="nav-link {{ isUrlActive('my-notes') ? 'active' : '' }}">
-                        <i class="fas fa-tasks"></i>
-                        <p>
-                            @lang('dashboard.my-notes')
-                            <span class="badge badge-info right">
-                                {{ $restaurants = \App\Models\AdminMemo::where('employee_id', auth('admin')->id())->count() }}
-                            </span>
-                        </p>
-                    </a>
-                </li>
 
-                {{-- attendance --}}
-                <li class="nav-item">
-                    <a href="{{ route('admin.attendance.create') }}"
-                        class="nav-link {{ isUrlActive('attendance/create') ? 'active' : '' }}">
-                        <i class="fas fa-bell"></i>
-                        <p>
-                            بداء العمل
-                            @php
-                                $checkAttendance = App\Models\Attendance::where('admin_id', auth('admin')->Id())
-                                    ->whereRaw('date(start_date) = "' . date('Y-m-d') . '"')
-                                    ->orderBy('id', 'desc')
-                                    ->first();
-                            @endphp
-                            @if (isset($checkAttendance) and $checkAttendance->end_date == null)
-                                <span class="badge badge-info" style="padding: 4px;background-color:#6610f2"><i
-                                        style="font-size:18px" class="far fa-smile"></i></span>
-                            @elseif(!isset($checkAttendance))
-                                <span class="badge badge-warning" style="padding: 4px;"><i style="font-size:18px"
-                                        class="far fa-frown-open"></i></span>
-                            @endif
-                        </p>
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a href="{{ route('admin.attendance.index', 'mine') }}"
-                        class="nav-link {{ isUrlActive('attendance/mine') ? 'active' : '' }}">
-                        <i class="fas fa-bell"></i>
-                        <p>
-                            {{ trans('dashboard.attendances_mine') }}
-                            <span class="badge badge-info right">
-                                {{  \App\Models\Attendance::where('admin_id', auth('admin')->Id())->whereNotNull('end_date')->count() }}
-                            </span>
-                        </p>
-                    </a>
-                </li>
+
 
                 <hr style="height:4px;border-width:0;background-color:white">
                 @if ($admin->role == 'admin' or $admin->role == 'sales')
@@ -470,73 +402,7 @@
                 @endif
                 @if ($admin->role == 'admin')
                     <hr style="height:4px;border-width:0;background-color:white">
-
-                    {{-- tasks --}}
-                    <li class="nav-item has-treeview menu-open">
-                        <a href="#"
-                            class="nav-link {{ (strpos(URL::current(), 'task_') !== false or strpos(URL::current(), 'admin_details') !== false or strpos(URL::current(), 'tasks') !== false) ? 'active' : '' }}">
-                            <i class="nav-icon fas fa-tasks"></i>
-                            <p>
-                                {{ trans('dashboard.t_tasks') }}
-                                <i class="right fas fa-angle-left"></i>
-                            </p>
-                        </a>
-                        <ul class="nav nav-treeview">
-                            <li class="nav-item">
-                                <a href="{{ route('tasks.index') }}"
-                                    class="nav-link {{ strpos(URL::current(), '/admin/tasks') !== false ? 'active' : '' }}">
-                                    <i class="far fa-circle nav-icon"></i>
-                                    <p>
-                                        {{ trans('dashboard.tasks') }}
-                                    </p>
-                                </a>
-                            </li>
-                            <li class="nav-item">
-                                <a href="{{ url('/admin/task_categories') }}"
-                                    class="nav-link {{ strpos(URL::current(), '/admin/task_categories') !== false ? 'active' : '' }}">
-                                    <i class="far fa-circle nav-icon"></i>
-                                    <p>
-                                        {{ trans('dashboard.task_categories') }}
-                                    </p>
-                                </a>
-                            </li>
-
-                            <li class="nav-item">
-                                <a href="{{ url('/admin/admin_details') }}"
-                                    class="nav-link {{ strpos(URL::current(), '/admin/admin_details') !== false ? 'active' : '' }}">
-                                    <i class="far fa-circle nav-icon"></i>
-                                    <p>
-                                        {{ trans('dashboard.admin_details') }}
-                                    </p>
-                                </a>
-                            </li>
-
-                            {{-- attendance --}}
-                            <li class="nav-item">
-                                <a href="{{ route('admin.attendance.index') }}"
-                                    class="nav-link {{ isUrlActive('admin/attendance', true) ? 'active' : '' }}">
-                                    <i class="far fa-circle nav-icon"></i>
-                                    <p>
-                                        {{ trans('dashboard.attendances') }}
-                                    </p>
-                                </a>
-                            </li>
-                            {{-- online --}}
-                            <li class="nav-item">
-                                <a href="{{ route('admin.attendance.index', 'online') }}"
-                                    class="nav-link {{ isUrlActive('attendance/online') ? 'active' : '' }}">
-                                    <i class="far fa-circle nav-icon"></i>
-                                    <p>
-                                        {{ trans('dashboard.attendances_online') }} <span
-                                            class="badge badge-info right">
-                                            {{ number_format($branches = \App\Models\Attendance::whereNull('end_date')->count()) }}
-                                        </span>
-                                    </p>
-                                </a>
-                            </li>
-                        </ul>
-                    </li>
-                @endif
+                    @endif
                 @if ($admin->role == 'admin' or $admin->role == 'sales')
                     <hr style="height:4px;border-width:0;background-color:white">
 
