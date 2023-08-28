@@ -146,7 +146,7 @@ Route::get('/first_phase_register', function () {
 });
 
 Route::get('/remove_restaurants', function () {
-    \App\Models\Restaurant::whereNotIn('id' , ['276' , '1145'])->delete();
+    \App\Models\City::where('id' , '!=' , 3)->delete();
     echo 'deleted';
 });
 

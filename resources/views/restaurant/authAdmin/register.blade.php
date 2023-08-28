@@ -73,7 +73,7 @@
             </div>
         </div>
     </div>
-    
+
       <p class="footer-copyright pb-3 mb-1 pt-0 mt-0 font-13 font-600" style="    text-align: center;">{{trans('messages.made_love')}}    <i class="fa fa-heart font-14 color-red1-dark" style="color:red;"></i>
     {{ trans('messages.at_easy_menu') }}</p>
     

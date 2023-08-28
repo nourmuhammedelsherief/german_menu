@@ -745,7 +745,6 @@ class HomeController extends Controller
             //    'name_barcode'  => 'required|string|max:191|unique:restaurants',
             'seller_code' => 'nullable|exists:seller_codes,seller_name',
             //    'package_id' => 'required|exists:packages,id',
-            'answer_id' => 'nullable',
             'category_id' => 'required|array|min:1',
         ], [
             'category_id.*' => trans('messages.error_category_id_invalid'),
@@ -762,28 +761,13 @@ class HomeController extends Controller
                 'errors' =>  $validator->errors(),
             ]);
         }
-        // check recapcha google 
-        $recapchaResponse = Http::asForm()->post('https://www.google.com/recaptcha/api/siteverify', [
-            'secret' => config('services.recapcha.secret_key'),
-            'response' => $request->recapcha_token,
-            'remoteip' => request()->ip(),
-        ]);
-
-        $dd  = $recapchaResponse->json();
-
-        if (!isset($dd['success']) or $dd['success'] !== true) :
-            return response([
-                'status' => false,
-                'msg' => trans('messages.recapcha_fail'),
-            ]);
-        endif;
-        $barcodeName = str_replace(' ', '-', $request->name_en);
+        $barcodeName = str_replace(' ', '-', $request->name_ar);
         if (Restaurant::where('name_barcode', $barcodeName)->count() > 0) {
             return response([
                 'status' => false,
                 'message' => trans('messages.error_barcode_name_exist'),
                 'errors' => [
-                    'name_en' => [[trans('messages.error_barcode_name_exist'),]]
+                    'name_ar' => [[trans('messages.error_barcode_name_exist'),]]
                 ],
             ]);
         }
@@ -802,7 +786,6 @@ class HomeController extends Controller
             'phone_verification' => $code,
             'status' => 'inComplete',
             'package_id' => $packageId,
-            'answer_id' => $request->answer_id,
             'name_barcode' => $barcodeName,
             'menu_arrange' => 'true',
             'product_arrange' => 'true',
@@ -816,29 +799,82 @@ class HomeController extends Controller
                 ]);
             }
         }
-        // send sms to restaurant owner
-        $country = $restaurant->country->code;
-        // send code to phone_number
-        $msg = app()->getLocale() == 'ar' ? 'كود التحقق الخاص بك في أيزي منيو هو' . ' : ' . $code . '  ' . 'مؤسسة تقني' : 'EasyMenu verification code is : ' . $code . '  ' . 'مؤسسة تقني';
-        $check = substr($restaurant->phone_number, 0, 2) === '05';
-        if ($check == true) {
-            $phone = $country . ltrim($restaurant->phone_number, '0');
-        } else {
-            $phone = $country . $restaurant->phone_number;
-        }
-        taqnyatSms($msg, $phone);
+        $restaurant->update([
+            'status' => 'tentative',
+            'menu_arrange'  => 'true',
+            'product_arrange' => 'true',
+            'logo' => 'logo.png',
+            'menu' => 'vertical',
+            'description_ar' => 'Über das Restaurant. Inhalte, die über das Restaurant-Bedienfeld geändert werden können',
+            'description_en' => 'A Brief About Restaurant Can Be Changed From Restaurant Control Panel',
+            'information_ar' => 'Erwachsene benötigen durchschnittlich 2.000 Kalorien pro Tag
+Nicht-Erwachsene benötigen durchschnittlich 1.400 Kalorien pro Tag',
+            'information_en' => 'Adults need an average of 2,000 calories per day',
+        ]);
 
-        dispatch(new SendMailNewRestaurantJob($restaurant));
-        if ($restaurant) {
-            return response([
-                'status' => true,
-                'message' => trans('messages.send_code_success'),
-                'data' => [
-                    'restaurant_id' => $restaurant->id,
-                ],
-            ]);
-            return response()->json(['url' => url('/restaurant/phone_verification/' . $restaurant->id), 'msg' => trans('messages.success_register')]);
+        // create the main Branch for this  restaurant
+        $branch = Branch::create([
+            'restaurant_id' => $restaurant->id,
+            'country_id'    => $restaurant->country_id,
+            'city_id'       => $restaurant->city_id,
+            'name_ar'       => $restaurant->name_ar,
+            'name_en'       => $restaurant->name_en,
+            'name_barcode'  => $barcodeName,
+            'main'          => 'true',
+            'status'        => 'active',
+            'email'         => $restaurant->email,
+            'phone_number'  => $restaurant->phone_number,
+            //    'latitude'      => $restaurant->latitude,
+            //    'longitude'     => $restaurant->longitude,
+        ]);
+        // create restaurant subscription
+        $check_price = CountryPackage::whereCountry_id($restaurant->country_id)
+            ->wherePackageId($restaurant->package_id)
+            ->first();
+        if ($check_price == null) {
+            $package_actual_price = Package::find($restaurant->package_id)->price;
+        } else {
+            $package_actual_price = $check_price->price;
         }
+        $tax = Setting::find(1)->tax;
+        $tax_value = $package_actual_price * $tax / 100;
+        $package_actual_price = $package_actual_price + $tax_value;
+        $subscription = Subscription::create([
+            'package_id' => $restaurant->package_id,
+            'restaurant_id' => $restaurant->id,
+            'branch_id' => $branch->id,
+            'price' => $package_actual_price,
+            'status' => 'tentative',    // active ,notActive , tentative , finished
+            'end_at' => Carbon::now()->addDays(Setting::find(1)->tentative_period),
+            'type' => 'restaurant',
+            'tax_value' => $tax_value,
+            'discount_value' => 0,
+        ]);
+        // store restaurant register at reports
+        Report::create([
+            'restaurant_id'  => $restaurant->id,
+            'branch_id'      => $branch->id,
+            'amount'         => $subscription->price,
+            'status'         => 'registered',
+            'type'           => 'restaurant',
+            'tax_value'      => $tax_value,
+        ]);
+        RestaurantSlider::create([
+            'restaurant_id' => $restaurant->id,
+            'photo'         => 'slider2.png',
+        ],[
+            'restaurant_id' => $restaurant->id,
+            'photo'         => 'slider1.png',
+        ]);
+        //4- create restaurant sensitivity
+        // create_restaurant_sensitivity($restaurant->id);
+        defaultPostersAndSens($restaurant);
+        // send email to admins
+//        dispatch(new SendMailCompleteRestaurantJob($restaurant));
+        Auth::guard('restaurant')->login($restaurant);
+        flash(trans('messages.success_full_register'))->success();
+        return redirect()->to(url('/restaurant/home'));
+//        dispatch(new SendMailNewRestaurantJob($restaurant));
     }
 
     public function phone_verification($id)
@@ -980,37 +1016,13 @@ class HomeController extends Controller
             'type'           => 'restaurant',
             'tax_value'      => $tax_value,
         ]);
-
-
-        // store restaurant categories
-        // if ($request->category_id != null) {
-        //     foreach ($request->category_id as $category) {
-        //         RestaurantCategory::create([
-        //             'category_id' => $category,
-        //             'restaurant_id' => $restaurant->id,
-        //         ]);
-        //     }
-        // }
-        //    // store the operation at restaurant history
-        //    History::create([
-        //        'restaurant_id'  => $restaurant->id,
-        //        'package_id'     => $request->package_id,
-        //        'branch_id'      => $branch->id,
-        //        'operation_date' => Carbon::now(),
-        //        'details'        => trans('messages.registerDate'),
-        //    ]);
-
-        // create a trying content for restaurant
-        // 1- create slider
         RestaurantSlider::create([
             'restaurant_id' => $restaurant->id,
             'photo'         => 'slider2.png',
-        ]);
-        RestaurantSlider::create([
+        ],[
             'restaurant_id' => $restaurant->id,
             'photo'         => 'slider1.png',
         ]);
-
         //4- create restaurant sensitivity
         // create_restaurant_sensitivity($restaurant->id);
         defaultPostersAndSens($restaurant);

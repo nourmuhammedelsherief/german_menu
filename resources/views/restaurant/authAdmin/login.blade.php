@@ -13,7 +13,7 @@
 @section('content')
     <div class="login-box">
         <div class="login-logo">
-            <a href="{{url('restaurant/locale/' . (app()->getLocale() == 'ar' ? 'en' : 'ar'))}}" class="change-lang" style="{{app()->getLocale() == 'en' ? 'left:unset;right:17px !important;top:24px !important;' : ''}}">{{app()->getLocale() == 'ar' ?  'English' : 'عربي'}}</a>
+            <a href="{{url('restaurant/locale/' . (app()->getLocale() == 'ar' ? 'en' : 'ar'))}}" class="change-lang">{{app()->getLocale() == 'ar' ?  'English' : 'German'}}</a>
             <a href="{{route('restaurant.login')}}"><b>@lang('messages.restaurant_login')</b></a>
         </div>
         <div class="card">
@@ -104,35 +104,6 @@
 
 
             </div>
-
-        </div>
-
-
-        <p class="footer-copyright pb-3 mb-1 pt-0 mt-0 font-13 font-600" style="    text-align: center;">
-           {{ trans('messages.made_love') }}
-            <i class="fa fa-heart font-14 color-red1-dark" style="color:red;"></i>
-            <a style="color: blue" href="{{url('/')}}">
-
-                {{ trans('messages.at_easy_menu') }}
-            </a>
-        </p>
-
-        <div class="row">
-            <p>
-                <a href="https://web.easymenu.site/" class="btn btn-success"> @lang('messages.home_page')</a>
-            </p>
-            <p>
-                <a href="https://easymenu.site/restaurants/easyMenuu">
-                    <img src="https://web.easymenu.site/wp-content/themes/tqnee/img/qr.png" data-src="https://web.easymenu.site/wp-content/themes/tqnee/img/qr.png" class="download lazy loaded" data-was-processed="true">
-                </a>
-                <span>
-                    {{ trans('messages.qr_code_try') }}
-                </span>
-            </p>
-
-            <p class="footer-copyright pb-3 mb-1 pt-0 mt-0 font-13 font-600" style="    text-align: center;">
-                {{ trans('messages.qr_code_try2') }}
-            </p>
 
         </div>
     </div>
