@@ -133,7 +133,7 @@
                                     <label class="control-label"> @lang('messages.seller_code') </label>
                                     <input type="text" name="seller_code" class="form-control"
                                            value="{{old('seller_code')}}"
-                                           placeholder="{{app()->getLocale() == 'ar' ? 'أذا لديك كود خصم أكتبه هنا' : 'Put Your Seller Code Here'}}">
+                                           placeholder="{{app()->getLocale() == 'ar' ? 'Wenn Sie einen Rabattcode haben, schreiben Sie ihn hier' : 'Put Your Seller Code Here'}}">
                                     @if ($errors->has('seller_code'))
                                         <span class="help-block">
                                             <strong style="color: red;">{{ $errors->first('seller_code') }}</strong>

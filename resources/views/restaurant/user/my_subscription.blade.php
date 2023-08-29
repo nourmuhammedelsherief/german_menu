@@ -276,7 +276,7 @@
                                                 <i class="far fa-clock bg-gray"></i>
                                                 <div class="timeline-item">
                                                     <h3 class="timeline-header border-0">
-                                                        {{ app()->getLocale() == 'ar' ? 'باقي علي أنتهاء الأشتراك الخاص بكم' : 'The rest of your subscription has expired' }}
+                                                        {{ app()->getLocale() == 'ar' ? 'Es bleibt bestehen, bis Ihr Abonnement abläuft' : 'The rest of your subscription has expired' }}
                                                         <a href="#">
                                                             <?php
                                                             $ticketTime = strtotime($user->subscription->end_at);
@@ -286,20 +286,20 @@
                                                             ?>
                                                             {{ round($difference / 86400) }}
                                                         </a>
-                                                        {{ app()->getLocale() == 'ar' ? 'يوم' : 'Day' }}
+                                                        {{ app()->getLocale() == 'ar' ? 'Tag' : 'Day' }}
                                                     </h3>
                                                     @if ($user->subscription->end_at < \Carbon\Carbon::now()->addMonth() and $user->subscription->status == 'active')
                                                         <p>
                                                             <a class="btn btn-info"
                                                                href="{{ route('renewSubscription', $user->id) }}">
-                                                                {{ app()->getLocale() == 'ar' ? 'تجديد الأشتراك' : 'Renew Subscription' }}
+                                                                {{ app()->getLocale() == 'ar' ? 'Abo-Verlängerung' : 'Renew Subscription' }}
                                                             </a>
                                                         </p>
                                                     @endif
                                                     @if ($user->subscription->status == 'tentative')
                                                         <a class="btn btn-success"
                                                            href="{{ route('renewSubscription', $user->id) }}">
-                                                            {{ app()->getLocale() == 'ar' ? 'تفعيل الأشتراك' : 'Active Subscription' }}
+                                                            {{ app()->getLocale() == 'ar' ? 'Abonnementaktivierung' : 'Active Subscription' }}
                                                         </a>
                                                     @endif
                                                 </div>
@@ -341,7 +341,7 @@
                                             <i class="far fa-money-bill-alt bg-gray"></i>
                                             <div class="timeline-item">
                                                 <h3 class="timeline-header border-0">
-                                                    {{ app()->getLocale() == 'ar' ? 'الزيارات اليومية' : 'Daily Views' }}
+                                                    {{ app()->getLocale() == 'ar' ? 'tägliche Besuche' : 'Daily Views' }}
                                                     <a href="#">
                                                         <?php $daily_views = \App\Models\RestaurantView::whereRestaurantId($user->id)
                                                             ->orderBy('id', 'desc')
@@ -359,11 +359,11 @@
                                         @if ($user->admin_activation == 'false')
                                             @php
                                                 $url = 'https://api.whatsapp.com/send?phone=' . \App\Models\Setting::find(1)->active_whatsapp_number . '&text=';
-                                                $content = 'لقد قمت بتسجيل حساب جديد لديكم وأريد اكمال الاجراءات المطلوبه لتفعيل الحساب';
+                                                $content = 'Ich habe ein neues Konto bei Ihnen registriert und möchte die zur Aktivierung des Kontos erforderlichen Verfahren abschließen';
                                             @endphp
                                             <a href="{{ $url . $content }}" class="btn btn-success" target="_blank">
                                                 <i class="fab fa-whatsapp"></i>
-                                                {{ app()->getLocale() == 'ar' ? 'لتفعيل الفترة التجريبية أضغط هنا' : 'To Have The Tentative Period Contact the Admin' }}
+                                                {{ app()->getLocale() == 'ar' ? 'Um den Testzeitraum zu aktivieren, klicken Sie hier' : 'To Have The Tentative Period Contact the Admin' }}
                                             </a>
                                         @endif
                                         <div>
@@ -675,7 +675,7 @@
                                         </div>
                                         <div class="form-group">
                                             <label for="cart" class="col-sm-3 control-label">
-                                                {{ app()->getLocale() == 'ar' ? 'عرض قائمه الفروع بالموقع' : 'show branches list at website' }}
+                                                {{ app()->getLocale() == 'ar' ? 'Sehen Sie sich die Liste der Filialen auf der Website an' : 'show branches list at website' }}
                                             </label>
 
                                             <div class="col-sm-9">

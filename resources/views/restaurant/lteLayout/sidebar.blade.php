@@ -39,7 +39,7 @@
         @if ($user->archive == 'true')
             @php
                 $url = 'https://api.whatsapp.com/send?phone=' . \App\Models\Setting::find(1)->active_whatsapp_number . '&text=';
-                $content = 'حسابي مؤرشف اريد تفعيل الحساب';
+                $content = 'Mein Konto ist archiviert. Ich möchte das Konto aktivieren';
             @endphp
             <a href="{{ $url . $content }}" class="btn btn-success" target="_blank">
                 <i class="fab fa-whatsapp"></i>
@@ -72,7 +72,7 @@
                                 class="nav-link {{ strpos(URL::current(), '/restaurant/barcode') !== false ? 'active' : '' }}">
                                 <i class="nav-icon fa fa-barcode"></i>
                                 <p>
-                                    {{ app()->getLocale() == 'ar' ? 'طباعه الباركود' : 'Print Barcode' }}
+                                    {{ app()->getLocale() == 'ar' ? 'Barcode-Druck' : 'Print Barcode' }}
                                 </p>
                             </a>
                         </li>
@@ -470,12 +470,11 @@
         @else
             @php
                 $url = 'https://api.whatsapp.com/send?phone=' . \App\Models\Setting::find(1)->active_whatsapp_number . '&text=';
-                $content = '
-لقد قمت بتسجيل حساب جديد لديكم وأريد اكمال الاجراءات المطلوبه لتفعيل الحساب';
+                $content = 'Ich habe ein neues Konto bei Ihnen registriert und möchte die zur Aktivierung des Kontos erforderlichen Verfahren abschließen';
             @endphp
             <a href="{{ $url . $content }}" class="btn btn-success" target="_blank">
                 <i class="fab fa-whatsapp"></i>
-                {{ app()->getLocale() == 'ar' ? 'لتفعيل الفترة التجريبية أضغط هنا' : 'To Have The Tentative Period Click Here' }}
+                {{ app()->getLocale() == 'ar' ? 'Um den Testzeitraum zu aktivieren, klicken Sie hier' : 'To Have The Tentative Period Click Here' }}
             </a>
 
         @endif
