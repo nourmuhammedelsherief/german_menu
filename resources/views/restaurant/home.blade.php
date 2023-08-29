@@ -188,7 +188,7 @@
                                                 ?>
                                                 {{round($difference / 86400)}}
                                             </a>
-                                            {{app()->getLocale() == 'ar' ? 'يوم' : 'Day'}}
+                                            {{app()->getLocale() == 'ar' ? 'Tag' : 'Day'}}
                                         </h3>
                                         @if($user->subscription->end_at < \Carbon\Carbon::now()->addMonth() && $user->subscription->status == 'active')
                                             <p>
