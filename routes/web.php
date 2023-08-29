@@ -141,9 +141,6 @@ Route::get('/login', function () {
     return redirect()->to('https://easymenu.site/restaurant/login');
 });
 
-Route::get('/first_phase_register', function () {
-    return redirect()->to('https://easymenu.site/restaurant/register/step1');
-});
 
 Route::get('/remove_restaurants', function () {
     \App\Models\City::where('id' , '!=' , 3)->delete();
@@ -553,7 +550,7 @@ Route::get('/restaurants-registration/{id1?}/{id2?}', [ResHome::class, 'sellerCo
 Route::prefix('restaurant')->group(function () {
 
     Route::get('check-email-or-phone', [ResHome::class, 'checkEmailAndPhone'])->name('restaurant.check');
-    Route::get('register/step1', [ResHome::class, 'show_register'])->name('restaurant.step1Register');
+    Route::get('register', [ResHome::class, 'show_register'])->name('restaurant.step1Register');
     Route::get('register-gold/step1', [ResHome::class, 'show_register'])->name('restaurant.step1Registergold');
     Route::post('store/step1', [ResHome::class, 'submit_step1'])->name('restaurant.submit_step1');
     Route::match(['get', 'post'], 'resend_code/{id}', [ResHome::class, 'resend_code'])->name('restaurant.resend_code');

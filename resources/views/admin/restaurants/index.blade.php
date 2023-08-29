@@ -219,7 +219,7 @@
                                     @endif
                                     <th> {{ app()->getLocale() == 'ar' ? 'ايقاف المنيو' : 'stop menu' }} </th>
 
-                                    <th>{{ app()->getLocale() == 'ar' ? 'ملاحظات' : 'Notes' }}</th>
+{{--                                    <th>{{ app()->getLocale() == 'ar' ? 'ملاحظات' : 'Notes' }}</th>--}}
                                     <th> @lang('messages.created_at') </th>
                                     <th>@lang('messages.operations')</th>
                                 </tr>
@@ -349,12 +349,7 @@
                                         {{--                                            {{app()->getLocale() == 'ar' ? $restaurant->subscription->package->name_ar : $restaurant->subscription->package->name_en}} --}}
                                         {{--                                        @endif --}}
                                         {{--                                    </td> --}}
-                                        <td>
-                                            <a href="{{ route('adminNote.index', $restaurant->id) }}"
-                                                class="btn btn-secondary">
-                                                {{ $restaurant->notes->count() }}
-                                            </a>
-                                        </td>
+
                                         <td>
                                             <button type="button" class="btn btn-info" data-toggle="modal"
                                                 data-target="#modal-info-{{ $restaurant->id }}">
