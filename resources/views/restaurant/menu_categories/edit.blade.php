@@ -173,7 +173,7 @@
                                 <div class="form-group image-editor-preview">
                                     <label for="">{{ trans('messages.photo') }}</label>
                                     <label class="custom-label" data-toggle="tooltip" title="{{trans('dashboard.change_image')}}">
-                                        <img class="rounded" id="avatar" src="{{asset(isset($category->image_path) ? $category->image_path : $restaurant->image_path)}}" alt="avatar" >
+                                        <img class="rounded" id="avatar" width="200" src="{{asset(isset($category->image_path) ? $category->image_path : $restaurant->image_path)}}" alt="avatar" >
                                         <input type="file" class="sr-only" id="image-uploader" data-product_id="" name="image" accept="image/*">
                                     </label>
 

@@ -128,10 +128,10 @@ class ProductController extends Controller
         endif;
         $imagePath =  'uploads/products/' . $request->image_name;
         if ($request->video_type == 'local_video' and (empty($request->video_path) or !$tempVideo = TemporaryFile::where('path', $request->video_path)->first())) {
-            flash('يرجي ارفاق الفيديو اولا !!')->error();
+            flash('Bitte zuerst das Video anhängen!!')->error();
             return redirect()->back();
         } elseif (($request->video_type == 'gif') and (empty($request->gif_path) or !$tempVideo = TemporaryFile::where('path', $request->gif_path)->first())) {
-            flash('يرجي ارفاق  صورة اولا !!')->error();
+            flash('Bitte zuerst ein Bild anhängen!!')->error();
             return redirect()->back();
         }
         elseif ((empty($request->image_name) or !$tempVideo = TemporaryFile::where('path', $imagePath)->first())) {

@@ -956,26 +956,26 @@ function defaultResturantData(Restaurant $restaurant)
 }
 function defaultPostersAndSens($restaurant)
 {
-    $sent = Sensitivity::all();
-    foreach ($sent as $temp) :
-        $data = $temp->only([
-            'name_en', 'name_ar', 'details_en', 'details_ar', 'photo'
-        ]);
-        $image = copyImage($temp->image_path, 'sensitivities', 'uploads/sensitivities');
-        $data['photo'] = $image;
-        $data['restaurant_id'] = $restaurant->id;
-        RestaurantSensitivity::create($data);
-    endforeach;
+//    $sent = Sensitivity::all();
+//    foreach ($sent as $temp) :
+//        $data = $temp->only([
+//            'name_en', 'name_ar', 'details_en', 'details_ar', 'photo'
+//        ]);
+//        $image = copyImage($temp->image_path, 'sensitivities', 'uploads/sensitivities');
+//        $data['photo'] = $image;
+//        $data['restaurant_id'] = $restaurant->id;
+//        RestaurantSensitivity::create($data);
+//    endforeach;
 
-    $posters = Poster::all();
-    foreach ($posters as $poster) :
-        $image = copyImage($poster->image_path, 'poster', 'uploads/posters');
-        $restaurant->posters()->create([
-            'name_en' => $poster->name_en,
-            'name_ar' => $poster->name_ar,
-            'poster' => $image,
-        ]);
-    endforeach;
+//    $posters = Poster::all();
+//    foreach ($posters as $poster) :
+//        $image = copyImage($poster->image_path, 'poster', 'uploads/posters');
+//        $restaurant->posters()->create([
+//            'name_en' => $poster->name_en,
+//            'name_ar' => $poster->name_ar,
+//            'poster' => $image,
+//        ]);
+//    endforeach;
 }
 
 /**

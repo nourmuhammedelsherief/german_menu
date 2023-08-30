@@ -538,7 +538,7 @@
                                             <label for="">{{ trans('messages.photo') }}</label>
                                             <label class="custom-label" data-toggle="tooltip"
                                                    title="{{ trans('dashboard.change_image') }}">
-                                                <img class="rounded" id="avatar"
+                                                <img class="rounded" id="avatar" width="200"
                                                      src="{{ asset(isset($user->image_path) ? $user->image_path : null) }}"
                                                      alt="avatar">
                                                 <input type="file" class="sr-only" id="image-uploader"
