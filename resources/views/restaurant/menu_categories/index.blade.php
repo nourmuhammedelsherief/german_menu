@@ -81,7 +81,7 @@
                                 @if(\Illuminate\Support\Facades\Auth::guard('restaurant')->user()->menu_arrange == 'true')
                                     <th> @lang('messages.arrange') </th>
                                 @endif
-                                <th> {{app()->getLocale() == 'ar' ? 'رابط القسم':'Category Link'}} </th>
+                                <th> {{app()->getLocale() == 'ar' ? 'Abschnittslink':'Category Link'}} </th>
                                 <th> @lang('messages.sub_categories') </th>
                                 <th> @lang('messages.activity') </th>
                                 <th> @lang('messages.operations') </th>
@@ -148,7 +148,7 @@
                                             <a href="{{route('arrangeMenuCategory' , $category->id)}}"
                                                class="btn btn-success">
                                                 @if($category->arrange == null)
-                                                    لم يحدد
+                                                    nicht angegeben
                                                 @else
                                                     {{$category->arrange}}
                                                 @endif

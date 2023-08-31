@@ -8,6 +8,7 @@
         "php": "8.1.2",
         "ext-json": "*",
         "barryvdh/laravel-cors": "^2.1",
+        "barryvdh/laravel-dompdf": "^2.0",
         "code-lts/laravel-fcm": "^1.6",
         "doctrine/dbal": "^3.5",
         "guzzlehttp/guzzle": "^7.0.1",

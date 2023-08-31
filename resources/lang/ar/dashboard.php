@@ -185,5 +185,8 @@ return [
     'reservation_cancel_order' => 'Bestellung stornieren',
     'transfer_photo' => 'Konvertierungsbild',
     'not_exists' => 'Nichts',
+    'explain' => 'Klärung',
+    'image_warning_size' => 'Die Bildgröße sollte sein: size' ,
+    'image_resize_hint' => 'Die Größe kann auf der Website geändert werden, z. B.:' ,
 ];
 

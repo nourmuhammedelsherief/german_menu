@@ -434,4 +434,10 @@ return [
 	'reservation_service' => 'Reservation service',
 	'whatsapp_orders' => 'Whatsapp orders',
 	'tab_2_tentative' => 'My Services (tentative)',
+
+
+
+    'explain' => 'clarification',
+    'image_warning_size' => 'The image size should be: size' ,
+    'image_resize_hint' => 'The size can be changed on the website, e.g. E.g.:' ,
 ];

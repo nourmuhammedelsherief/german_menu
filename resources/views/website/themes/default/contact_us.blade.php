@@ -218,40 +218,10 @@
         <div class="content">
             <div class="d-flex mt-n5 site-title">
                 <div class="mt-n5">
-                    @if ($table == null)
-                        @if ($branch->main == 'true')
-                            <a href="{{ url('/restaurants/' . $restaurant->name_barcode) }}" class=" shadow-xl ">
-                                <img src="{{ asset('/uploads/restaurants/logo/' . $restaurant->logo) }}"
-                                     style="width: 90px; height:90px; position: relative; z-index: 1;border: 1px dashed #f7b538;"/>
-                            </a>
-                        @else
-                            <a href="{{ route('sliverHomeBranch', [$restaurant->name_barcode, $branch->name_barcode]) }}"
-                               class=" shadow-xl ">
-                                <img src="{{ asset('/uploads/restaurants/logo/' . $restaurant->logo) }}"
-                                     style="width: 90px; height:90px; position: relative; z-index: 1;border: 1px dashed #f7b538;"/>
-                            </a>
-                        @endif
-                    @else
-                        @if ($table != null)
-                            <a href="{{ route('sliverHomeTableBranch', [$restaurant->name_barcode, $table->foodics_id != null ? $table->foodics_id : $table->name_barcode]) }}"
-                               class=" shadow-xl ">
-                                <img src="{{ asset('/uploads/restaurants/logo/' . $restaurant->logo) }}"
-                                     style="width: 90px; height:90px; position: relative; z-index: 1;border: 1px dashed #f7b538;"/>
-                            </a>
-                        @elseif($branch->main == 'true')
-                            <a href="{{ route('sliverHomeTable', [$restaurant->name_barcode, $table->name_barcode]) }}"
-                               class=" shadow-xl ">
-                                <img src="{{ asset('/uploads/restaurants/logo/' . $restaurant->logo) }}"
-                                     style="width: 90px; height:90px; position: relative; z-index: 1;border: 1px dashed #f7b538;"/>
-                            </a>
-                        @else
-                            <a href="{{ route('sliverHomeTableBranch', [$restaurant->name_barcode, $table->name_barcode, $branch->name_barcode]) }}"
-                               class=" shadow-xl ">
-                                <img src="{{ asset('/uploads/restaurants/logo/' . $restaurant->logo) }}"
-                                     style="width: 90px; height:90px; position: relative; z-index: 1;border: 1px dashed #f7b538;"/>
-                            </a>
-                        @endif
-                    @endif
+                    <a href="{{url()->current()}}" class=" shadow-xl ">
+                        <img src="{{ asset('/uploads/restaurants/logo/' . $restaurant->logo) }}"
+                             style="width: 90px; height:90px; position: relative; z-index: 1;border: 1px dashed #f7b538;"/>
+                    </a>
 
                     @if ($branch->state == 'open')
                         <p class="text-center"

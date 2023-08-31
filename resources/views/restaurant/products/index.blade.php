@@ -163,7 +163,7 @@
                                             <a href="{{route('arrangeProduct' , $product->id)}}"
                                                class="btn btn-success">
                                                 @if($product->arrange == null)
-                                                    لم يحدد
+                                                    nicht angegeben
                                                 @else
                                                     {{$product->arrange}}
                                                 @endif
