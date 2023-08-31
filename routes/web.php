@@ -137,9 +137,9 @@ Route::get('test', [TestController::class, 'index']);
 //    // return redirect()->to('https://web.easymenu.site');
 //    return view('welcome');
 //});
-Route::get('/login', function () {
-    return redirect()->to('https://easymenu.site/restaurant/login');
-});
+//Route::get('/login', function () {
+//    return redirect()->to('https://easymenu.site/restaurant/login');
+//});
 
 
 Route::get('/remove_restaurants', function () {
