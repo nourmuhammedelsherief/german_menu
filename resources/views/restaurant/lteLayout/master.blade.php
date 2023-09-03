@@ -5,7 +5,7 @@
     <meta charset="utf-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <title>@yield('title')</title>
-    <link type="text/css" rel="icon" href="{{ URL::asset('/uploads/img/logo.png') }}" type="image/x-icon">
+    <link type="text/css" rel="icon" href="{{asset('/uploads/img/logo.png')}}" type="image/x-icon">
     <!-- Tell the browser to be responsive to screen width -->
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <!-- Font Awesome -->
