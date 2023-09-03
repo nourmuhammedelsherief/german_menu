@@ -265,7 +265,6 @@ return [
     'icon' => 'Symbol',
     'deliveries' => 'Lieferung',
     'sensitivities' => 'Allergie',
-    'offers' => 'bietet an',
     'photos' => 'die Bilder',
     'follow_us' => 'verbinde dich mit uns',
     'information' => 'Information',
@@ -431,13 +430,7 @@ return [
     'more' => 'Mehr' ,
     'category_description' => 'Abschnittsbeschreibung' ,
     'choose_branch' => 'Wählen Sie die Filiale aus' ,
-    'calories_des' => '(:Kalorien)',
     'calories_des' => '(:num Kalorien)' ,
-    '_reservation_type' => [
-        'package' => 'Paket' ,
-        'table' => 'Tisch' ,
-        'chair' => 'Stuhl'
-    ],
     'persons' => 'Personen' ,
     'next_step' => 'nächster Schritt' ,
     'close_order' => 'Beenden Sie die Anfrage' ,

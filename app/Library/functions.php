@@ -927,8 +927,6 @@ function defaultResturantData(Restaurant $restaurant)
     // update data
 
     $restaurant->update([
-        'logo' => 'logo.png',
-
         'status' => 'tentative',
         'menu_arrange'  => 'false',
         'product_arrange' => 'false',

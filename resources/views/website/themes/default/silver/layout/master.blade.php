@@ -3,7 +3,7 @@
         $pageTitle = isset($branch->id) ? $branch->name : (app()->getLocale() == 'ar' ? $restaurant->name_ar : $restaurant->name_en);
         $pageIcon = asset('uploads/restaurants/logo/' . $restaurant->logo);
     }
-    
+
 @endphp
 @include('website.' . session('theme_path') . 'silver.layout.header')
 @if ($restaurant->archive == 'true')
@@ -51,7 +51,7 @@
                                 $q->where('table_id', $table->id);
                             })
                             ->count();
-                        
+
                     @endphp
 
                     {{-- @endif --}}
@@ -95,7 +95,7 @@
         <div class="page-content pb-0">
             @php
                 $sliderType = 'slider';
-                
+
                 $sliders = $restaurant
                     ->sliders()
                     ->orderBy('created_at', 'desc')
@@ -228,7 +228,7 @@
                                     ->orderBy('sort', 'asc')
                                     ->get()
                                 : [];
-                            
+
                             $checkFixedIcons =
                                 (isset($restaurant->id) and
                                 App\Models\RestaurantIcon::where('restaurant_id', $restaurant->id)

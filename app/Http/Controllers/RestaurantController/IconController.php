@@ -38,77 +38,65 @@ class IconController extends Controller
     {
         $list = [
             [
-                'title_ar' => 'التقييم',
+                'title_ar' => 'Auswertung',
                 'title_en' => 'Rate Us',
                 'sort' => 1,
                 'code' => 'feedback',
             ],
             [
-                'title_ar' => 'اتصال',
+                'title_ar' => 'Kommunikation',
                 'title_en' => 'Call us',
                 'sort' => 2,
                 'code' => 'call_phone',
             ],
             [
-                'title_ar' => 'الوتساب',
+                'title_ar' => 'WhatsApp',
                 'title_en' => 'Whatsapp',
                 'sort' => 3,
                 'code' => 'whatsapp',
             ],
             [
-                'title_ar' => 'نظام الحجوزات',
+                'title_ar' => 'Reservierungen',
                 'title_en' => 'Reservation',
                 'sort' => 4,
                 'code' => 'reservation',
             ],
-            [
-                'title_ar' => 'الحفلات',
-                'title_en' => 'Parties',
-                'sort' => 4,
-                'code' => 'party',
-            ],
           
             [
-                'title_ar' => 'تواصل معنا',
+                'title_ar' => 'verbinde dich mit uns',
                 'title_en' => 'Follow Us',
                 'sort' => 5,
                 'code' => 'follow_us',
             ],
             [
-                'title_ar' => 'التوصيل',
+                'title_ar' => 'Lieferung',
                 'title_en' => 'Deliveries',
                 'sort' => 6,
                 'code' => 'deliveries',
             ],
             [
-                'title_ar' => 'الحساسية',
+                'title_ar' => 'Allergien',
                 'title_en' => 'Sensitivities',
                 'sort' => 7,
                 'code' => 'sensitivities',
             ],
             [
-                'title_ar' => 'العروض',
+                'title_ar' => 'Bietet an',
                 'title_en' => 'Offer',
                 'sort' => 8,
                 'code' => 'offer',
             ],
             [
-                'title_ar' => 'معلومات',
+                'title_ar' => 'Information',
                 'title_en' => 'Information',
                 'sort' => 9,
                 'code' => 'information',
             ],
             [
-                'title_ar' => 'الموقع',
+                'title_ar' => 'Zweig',
                 'title_en' => 'Branch',
                 'sort' => 10,
                 'code' => 'branch',
-            ],
-            [
-                'title_ar' => 'نداء',
-                'title_en' => 'Call Waiter',
-                'sort' => 11,
-                'code' => 'waiter',
             ],
             
         ];
