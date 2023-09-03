@@ -10,7 +10,7 @@
     <link rel="stylesheet" href="{{ URL::asset('admin/css/bootstrap-fileinput.css') }}">
     <meta name="csrf-token" content="{{ csrf_token() }}">
 
-    
+
     <link href="{{ asset('admin') }}/bootstrap-fileinput/bootstrap-fileinput.css" rel="stylesheet" type="text/css" />
     <link rel="stylesheet" href="{{ asset('admin/bootstrap-fileinput/css/fileinput.min.css') }}">
     <link rel="stylesheet" href="{{ asset('admin/bootstrap-fileinput/css/fileinput-rtl.min.css') }}">
@@ -60,9 +60,9 @@
                               enctype="multipart/form-data">
                             <input type='hidden' name='_token' value='{{Session::token()}}'>
                             <input type="hidden" name="image_name" value="">
-                       
+
                             <div class="card-body">
-                                
+
                                      {{-- start_date --}}
                                 <div class="form-group">
                                     <label class="control-label"> @lang('dashboard.entry.start_date') </label>
@@ -97,9 +97,9 @@
                                         </span>
                                     @endif
                                 </div>
-                                
-                      
-                                
+
+
+
                                 {{-- content_type --}}
                                 <div class="form-group">
                                     <label class="control-label"> @lang('dashboard.entry.content_type') </label>
@@ -190,7 +190,7 @@
                                         <img class="rounded" id="avatar" src="{{asset(isset($ads->image_path) ? $ads->image_path : '')}}" alt="avatar" >
                                         <input type="file" class="sr-only" id="image-uploader" data-product_id="" name="image" accept="image/*">
                                     </label>
-                                    
+
                                     @error('image_name')
                                         <p class="text-center text-danger">{{$message}}</p>
                                     @enderror
@@ -238,11 +238,11 @@
 
                 </div>
             </div>
-       
+
 
         </div><!-- /.container-fluid -->
     </section>
-    
+
     @php
         // $itemId = $ads->id ;
         $editorRate = [3 , 4];
@@ -264,7 +264,7 @@
                     $('select[name=category_id]').parent().fadeIn(100);
                 }
             });
-            
+
             $('select[name=content_type]').on('change' , function(){
                 var val = $(this).val();
                 if(val == 'image'){

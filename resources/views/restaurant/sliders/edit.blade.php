@@ -11,7 +11,7 @@
     <link rel="stylesheet" href="{{ asset('plugins/select2/css/select2.css') }}">
     <link href="{{ asset('admin') }}/bootstrap-fileinput/css/fileinput.css" rel="stylesheet" type="text/css" />
     <link rel="stylesheet" href="{{ asset('admin/bootstrap-fileinput/css/fileinput.min.css') }}">
-    <link rel="stylesheet" href="{{ asset('admin/bootstrap-fileinput/css/fileinput-rtl.min.css') }}">
+    <link rel="stylesheet" href="{{ asset('admin/bootstrap-fileinput/css/fileinput-ltr.min.css') }}">
 @endsection
 @section('content')
     <section class="content-header">
@@ -50,11 +50,11 @@
                         <div class="alert alert-warning" role="alert">
                             <h4 class="alert-heading">{{ trans('dashboard.explain') }}</h4>
 
-                            <p>{{ trans('dashboard.image_warning_size', ['size' => 'العرض 600px ,  الطول 270px']) }}</p>
+                            <p>{{ trans('dashboard.image_warning_size', ['size' => 'das Angebot 600px ,  Höhe 270px']) }}</p>
                             <hr>
                             <p class="mb-0">{!! trans('dashboard.image_resize_hint') !!}
                                 <a href="https://redketchup.io/image-resizer" target="__blank" style="color : #007bff;"
-                                    title="موقع لتغير حجم الصور"> موقع لتغير حجم الصور</a>
+                                    title="Eine Website zum Ändern der Bildgröße">Eine Website zum Ändern der Bildgröße</a>
                             </p>
 
                         </div>
@@ -112,7 +112,7 @@
                                 <div class="form-group type_youtube display-none">
                                     <label class="control-label"> @lang('dashboard.youtube') </label>
                                     <input type="text" name="youtube" class="form-control"
-                                        value="{{ $slider->youtube }}" placeholder="مثال : xxxxxxx">
+                                        value="{{ $slider->youtube }}" placeholder="Beispiel : xxxxxxx">
                                     <p class="text-mute">{{ trans('dashboard.youtube_link_code') }}</p>
                                     @if ($errors->has('youtube'))
                                         <span class="help-block">
@@ -155,7 +155,7 @@
                                     <div class="col-md-12">
                                         <span class="fileinput-new"> {{ trans('dashboard.local_video') }}</span>
                                         <br>
-                                        <div dir=rtl class="file-loading">
+                                        <div dir=ltr class="file-loading">
                                             <input type="file" name="video" accept=".mp4" class="file"
                                                 data-browse-on-zone-click="true" id="local-video">
                                         </div>
@@ -166,7 +166,7 @@
                                     <div class="col-md-12">
                                         <span class="fileinput-new"> {{ trans('messages.photo') }}</span>
                                         <br>
-                                        <div dir=rtl class="file-loading">
+                                        <div dir=ltr class="file-loading">
                                             <input type="file" name="video" accept=".gif" class="file"
                                                 data-browse-on-zone-click="true" id="gif_image">
                                         </div>
@@ -196,7 +196,7 @@
     <script src="{{ asset('admin/bootstrap-fileinput/js/fileinput.min.js') }}"></script>
     <script src="{{ asset('admin/bootstrap-fileinput/themes/fa/theme.js') }}"></script>
 
-    <script src="{{ asset('admin/bootstrap-fileinput/locales/ar.js') }}"></script>
+    <script src="{{ asset('admin/bootstrap-fileinput/locales/en.js') }}"></script>
     <script src="https://use.fontawesome.com/52e183519a.js"></script>
 
     <script>
@@ -213,7 +213,7 @@
                 'type': 'local_video',
                 'id': {{ $slider->id }}
             },
-            rtl: true,
+            ltr: true,
             language: 'ar',
             maxFileCount: 1,
             allowedFileTypes: ['video'],
@@ -271,7 +271,7 @@
                 'type': 'gif',
                 'id': {{ $slider->id }}
             },
-            rtl: true,
+            ltr: true,
             language: 'ar',
             maxFileCount: 1,
             allowedFileTypes: ['image'],

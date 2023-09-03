@@ -1,4 +1,3 @@
-<script src="//ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-validate/1.19.0/jquery.validate.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-validate/1.19.0/additional-methods.min.js"></script>
 
@@ -64,7 +63,7 @@
         @if (app()->getLocale() == 'en')
             <a href="#" class="header-title header-subtitle"
                 onclick="window.location='{{ route('language', 'ar') }}'">
-                ع
+                GR
             </a>
             {{--            <a type="button" onclick="window.location='{{ route('language' , 'ar') }}'">ع</a> --}}
         @else
@@ -131,9 +130,8 @@
                         <img src="{{ asset('images/line.png') }}" class="mb-3" />
                     </div>
                     <h3 class=" mb-3  text-center"> @lang('messages.loginx') </h3>
-                    <form method="post" action="{{ route('user_register', $restaurant->id) }}" id="register-form">
+                    <form method="post" action="{{ route('user_register', $restaurant->id) }}">
                         @csrf
-                        <input type="hidden" name="recapcha_token" value="">
                         <div class="row">
                             <label for=""
                                 style="padding-right:15px;padding-left:15px;">{{ trans('messages.phone_number') }} <span
@@ -147,9 +145,10 @@
                                             <option value="{{ $country->id }}"
                                                 title="{{ $country->flag == null ? null : asset($country->flag_path) }}"
                                                 data_flag="@php
-if($country->id == 1) echo '01xxxxxxxx'; 
-                                                elseif($country->code == 973) echo '3xxxxxxx'; 
-                                                elseif($country->id == 2) echo '05xxxxxxxx'; 
+                                                if($country->id == 1)
+                                                echo '01xxxxxxxx';
+                                                elseif($country->code == 973) echo '3xxxxxxx';
+                                                elseif($country->id == 2) echo '05xxxxxxxx';
                                                 else echo $country->code . 'xxxxxxxx'; @endphp">
                                                 {{ $country->code }} +
                                             </option>
@@ -165,30 +164,15 @@ if($country->id == 1) echo '01xxxxxxxx';
                                 @endif
 
                             </div>
-
-                            <div class="col-md-12 display-none">
-                                <label for="" style="">{{ trans('messages.code') }} <span
-                                        style="color: red">*</span></label>
-                                <input type="number" name="code" class="form-control x-input-style" pattern="[0-9]*"
-                                    inputmode="numeric" placeholder="{{ trans('messages.code_enter') }}">
-                            </div>
                         </div>
 
 
-                        <button type="button"
-                            class="btn btn-m btn-full mt-3 rounded-s text-uppercase font-900 shadow-s bg-dark2-dark send-sms step-1 "
-                            style="margin:auto;" id="send-sms">
-                            @if ($verifiyCode == true)
-                                @lang('messages.send_code')
-                            @else
-                                {{ trans('dashboard.login') }}
-                            @endif
+                        <button type="submit"
+                            class="btn btn-m btn-full mt-3 rounded-s text-uppercase font-900 shadow-s bg-dark2-dark  step-1 "
+                            style="margin:auto;">
+                            {{ trans('dashboard.login') }}
 
                         </button>
-
-                        <a href="javascript:;" id="send-again"
-                            class="active display-none">{{ trans('messages.send_sms_again') }} <span></span></a>
-                        <input type="hidden" name="verifiy_code" value="{{ $verifiyCode ? 1 : 0 }}">
                     </form>
                 </div>
             </div>
@@ -202,7 +186,6 @@ if($country->id == 1) echo '01xxxxxxxx';
 @push('scripts')
     <script src="{{ URL::asset('admin/js/select2.full.min.js') }}"></script>
     <script src="{{ URL::asset('admin/js/components-select2.min.js') }}"></script>
-    <script src="https://www.google.com/recaptcha/api.js?render={{ config('services.recapcha.client_key') }}"></script>
     <script>
         function onClick() {
 

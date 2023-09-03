@@ -11,7 +11,7 @@
     <link rel="stylesheet" href="{{asset('plugins/select2/css/select2.css')}}">
     <link href="{{asset('admin')}}/bootstrap-fileinput/css/fileinput.css" rel="stylesheet" type="text/css" />
 <link rel="stylesheet" href="{{ asset('admin/bootstrap-fileinput/css/fileinput.min.css') }}">
-<link rel="stylesheet" href="{{ asset('admin/bootstrap-fileinput/css/fileinput-rtl.min.css') }}">
+<link rel="stylesheet" href="{{ asset('admin/bootstrap-fileinput/css/fileinput-ltr.min.css') }}">
 @endsection
 @section('content')
     <section class="content-header">
@@ -56,9 +56,9 @@
                             <div class="card-body">
                                 {{-- name --}}
                                 <div class="form-group">
-                                    <label class="control-label"> @lang('dashboard.entry.name') </label>
+                                    <label class="control-label"> @lang('messages.name_ar') </label>
                                     <input name="name" type="text" class="form-control" rows="6"
-                                            placeholder="@lang('dashboard.entry.name') ..." value="{{$item->name}}">
+                                            placeholder="@lang('messages.name_ar') ..." value="{{$item->name}}">
                                     @if ($errors->has('name'))
                                         <span class="help-block">
                                             <strong style="color: red;">{{ $errors->first('name') }}</strong>

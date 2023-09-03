@@ -10,7 +10,7 @@
     <link rel="stylesheet" href="{{ URL::asset('admin/css/bootstrap-fileinput.css') }}">
     <link href="{{ asset('admin') }}/bootstrap-fileinput/css/fileinput.css" rel="stylesheet" type="text/css" />
     <link rel="stylesheet" href="{{ asset('admin/bootstrap-fileinput/css/fileinput.min.css') }}">
-    <link rel="stylesheet" href="{{ asset('admin/bootstrap-fileinput/css/fileinput-rtl.min.css') }}">
+    <link rel="stylesheet" href="{{ asset('admin/bootstrap-fileinput/css/fileinput-ltr.min.css') }}">
     <meta name="csrf-token" content="{{ csrf_token() }}">
     {{--    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.1.3/css/bootstrap.min.css" /> --}}
 @endsection
@@ -182,7 +182,7 @@
                                         <label class="control-label"> @lang('messages.days') </label>
                                         <br>
                                         <input id="select-all" type="checkbox"><label for='select-all'>
-                                            {{ app()->getLocale() == 'ar' ? 'اختيار الكل' : 'Choose All' }}</label>
+                                            {{ app()->getLocale() == 'ar' ? 'Wählen Sie Alle' : 'Choose All' }}</label>
                                         <br>
 
                                         <?php $days = \App\Models\Day::all();
@@ -204,7 +204,7 @@
                                     <div class="col-md-12">
                                         <span class="fileinput-new"> {{ trans('messages.photo') }}</span>
                                         <br>
-                                        <div dir=rtl class="file-loading">
+                                        <div dir=ltr class="file-loading">
                                             <input type="file" name="photo" id="normal-image"
                                                 accept=".png,.jpg,.jpeg" class="file" data-browse-on-zone-click="true">
                                         </div>
@@ -239,7 +239,7 @@
                                     <div class="col-md-12">
                                         <span class="fileinput-new"> {{ trans('dashboard.local_video') }}</span>
                                         <br>
-                                        <div dir=rtl class="file-loading">
+                                        <div dir=ltr class="file-loading">
                                             <input type="file" name="video" accept=".mp4" class="file"
                                                 data-browse-on-zone-click="true" id="local-video">
                                         </div>
@@ -250,7 +250,7 @@
                                     <div class="col-md-12">
                                         <span class="fileinput-new"> {{ trans('messages.photo') }}</span>
                                         <br>
-                                        <div dir=rtl class="file-loading">
+                                        <div dir=ltr class="file-loading">
                                             <input type="file" name="video" accept=".gif" class="file"
                                                 data-browse-on-zone-click="true" id="gif_image">
                                         </div>
@@ -261,11 +261,11 @@
                             <!-- /.card-body -->
                             <div class="alert alert-warning" role="alert">
                                 <h4 class="alert-heading">{{ trans('dashboard.explain') }}</h4>
-                                <p>{{ trans('dashboard.image_warning_size', ['size' => 'الطول يساوي ضعف العرض ']) }}</p>
+                                <p>{{ trans('dashboard.image_warning_size', ['size' => 'Die Länge entspricht dem Doppelten der Breite']) }}</p>
                                 <hr>
                                 <p class="mb-0">{!! trans('dashboard.image_resize_hint') !!}
                                     <a href="https://redketchup.io/image-resizer" target="__blank" style="color : #007bff;"
-                                        title="موقع لتغير حجم الصور"> موقع لتغير حجم الصور</a>
+                                        title="Eine Website zum Ändern der Bildgröße">Eine Website zum Ändern der Bildgröße</a>
                                 </p>
                             </div>
                             <div class="card-footer">
@@ -318,7 +318,7 @@
                     'action': 'create',
                 @endif
             },
-            rtl: true,
+            ltr: true,
             language: 'en',
             maxFileCount: 1,
             allowedFileTypes: ['image'],
@@ -375,7 +375,7 @@
                 'type': 'local_video',
                 'id': {{ $ads->id }},
             },
-            rtl: true,
+            ltr: true,
             language: 'ar',
             maxFileCount: 1,
             allowedFileTypes: ['video'],
@@ -431,7 +431,7 @@
                 'type': 'gif',
                 'id': {{ $ads->id }},
             },
-            rtl: true,
+            ltr: true,
             language: 'ar',
             maxFileCount: 1,
             allowedFileTypes: ['image'],

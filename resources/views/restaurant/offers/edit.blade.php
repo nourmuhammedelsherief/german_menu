@@ -10,7 +10,7 @@
     <link rel="stylesheet" href="{{ URL::asset('admin/css/bootstrap-fileinput.css') }}">
     <link href="{{ asset('admin') }}/bootstrap-fileinput/css/fileinput.css" rel="stylesheet" type="text/css" />
     <link rel="stylesheet" href="{{ asset('admin/bootstrap-fileinput/css/fileinput.min.css') }}">
-    <link rel="stylesheet" href="{{ asset('admin/bootstrap-fileinput/css/fileinput-rtl.min.css') }}">
+    <link rel="stylesheet" href="{{ asset('admin/bootstrap-fileinput/css/fileinput-ltr.min.css') }}">
     <meta name="csrf-token" content="{{ csrf_token() }}">
 @endsection
 
@@ -69,7 +69,7 @@
                                     <div class="col-md-12">
                                         <span class="fileinput-new"> {{ trans('messages.photo') }}</span>
                                         <br>
-                                        <div dir=rtl class="file-loading">
+                                        <div dir=ltr class="file-loading">
                                             <input type="file" name="photo" id="normal-image" accept=".png,.jpg,.jpeg"
                                                 class="file" data-browse-on-zone-click="true">
                                         </div>
@@ -79,11 +79,11 @@
                             <!-- /.card-body -->
                             <div class="alert alert-warning" role="alert">
                                 <h4 class="alert-heading">{{ trans('dashboard.explain') }}</h4>
-                                <p>{{ trans('dashboard.image_warning_size', ['size' => 'العرض يساوي الطول مرة ونص ']) }}</p>
+                                <p>{{ trans('dashboard.image_warning_size', ['size' => 'Die Breite entspricht dem Eineinhalbfachen der Länge']) }}</p>
                                 <hr>
                                 <p class="mb-0">{!! trans('dashboard.image_resize_hint') !!}
                                     <a href="https://redketchup.io/image-resizer" target="__blank" style="color : #007bff;"
-                                        title="موقع لتغير حجم الصور"> موقع لتغير حجم الصور</a>
+                                        title="Eine Website zum Ändern der Bildgröße">Eine Website zum Ändern der Bildgröße</a>
                                 </p>
                             </div>
                             @method('PUT')
@@ -117,7 +117,7 @@
 
 
 
-    <script src="{{ asset('admin/bootstrap-fileinput/locales/ar.js') }}"></script>
+    <script src="{{ asset('admin/bootstrap-fileinput/locales/en.js') }}"></script>
     <script type="text/javascript">
         $("#normal-image").fileinput({
             uploadUrl: "{{ route('restaurant.offer.update_image') }}",
@@ -137,7 +137,7 @@
                     'action': 'create',
                 @endif
             },
-            rtl: true,
+            ltr: true,
             language: 'en',
             maxFileCount: 1,
             allowedFileTypes: ['image'],

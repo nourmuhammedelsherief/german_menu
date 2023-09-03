@@ -38,7 +38,7 @@
     <section class="content">
         <div class="row">
             <div class="col-12">
-            
+
                 <div class="card">
                     <!-- /.card-header -->
                     <div class="card-body">
@@ -74,21 +74,21 @@
                                     <td><?php echo ++$i ?></td>
                                     <td> {{$register->name}} </td>
                                     <td>
-                                        <a href="mailTo:{{$register->email}}">{{$register->email}}</a> 
+                                        <a href="mailTo:{{$register->email}}">{{$register->email}}</a>
                                     </td>
                                     <td>
-                                        <a href="tel:{{$register->phone_number}}">{{$register->phone_number}}</a> 
+                                        <a href="tel:{{$register->phone_number}}">{{$register->phone_number}}</a>
                                     </td>
                                     <td> {{app()->getLocale() == 'ar' ? $register->country->name_ar : $register->country->name_en}} </td>
                                     <td>
-                                       @if($register->type == 'cafe')
-                                       مقهي
-                                       @else
-                                       مطعم
-                                       @endif
+                                        @if($register->type == 'cafe')
+                                            مقهي
+                                        @else
+                                            مطعم
+                                        @endif
                                     </td>
                                     <td>
-                                       
+
                                         @if(auth()->guard('admin')->user()->role == 'admin')
                                             <a class="delete_city btn btn-danger" data="{{ $register->id }}"
                                                data_name="{{ $register->name }}">
@@ -160,15 +160,12 @@
 
                     {{--var url = '{{ route("imageProductRemove", ":id") }}';--}}
 
-                        {{--url = url.replace(':id', id);--}}
+                            {{--url = url.replace(':id', id);--}}
 
                         window.location.href = "{{ url('/') }}" + "/admin/register_form_requests/delete/" + id;
 
-
                 });
-
             });
-
         });
     </script>
 

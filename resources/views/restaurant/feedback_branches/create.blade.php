@@ -56,7 +56,7 @@
                                
                                 {{-- name ar --}}
                                 <div class="form-group">
-                                    <label class="control-label"> @lang('dashboard.entry.name_ar') </label>
+                                    <label class="control-label"> @lang('messages.name_ar') </label>
                                     <input name="name_ar" type="text" class="form-control"
                                            value="{{old('name_ar')}}" placeholder="@lang('messages.name_ar')">
                                     @if ($errors->has('name_ar'))

@@ -23,15 +23,6 @@ class UserController extends Controller
 {
     public function show_register($id = null)
     {
-        // $data = [
-        //     'ser/login' , 'ser/register' ,'ser/forget_password'
-        // ];
-        // foreach($data as $item):
-        //     if(isUrlActive($item)) return 'true';
-        // endforeach;
-        // return url()->current();
-        // return 'false';
-        // return auth('web')->check() ? 'true' : 'false';
         if (auth('web')->check()) :
         // return 
         endif;
@@ -43,8 +34,8 @@ class UserController extends Controller
         if (auth('web')->check()) {
             return redirect(route('sliverHome', [$restaurant->name_barcode]));
         }
-        $verifiyCode = false;
-        if ($restaurant->serviceSubscriptions()->whereIn('service_id', [4, 9, 10])->where('status', 'active')->whereNotNull('paid_at')->count() > 0) $verifiyCode = false; // for test
+        $verifiyCode = true;
+        if ($restaurant->serviceSubscriptions()->whereIn('service_id', [4, 9, 10])->where('status', 'active')->whereNotNull('paid_at')->count() > 0) $verifiyCode = true; // for test
         $this->checkTheme($restaurant);
         $countries = Country::orderBy('created_at', 'asc')->get();
         return view('website.' . session('theme_path') . 'silver.accessories.user.register', compact('restaurant', 'countries', 'verifiyCode'));
@@ -54,69 +45,11 @@ class UserController extends Controller
         $restaurant = Restaurant::find($id);
         // test
         $this->checkTheme($restaurant);
-        // if($user = User::where('phone_number' , $request->phone_number)->first()){
-        //     // return $user;
-        //     Auth::login($user);
-        //     return redirect(route('sliverHome' , [$restaurant->name_barcode]));
-        // }
-
-
-        $rules = [
-            //            'password' => 'required|string|min:8|confirmed',
+        $this->validate($request  , [
             'country_id' => 'required|exists:countries,id',
             'phone_number' => ['required', 'regex:/^((05)|(01)|())[0-9]{8}/'],
-            'recapcha_token' => 'required|min:1',
-            //            'name'    => 'nullable|string|max:255',
-        ];
-        $validator = Validator::make($request->all(), $rules);
-        if ($validator->fails()) {
-            $i = 0;
-            if (count($validator->getMessageBag()->toArray()) > 0) {
-                foreach ($validator->getMessageBag()->toArray() as $err) {
-                    flash($err[0])->error();
-                    return response([
-                        'status' => false,
-                        'msg' => $err[0],
-                    ]);
-                }
-            }
-        }
-        // check recapcha google 
-        $recapchaResponse = Http::asForm()->post('https://www.google.com/recaptcha/api/siteverify', [
-            'secret' => config('services.recapcha.secret_key'),
-            'response' => $request->recapcha_token,
-            'remoteip' => request()->ip(),
         ]);
 
-        $dd  = $recapchaResponse->json();
-        if (!isset($dd['success']) or $dd['success'] !== true) :
-            return response([
-                'status' => false,
-                'msg' => trans('messages.recapcha_fail'),
-            ]);
-        endif;
-
-        $check = substr($request->phone_number, 0, 2) === '05';
-        //        dd($check , $request->country_id);
-        if ($check == true && $request->country_id == '1') {
-
-            return response([
-                'status' => false,
-                'msg' => 'يرجي أختيار كود الدولة المناسب'
-            ]);
-        } elseif ($check == false && $request->country_id == '2') {
-            return response([
-                'status' => false,
-                'msg' => 'يرجي أختيار كود الدولة المناسب'
-            ]);
-        }
-        //        elseif (strlen($request->phone_number) != 8 && $request->country_id != '3')
-        //        {
-        //            return response([
-        //                'status' => false ,
-        //                'msg' => 'يرجي أختيار كود الدولة المناسب'
-        //            ]);
-        //        }
         $check_user = User::whereCountryId($request->country_id)
             ->where('phone_number', $request->phone_number)
             ->first();
@@ -127,64 +60,14 @@ class UserController extends Controller
                 'password' => Hash::make($request->password),
                 'phone_number' => $request->phone_number,
                 'country_id'  => $request->country_id,
-                'active' => 'false',
+                'active' => 'true',
                 'register_restaurant_id' => $restaurant->id,
             ]);
         } else {
             $user = $check_user;
         }
-        $url =  route('sliverHome', $restaurant->name_barcode);
-        if ($request->verifiy_code === '0' or true) :
-            if (session()->has('redirect_to')) :
-                $url = session('redirect_to');
-                session()->forget('redirect_to');
-            endif;
-            Auth::guard('web')->login($user);
-            if (session()->has('last_order')) :
-                $myRequest = new Request(session('last_order'));
-                $con = new OrderController();
-                session()->flash('come_from_login', true);
-                return $con->add_to_cart($myRequest , 'phone');
-            endif;
-            
-            return response([
-                'status' => true,
-                'user_id' => $user->id,
-                'type' => 'phone',
-                'redirect_to' => $url,
-                'msg' =>  trans('messages.login_success')
-                // 'code' => $code ,
-            ]);
-        endif;
-        // send verification code
-        $code = mt_rand(1000, 9999);
-        // $code = 1234; // test
-        if (env('APP_SMS_TEST', false)) {
-            $code = '2222';
-        }
-        $country = Country::find($request->country_id)->code;
-        // send code to phone_number
-        $msg = app()->getLocale() == 'ar' ? 'كود التحقق الخاص بك في أيزي منيو للزبون هو' . ' : ' . $code . '  ' . 'مؤسسة تقني' : 'EasyMenu verification code is : ' . $code . '  ' . 'مؤسسة تقني';
-        $check = substr($request->phone_number, 0, 2) === '05';
-        if ($check == true) {
-            $phone = $country . ltrim($request->phone_number, '0');
-        } else {
-            $phone = $country . $request->phone_number;
-        }
-        //        dd($phone);
-        taqnyatSms($msg, $phone);
-        $user->update([
-            'verification_code' => $code
-        ]);
-        if ($request->wantsJson()) :
-            return response([
-                'status' => true,
-                'type' => 'sms',
-                'user_id' => $user->id,
-                // 'code' => $code ,
-            ]);
-        endif;
-        return view('website.' . session('theme_path') . 'silver.accessories.user.code_verify', compact('user', 'restaurant', 'id'));
+        Auth::guard('web')->login($user, true);
+        return redirect()->route('sliverHome', $restaurant->name_barcode);
     }
 
     public function verify(Request $request, $id, $res)

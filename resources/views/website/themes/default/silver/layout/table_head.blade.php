@@ -40,7 +40,7 @@
         @if(app()->getLocale() == 'en')
             <a href="#" class="header-title header-subtitle" onclick="window.location='{{ route('language' , 'ar') }}'"
                style="color: {{$restaurant->color == null ? '' : $restaurant->color->main_heads}}">
-                عربي
+                German
             </a>
             {{--            <a type="button" onclick="window.location='{{ route('language' , 'ar') }}'">訊</a>--}}
         @else

@@ -43,9 +43,7 @@
         }
     </style>
     <link rel="stylesheet" type="text/css" href="{{asset('styles/style.css')}}">
-    @if(app()->getLocale() == 'en')
     <link rel="stylesheet" type="text/css" href="{{asset('styles/style_ltr.css')}}">
-    @endif
     <link rel="stylesheet" type="text/css" href="{{asset('styles/global.css')}}">
     <link rel="stylesheet" type="text/css" href="{{asset('fonts/css/fontawesome-all.min.css')}}">
     <link rel="stylesheet" type="text/css" href="{{asset('plugins/vanilla-calendar/vanilla-calendar.min.css')}}">
@@ -93,9 +91,9 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
     <!-- Restaurant tags end -->
 
 @if($restaurant != null)
-    <body class="theme-light" data-highlight="yellow2" dir="{{app()->getLocale() == 'ar' ? 'rtl' : 'ltr'}}" style="max-width: 1000px; width:99%; margin:auto; background-color: {{$restaurant->color == null ? '' : $restaurant->color->background}};">
+    <body class="theme-light" data-highlight="yellow2" dir="ltr" style="max-width: 1000px; width:99%; margin:auto; background-color: {{$restaurant->color == null ? '' : $restaurant->color->background}};">
 @else
-    <body class="theme-light" data-highlight="yellow2" dir="{{app()->getLocale() == 'ar' ? 'rtl' : 'ltr'}}" >
+    <body class="theme-light" data-highlight="yellow2" dir="ltr" >
 @endif
 <!-- Google Tag Manager (noscript) -->
 <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-T9PFN6PT"
