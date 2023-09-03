@@ -63,7 +63,7 @@
         @if (app()->getLocale() == 'en')
             <a href="#" class="header-title header-subtitle"
                 onclick="window.location='{{ route('language', 'ar') }}'">
-                GR
+                De
             </a>
             {{--            <a type="button" onclick="window.location='{{ route('language' , 'ar') }}'">ع</a> --}}
         @else

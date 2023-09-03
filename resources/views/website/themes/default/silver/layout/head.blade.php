@@ -55,7 +55,7 @@
             <a href="#" class="header-title header-subtitle"
                 onclick="window.location='{{ route('language', 'ar') }}'"
                 style="color: {{ $restaurant->color == null ? '' : $restaurant->color->main_heads }}">
-                GR
+                DE
             </a>
             {{--            <a type="button" onclick="window.location='{{ route('language' , 'ar') }}'">訊</a> --}}
         @else
