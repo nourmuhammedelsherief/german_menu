@@ -159,7 +159,7 @@
 
                                         <label class="control-label"> @lang('messages.days') </label>
                                         <br>
-                                        <input id="select-all" type="checkbox"><label for='select-all'> {{app()->getLocale() == 'ar' ? 'اختيار الكل':'Choose All' }}</label>
+                                        <input id="select-all" type="checkbox"><label for='select-all'> {{app()->getLocale() == 'ar' ? 'Wählen Sie Alle':'Choose All' }}</label>
                                         <br>
 
                                         <?php $days = \App\Models\Day::all(); ?>
@@ -179,7 +179,7 @@
                                 <div class="form-group image-editor-preview">
                                     <label for="">{{ trans('messages.photo') }}</label>
                                     <label class="custom-label" data-toggle="tooltip" title="{{trans('dashboard.change_image')}}">
-                                        <img class="rounded" id="avatar" src="{{asset($restaurant->image_path)}}" alt="avatar" >
+                                        <img class="rounded" id="avatar" src="{{asset($restaurant->image_path)}}" alt="avatar"  width="200" height="200">
                                         <input type="file" class="sr-only" id="image-uploader" data-product_id="" name="image" accept="image/*">
                                     </label>
 

@@ -701,7 +701,7 @@
                             method: 'POST',
                             data: {
                                 recapcha_token : token ,
-                            } , 
+                            } ,
                             headers: {
                                 accept: 'application/json'
                             },

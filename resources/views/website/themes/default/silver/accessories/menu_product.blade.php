@@ -25,12 +25,12 @@
                     @else
                         @if($meal->foodics_image != null)
                             <img
-                                data-src="{{$meal->foodics_image}}"
-                                style="width:100%;"/>
+                                    data-src="{{$meal->foodics_image}}"
+                                    style="width:100%;"/>
                         @else
                             <img
-                                data-src="{{empty($meal->photo) ? asset($meal->restaurant->image_path) : asset($meal->image_path)}}"
-                                style="width:100%;"/>
+                                    data-src="{{empty($meal->photo) ? asset($meal->restaurant->image_path) : asset($meal->image_path)}}"
+                                    style="width:100%;"/>
                     @endif
                 @endif
                 <!--  <div class="card-overlay "></div>
@@ -42,15 +42,15 @@
                             @if($meal->poster != null)
                                 <i>
                                         <img
-                                            data-src="{{asset('/uploads/posters/' . $meal->poster->poster)}}"
-                                            height="40"
-                                            width="40">
+                                                data-src="{{asset('/uploads/posters/' . $meal->poster->poster)}}"
+                                                height="40"
+                                                width="40">
                                     </i>
                             @endif
                         </span>
                     {{app()->getLocale() == 'ar' ? $meal->name_ar : $meal->name_en}}
 
-                   
+
 
                     <div class="product-btns">
                         <span class="share-product"  data-url="{{route('product.show' , [$meal->restaurant->name_barcode , $meal->id])}}"  data-id="{{$meal->id}}" data-title="{{$meal->name}}">
@@ -84,7 +84,7 @@
                 @if($meal->calories != null)
                     <span class="pl-1 calories" style="margin:0 6px;">
                         <span
-                            style="color: {{$meal->restaurant->color == null ? '' : $meal->restaurant->color->main_heads}} !important">
+                                style="color: {{$meal->restaurant->color == null ? '' : $meal->restaurant->color->main_heads}} !important">
                             {{ trans('messages.calories_des' , ['num' => $meal->calories]) }}
                         </span>
                     </span>
@@ -184,25 +184,25 @@
                                                         <label for="box{{$option->option->id}}{{$meal->id}}-fac-radio"
                                                                class="color-dark1-dark font-13 ">
                                                             <input
-                                                                id="box{{$option->option->id}}{{$meal->id}}-fac-radio"
-                                                                data="{{$option->product->id}}"
-                                                                class="activity_price" data-id="{{$option->option->id}}"
-                                                                data-required="{{$check_required_options ? 'true' : 'false'}}"
-                                                                data-min="{{$option->min}}" ,
-                                                                data-max="{{$option->max}}" ,
-                                                                data-choose_one="{{$main_addition->modifier->choose == 'one' ? 'true' : 'false'}}"
-                                                                data-main_id="{{$main_addition->modifier->id}}"
-                                                                type="checkbox" name="options[]"
-                                                                style="background-color: {{$meal->restaurant->color == null ? '' : $meal->restaurant->color->icons}} !important"
-                                                                data-price="{{$option->option->price}}"
-                                                                value="{{$option->option->id}}">
+                                                                    id="box{{$option->option->id}}{{$meal->id}}-fac-radio"
+                                                                    data="{{$option->product->id}}"
+                                                                    class="activity_price" data-id="{{$option->option->id}}"
+                                                                    data-required="{{$check_required_options ? 'true' : 'false'}}"
+                                                                    data-min="{{$option->min}}" ,
+                                                                    data-max="{{$option->max}}" ,
+                                                                    data-choose_one="{{$main_addition->modifier->choose == 'one' ? 'true' : 'false'}}"
+                                                                    data-main_id="{{$main_addition->modifier->id}}"
+                                                                    type="checkbox" name="options[]"
+                                                                    style="background-color: {{$meal->restaurant->color == null ? '' : $meal->restaurant->color->icons}} !important"
+                                                                    data-price="{{$option->option->price}}"
+                                                                    value="{{$option->option->id}}">
                                                             <input type="hidden" name="options_ids[]"
                                                                    value="{{$option->option->id}}">
                                                             <span class="checkmark"
                                                                   style="border-color: {{$meal->restaurant->color == null ? '' : $meal->restaurant->color->icons}} !important">
                                                                </span>
                                                             <span
-                                                                style="color: {{$meal->restaurant->color == null ? '' : $meal->restaurant->color->options_description}} !important">
+                                                                    style="color: {{$meal->restaurant->color == null ? '' : $meal->restaurant->color->options_description}} !important">
                                                        {{app()->getLocale() == 'ar' ? $option->option->name_ar : $option->option->name_en}}
                                                                 @if(!empty($option->option->calories))
 
@@ -221,7 +221,7 @@
                                                    {{$option->option->price * ($option->min > 1 ? $option->min : 1)}}
                                                </span>
                                                             <span
-                                                                style="color: {{$meal->restaurant->color == null ? '' : $meal->restaurant->color->options_description}} !important">
+                                                                    style="color: {{$meal->restaurant->color == null ? '' : $meal->restaurant->color->options_description}} !important">
                                                    {{app()->getLocale() == 'ar' ? $meal->branch->country->currency_ar : $meal->branch->country->currency_en}}
                                                </span>
                                                         </h1>
@@ -242,14 +242,14 @@
                                                                     </button>
 
                                                                     <input
-                                                                        style="color: {{$meal->restaurant->color == null ? '' : $meal->restaurant->color->options_description}} !important"
-                                                                        name="qty{{$option->option->id}}{{$meal->id}}"
-                                                                        type="number"
-                                                                        data-required="{{$check_required_options ? 'true' : 'false'}}"
-                                                                        data-min="{{$option->min}}"
-                                                                        data-max="{{$option->max}}"
-                                                                        readonly
-                                                                        value="{{$option->min > 1 ? $option->min : 1}}" class="border-1 cbox addition">
+                                                                            style="color: {{$meal->restaurant->color == null ? '' : $meal->restaurant->color->options_description}} !important"
+                                                                            name="qty{{$option->option->id}}{{$meal->id}}"
+                                                                            type="number"
+                                                                            data-required="{{$check_required_options ? 'true' : 'false'}}"
+                                                                            data-min="{{$option->min}}"
+                                                                            data-max="{{$option->max}}"
+                                                                            readonly
+                                                                            value="{{$option->min > 1 ? $option->min : 1}}" class="border-1 cbox addition">
 
                                                                     <button type="button"
                                                                             value="{{$option->option->price}}"
@@ -313,7 +313,7 @@
                                    {{$meal->price}}
                                </span>
                                             <span
-                                                style="color: {{$meal->restaurant->color == null ? '' : $meal->restaurant->color->main_heads}} !important">
+                                                    style="color: {{$meal->restaurant->color == null ? '' : $meal->restaurant->color->main_heads}} !important">
                                    {{app()->getLocale() == 'ar' ? $meal->branch->country->currency_ar : $meal->branch->country->currency_en}}
                                </span>
                                         </h3>
@@ -334,20 +334,20 @@
                                     <div class="clear"></div>
                                     <div id="additionButton" style="display:block;">
                                         @if($table != null)
-{{--                                            @php--}}
-{{--                                                $check_table_order = \App\Models\TableOrder::whereStatus('in_reservation')--}}
-{{--                                                   ->where('ip' , '!=' , \Illuminate\Support\Facades\Session::getId())--}}
-{{--                                                   ->where('table_id' , $table->id)--}}
-{{--                                                   ->first();--}}
-{{--                                            @endphp--}}
-{{--                                            @if($check_table_order == null)--}}
-                                                <button type="submit"
-                                                        style="background-color: {{$meal->restaurant->color == null ? '' : $meal->restaurant->color->icons}} !important; color: {{$meal->restaurant->color == null ? '' : $meal->restaurant->color->main_heads}} !important"
-                                                        data-product_id="{{$meal->id}}"
-                                                        class="btn btn-l mb-3 rounded-m text-uppercase font-900 shadow-s bg-dark2-dark btn-save-cart">
-                                                    @lang('messages.add_to_cart')
-                                                </button>
-{{--                                            @endif--}}
+                                            {{--                                            @php--}}
+                                            {{--                                                $check_table_order = \App\Models\TableOrder::whereStatus('in_reservation')--}}
+                                            {{--                                                   ->where('ip' , '!=' , \Illuminate\Support\Facades\Session::getId())--}}
+                                            {{--                                                   ->where('table_id' , $table->id)--}}
+                                            {{--                                                   ->first();--}}
+                                            {{--                                            @endphp--}}
+                                            {{--                                            @if($check_table_order == null)--}}
+                                            <button type="submit"
+                                                    style="background-color: {{$meal->restaurant->color == null ? '' : $meal->restaurant->color->icons}} !important; color: {{$meal->restaurant->color == null ? '' : $meal->restaurant->color->main_heads}} !important"
+                                                    data-product_id="{{$meal->id}}"
+                                                    class="btn btn-l mb-3 rounded-m text-uppercase font-900 shadow-s bg-dark2-dark btn-save-cart">
+                                                @lang('messages.add_to_cart')
+                                            </button>
+                                            {{--                                            @endif--}}
                                         @else
                                             <button type="submit"
                                                     style="background-color: {{$meal->restaurant->color == null ? '' : $meal->restaurant->color->icons}} !important; color: {{$meal->restaurant->color == null ? '' : $meal->restaurant->color->main_heads}} !important"
