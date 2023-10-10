@@ -102,7 +102,7 @@
                                                        placeholder="@lang('messages.name_barcode')">
                                             </div>
                                             <h6 style="color: red">@lang('messages.whenChangeName')</h6>
-                                            <a target="_blank" href="https://api.whatsapp.com/send?phone=966590136653"
+                                            <a target="_blank" href="https://api.whatsapp.com/send?phone={{\App\Models\Setting::first()->technical_support_number}}"
                                                style="color: green">
                                                 <i style="font-size:24px" class="fa">&#xf232;</i>
                                                 <span class="hidemob">
