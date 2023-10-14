@@ -384,13 +384,17 @@ span.calories {
     width: 100%  !important;
     height: 270px !important;
 }
-.product-theme-2 .product-image img , 
-.product-image>img , 
-.product-theme-3 .product-image img , 
-.product-details .card > img:first-child{
+.product-theme-2 .product-image.empty img , 
+.product-image.empty >img , 
+.product-theme-3 .product-image.empty img , 
+.product-details .card > img.empty:first-child{
     background-image: var(--rest-logo) !important;
     background-position: center;
     background-size: cover;
+}
+.background-white{
+    background-image: none !important;
+    background-color: #ebebeb;
 }
 .product-details .card > img:first-child{
     min-height: 370px;
